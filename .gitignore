@@ -3,5 +3,5 @@
 build/
 .classpath
 .settings/
-
+bin/
 
