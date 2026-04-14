@@ -5,3 +5,6 @@ build/
 .settings/
 bin/
 
+# Editor
+.vscode/
+*.sw?
