@@ -14,8 +14,14 @@ import static io.github.libsdl4j.api.video.SDL_WindowFlags.SDL_WINDOW_SHOWN;
 import static io.github.libsdl4j.api.video.SdlVideo.SDL_CreateWindow;
 import static io.github.libsdl4j.api.video.SdlVideoConst.SDL_WINDOWPOS_CENTERED;
 
+import app.pairs.asset.AssetManager;
+
+import com.sun.jna.ptr.IntByReference;
+
 import io.github.libsdl4j.api.event.SDL_Event;
+import io.github.libsdl4j.api.rect.SDL_Rect;
 import io.github.libsdl4j.api.render.SDL_Renderer;
+import io.github.libsdl4j.api.render.SDL_Texture;
 import io.github.libsdl4j.api.video.SDL_Window;
 
 public class Main {
@@ -50,16 +56,46 @@ public class Main {
 			);
 		}
 
+		// Initialize AssetManager with renderer
+		AssetManager.instance().init(renderer);
+
+		// Load assets
+		try {
+			AssetManager.instance().loadManifest("manifest.json");
+		} catch (Exception e) {
+			System.err.println("Failed to load assets: " + e.getMessage());
+			e.printStackTrace();
+			SDL_Quit();
+			System.exit(1);
+		}
+
+		// Get the loaded texture
+		SDL_Texture texture = AssetManager.instance().get("tinyblocks/texture");
+
+		// Query texture dimensions
+		IntByReference w = new IntByReference();
+		IntByReference h = new IntByReference();
+		SDL_QueryTexture(texture, null, null, w, h);
+
+		// Calculate centered destination rect
+		SDL_Rect dstRect = new SDL_Rect();
+		dstRect.x = (1_024 - w.getValue()) / 2;
+		dstRect.y = (768 - h.getValue()) / 2;
+		dstRect.w = w.getValue();
+		dstRect.h = h.getValue();
+
 		// Set color of renderer to green
 		SDL_SetRenderDrawColor(
 			renderer, (byte)0, (byte)255, (byte)0, (byte)255
 		);
 
-		// Clear the window and make it all red
+		// Clear the window
 		SDL_RenderClear(renderer);
 
-		// Render the changes above ( which up until now had just happened
-		// behind the scenes )
+		// Render the texture centered
+		SDL_RenderCopy(renderer, texture, null, dstRect);
+
+		// Render the changes
 		SDL_RenderPresent(renderer);
 
 		// Start an event loop and react to events
