@@ -4,6 +4,7 @@ build/
 .classpath
 .settings/
 bin/
+.project
 
 # Editor
 .vscode/
