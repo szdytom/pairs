@@ -1,4 +1,17 @@
 {
 	"format": 1,
-	"sequence": []
+	"sequence": [
+		{
+			"id": "tinyblocks/raw",
+			"type": "image",
+			"file": "tinyblocks.png",
+			"description": "Loading tinyblocks.png"
+		},
+		{
+			"id": "tinyblocks/texture",
+			"type": "create-texture",
+			"input": "tinyblocks/raw",
+			"description": "Creating texture from tinyblocks"
+		}
+	]
 }
