@@ -8,21 +8,25 @@ import io.github.libsdl4j.api.render.SdlRender;
 import io.github.libsdl4j.api.surface.SDL_Surface;
 import io.github.libsdl4j.api.rect.SDL_Rect;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Renders a 2D grid of tile types using isometric projection.
+ * The grid uses string tile IDs; null represents an empty cell.
  */
 public class IsometricGridView implements ViewComponent {
     private static final int TILE_CONTENT_WIDTH = 16;
     private static final int TILE_CONTENT_HEIGHT = 16;
 
-    private int[][] grid;
+    private String[][] grid;
     private final TileRegistry tileRegistry;
     private final IsometricMapper mapper;
     private final SDL_Renderer renderer;
-    private SDL_Texture[] typeTextures;
+    private Map<String, SDL_Texture> typeTextures;
     private boolean texturesInitialized;
 
-    public IsometricGridView(int[][] grid, TileRegistry tileRegistry,
+    public IsometricGridView(String[][] grid, TileRegistry tileRegistry,
                              IsometricMapper mapper, SDL_Renderer renderer) {
         this.grid = grid;
         this.tileRegistry = tileRegistry;
@@ -31,7 +35,7 @@ public class IsometricGridView implements ViewComponent {
         this.texturesInitialized = false;
     }
 
-    public void setGrid(int[][] grid) {
+    public void setGrid(String[][] grid) {
         this.grid = grid;
     }
 
@@ -57,14 +61,14 @@ public class IsometricGridView implements ViewComponent {
         for (int[] pos : renderOrder) {
             int row = pos[0];
             int col = pos[1];
-            int typeId = grid[row][col];
+            String typeId = grid[row][col];
 
-            if (typeId == 0)
+            if (typeId == null || typeId.isEmpty())
                 continue;
 
             IsometricMapper.IsometricCoordinate screenPos = mapper.gridToScreen(row, col, scale);
 
-            SDL_Texture tex = getTextureForType(typeId);
+            SDL_Texture tex = typeTextures.get(typeId);
             if (tex != null) {
                 SDL_Rect dst = new SDL_Rect();
                 dst.x = screenPos.x - dstW / 2;
@@ -84,31 +88,24 @@ public class IsometricGridView implements ViewComponent {
     }
 
     private void initializeTextures() {
-        int totalTypes = tileRegistry.getRows() * tileRegistry.getColumns();
-        typeTextures = new SDL_Texture[totalTypes];
+        typeTextures = new HashMap<>();
 
         for (int row = 0; row < tileRegistry.getRows(); row++) {
             for (int col = 0; col < tileRegistry.getColumns(); col++) {
+                String typeId = tileRegistry.getTypeId(row, col);
+                if (typeId == null)
+                    continue;
+                if (typeTextures.containsKey(typeId))
+                    continue;
+
                 SDL_Surface surface = tileRegistry.getTile(row, col);
                 if (surface != null) {
                     SDL_Texture tex = SdlRender.SDL_CreateTextureFromSurface(
                         renderer, surface);
-                    int typeId = tileRegistry.getTypeForTile(row, col);
-                    if (typeId >= 0 && typeId < typeTextures.length) {
-                        if (typeTextures[typeId] == null) {
-                            typeTextures[typeId] = tex;
-                        }
-                    }
+                    typeTextures.put(typeId, tex);
                 }
             }
         }
         texturesInitialized = true;
-    }
-
-    private SDL_Texture getTextureForType(int typeId) {
-        if (typeId >= 0 && typeId < typeTextures.length) {
-            return typeTextures[typeId];
-        }
-        return null;
     }
 }

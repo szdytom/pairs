@@ -93,7 +93,7 @@ public class Main {
 			TILE_WIDTH, TILE_HEIGHT, originX, originY
 		);
 
-		int[][] grid = createTestGrid(GRID_ROWS, GRID_COLS);
+		String[][] grid = createTestGrid(GRID_ROWS, GRID_COLS);
 		ViewComponent gridView = new IsometricGridView(
 			grid, tiles, mapper, renderer
 		);
@@ -146,11 +146,11 @@ public class Main {
 		SDL_Quit();
 	}
 
-	private static int[][] createTestGrid(int rows, int cols) {
-		int[][] grid = new int[rows][cols];
+	private static String[][] createTestGrid(int rows, int cols) {
+		String[][] grid = new String[rows][cols];
 		for (int r = 0; r < rows; r++) {
 			for (int c = 0; c < cols; c++) {
-				grid[r][c] = (r * cols + c) % 25 + 1;
+				grid[r][c] = String.valueOf((r * cols + c) % 25);
 			}
 		}
 		return grid;
