@@ -3,8 +3,7 @@ package app.pairs.logic;
 import app.pairs.model.Tilemap;
 
 public final class ClrRadius {
-	private ClrRadius() {
-	}
+	private ClrRadius() {}
 
 	public static int getUr(Tilemap map, int row, int col) {
 		int i = row;

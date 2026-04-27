@@ -1,9 +1,10 @@
 package app.pairs.map;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import org.junit.jupiter.api.Test;
 
 import app.pairs.model.Tilemap;
+
+import org.junit.jupiter.api.Test;
 
 class HardTileFactoryPrintTest {
 	@Test

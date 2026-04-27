@@ -29,6 +29,7 @@ Application entry point: `app.pairs.Main` (configured in `build.gradle`)
 - Follow standard Java naming conventions for classes, methods, and variables.
 - Split long functions into smaller, focused methods to improve readability and maintainability.
 - Use concise variable and method names. Don't restate types in names.
+- Fail-fast for error handling for unexpected state: prefer throwing IllegalStateException.
 
 ## General Instructions
 
