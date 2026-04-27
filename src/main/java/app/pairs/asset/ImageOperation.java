@@ -4,6 +4,7 @@ import java.awt.image.BufferedImage;
 import java.io.InputStream;
 import javax.imageio.ImageIO;
 
+import com.google.gson.JsonObject;
 import com.sun.jna.Memory;
 
 import io.github.libsdl4j.api.surface.SDL_Surface;
@@ -16,6 +17,12 @@ public class ImageOperation implements AssetOperation {
 	@Override
 	public String type() {
 		return "image";
+	}
+
+	@Override
+	public void configure(JsonObject item) {
+		id(item.get("id").getAsString());
+		file(item.get("file").getAsString());
 	}
 
 	@Override
