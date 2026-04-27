@@ -1,8 +1,11 @@
 package app.pairs.asset;
 
+import com.google.gson.JsonObject;
+
 public interface AssetOperation {
 	String type();
 	void process(Context ctx) throws Exception;
+	void configure(JsonObject item);
 
 	public static interface Context {
 		String id();

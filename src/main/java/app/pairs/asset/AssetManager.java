@@ -92,33 +92,7 @@ public class AssetManager {
 	}
 
 	private void configureOperation(AssetOperation op, JsonObject item) {
-		if (op instanceof ImageOperation) {
-			ImageOperation imgOp = (ImageOperation)op;
-			imgOp.id(item.get("id").getAsString());
-			imgOp.file(item.get("file").getAsString());
-		} else if (op instanceof CreateTextureOperation) {
-			CreateTextureOperation texOp = (CreateTextureOperation)op;
-			texOp.id(item.get("id").getAsString());
-			texOp.input(item.get("input").getAsString());
-		} else if (op instanceof CropTilesOperation) {
-			CropTilesOperation cropOp = (CropTilesOperation)op;
-			cropOp.id(item.get("id").getAsString());
-			cropOp.input(item.get("input").getAsString());
-			cropOp.tileWidth(item.get("tileWidth").getAsInt());
-			cropOp.tileHeight(item.get("tileHeight").getAsInt());
-			cropOp.columns(item.get("columns").getAsInt());
-			cropOp.rows(item.get("rows").getAsInt());
-		} else if (op instanceof TileTypeMappingOperation) {
-			TileTypeMappingOperation typeOp = (TileTypeMappingOperation)op;
-			typeOp.id(item.get("id").getAsString());
-			typeOp.input(item.get("input").getAsString());
-			JsonArray mappingArray = item.getAsJsonArray("mapping");
-			int[] mapping = new int[mappingArray.size()];
-			for (int i = 0; i < mappingArray.size(); i++) {
-				mapping[i] = mappingArray.get(i).getAsInt();
-			}
-			typeOp.mapping(mapping);
-		}
+		op.configure(item);
 	}
 
 	@SuppressWarnings("unchecked")

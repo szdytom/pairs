@@ -1,5 +1,7 @@
 package app.pairs.asset;
 
+import com.google.gson.JsonObject;
+
 import io.github.libsdl4j.api.render.SDL_Renderer;
 import io.github.libsdl4j.api.render.SDL_Texture;
 import io.github.libsdl4j.api.render.SdlRender;
@@ -12,6 +14,12 @@ public class CreateTextureOperation implements AssetOperation {
 	@Override
 	public String type() {
 		return "create-texture";
+	}
+
+	@Override
+	public void configure(JsonObject item) {
+		id(item.get("id").getAsString());
+		input(item.get("input").getAsString());
 	}
 
 	@Override

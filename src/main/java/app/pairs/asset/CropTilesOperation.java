@@ -1,5 +1,7 @@
 package app.pairs.asset;
 
+import com.google.gson.JsonObject;
+
 import io.github.libsdl4j.api.surface.SDL_Surface;
 import io.github.libsdl4j.api.surface.SdlSurface;
 import io.github.libsdl4j.api.rect.SDL_Rect;
@@ -19,6 +21,16 @@ public class CropTilesOperation implements AssetOperation {
     @Override
     public String type() {
         return "crop-tiles";
+    }
+
+    @Override
+    public void configure(JsonObject item) {
+        id(item.get("id").getAsString());
+        input(item.get("input").getAsString());
+        tileWidth(item.get("tileWidth").getAsInt());
+        tileHeight(item.get("tileHeight").getAsInt());
+        columns(item.get("columns").getAsInt());
+        rows(item.get("rows").getAsInt());
     }
 
     @Override
