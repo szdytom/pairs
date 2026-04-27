@@ -7,12 +7,12 @@ LibSDL4J is a mapping of SDL2 APIs to Java. There are two goals for LibSDL4J:
   It should be easy to just 1:1 translate C-style source code to Java.
 * Provide reasonably performant mapping.
 
-Because of these goals, there is a lot of room for Java niceties (enums, encapsulation, AutoClosable, type-safety, exceptions etc.)
+Because of these goals, there is not a lot of room for Java niceties (enums, encapsulation, AutoClosable, type-safety, exceptions etc.)
 which are intentionally avoided. These can be applied by wrapping the raw API,
 but it is outside the scope of this project.
 
 If you have LibSDL4J set up as a dependency of your project,
-you can try to a sample program:
+you can try a sample program:
 
 ~~~
 import io.github.libsdl4j.api.event.SDL_Event;
@@ -172,7 +172,95 @@ dst.w = 16 * scale;  // scale applied only here
 dst.h = 16 * scale;
 ```
 
-### Texture Lifecycle
+### Surface Pixel Memory Ownership
 
-`SDL_CreateTextureFromSurface` creates a GPU texture from a CPU surface. The surface can be freed after this call (use `SdlSurface.SDL_FreeSurface`), but the texture must eventually be freed with `SdlRender.SDL_DestroyTexture`. In this project textures are cached by type ID and persist for the application lifetime; for a production game, track them and clean up on shutdown.
+`SDL_CreateRGBSurfaceFrom` does **not** copy the pixel buffer — it wraps a pointer. If that pointer points into a JNA `Memory` object that goes out of scope, the surface holds a dangling pointer (use-after-free / crash).
+
+**Safe approach** — use `SDL_CreateRGBSurfaceWithFormat` (SDL allocates and owns the pixel memory), then write pixel data directly:
+
+```java
+// Byte array layout in memory: [R, G, B, A] per pixel → use ABGR8888
+SDL_Surface surface = SdlSurface.SDL_CreateRGBSurfaceWithFormat(
+    0, width, height, 32, SDL_PIXELFORMAT_ABGR8888
+);
+// surface owns the pixels — write directly to them
+surface.getPixels().write(0, rgba, 0, rgba.length);
+
+// The surface is now safe to pass around; no separate Memory to manage.
+```
+
+Available pixel format constants include: `SDL_PIXELFORMAT_RGBA8888`, `SDL_PIXELFORMAT_ABGR8888`, `SDL_PIXELFORMAT_ARGB8888`, `SDL_PIXELFORMAT_BGRA8888`, etc. — all in `SDL_PixelFormatEnum`.
+
+### Renderer Binding
+
+SDL textures are bound to the renderer that created them. Passing a texture to `SDL_RenderCopy` on a different renderer will fail. Always create textures with the same renderer used for drawing.
+
+```java
+// Don't store a renderer field — use the one passed to render()
+@Override
+public void render(SDL_Renderer renderer, int scale) {
+    if (!texturesInitialized) {
+        initializeTextures(renderer);  // same renderer for creation
+    }
+    // ... draw with renderer
+}
+```
+
+### Avoid Per-Frame SDL_Rect Allocation
+
+Allocating `new SDL_Rect()` for every draw call in a render loop creates GC pressure and frame spikes. Reuse instances by mutating fields:
+
+```java
+// Static for constant rects, instance field for mutable ones
+private static final SDL_Rect SRC_RECT = new SDL_Rect();
+private final SDL_Rect dstRect = new SDL_Rect();
+
+static {
+    SRC_RECT.x = 1;
+    SRC_RECT.y = 1;
+    SRC_RECT.w = 16;
+    SRC_RECT.h = 16;
+}
+
+// In render loop:
+dstRect.x = screenX - dstW / 2;
+dstRect.y = screenY - dstH / 2;
+dstRect.w = dstW;
+dstRect.h = dstH;
+SDL_RenderCopy(renderer, tex, SRC_RECT, dstRect);
+```
+
+### SDL_Surface Pixel Access
+
+`SDL_Surface` in libsdl4j extends `PointerType`, not `Structure`. Use the accessor methods to read fields:
+
+- `surface.getPixels()` — returns `Pointer`, can write to it directly
+- `surface.getW()`, `surface.getH()` — surface dimensions
+- `surface.getPitch()` — row pitch in bytes
+- `surface.getFormat()` — pixel format
+- `surface.setUserdata(Pointer)` — attach application data to surface
+
+### Texture and Surface Lifecycle
+
+`SDL_CreateTextureFromSurface` creates a GPU texture from a CPU surface. The surface can be freed after this call (use `SdlSurface.SDL_FreeSurface`), but the texture must eventually be freed with `SdlRender.SDL_DestroyTexture`.
+
+Key ownership rules:
+- `SDL_Surface` objects returned by `SDL_CreateRGBSurface*` must be freed with `SDL_FreeSurface`.
+- `SDL_Texture` objects returned by `SDL_CreateTexture*` / `SDL_CreateTextureFromSurface` must be freed with `SDL_DestroyTexture`.
+- `SDL_Renderer` must be destroyed with `SDL_DestroyRenderer` **before** `SDL_DestroyWindow`.
+- `SDL_Window` must be destroyed with `SDL_DestroyWindow` **before** `SDL_Quit()`.
+
+**Cleanup order** (reverse of creation):
+
+```java
+// Assume: window → renderer → textures (created from renderer)
+
+// On shutdown:
+view.destroy();                 // destroy textures first (per-texture SDL_DestroyTexture)
+SDL_DestroyRenderer(renderer);  // then destroy renderer
+SDL_DestroyWindow(window);      // then destroy window
+SDL_Quit();                     // finally quit SDL subsystems
+```
+
+Textures and surfaces created by sub-components should be cleaned up by those components via a `destroy()` / `dispose()` method, called before the renderer/window are destroyed.
 

@@ -6,16 +6,18 @@ import static io.github.libsdl4j.api.SdlSubSystemConst.SDL_INIT_EVERYTHING;
 import static io.github.libsdl4j.api.error.SdlError.SDL_GetError;
 import static io.github.libsdl4j.api.event.SDL_EventType.*;
 import static io.github.libsdl4j.api.event.SdlEvents.SDL_PollEvent;
-import static io.github.libsdl4j.api.keycode.SDL_Keycode.SDLK_SPACE;
-import static io.github.libsdl4j.api.keycode.SDL_Keycode.SDLK_ESCAPE;
-import static io.github.libsdl4j.api.keycode.SDL_Keycode.SDLK_EQUALS;
-import static io.github.libsdl4j.api.keycode.SDL_Keycode.SDLK_MINUS;
+import static io.github.libsdl4j.api.hints.SdlHintsConst.SDL_HINT_RENDER_SCALE_QUALITY;
 import static io.github.libsdl4j.api.keycode.SDL_Keycode.SDLK_0;
+import static io.github.libsdl4j.api.keycode.SDL_Keycode.SDLK_EQUALS;
+import static io.github.libsdl4j.api.keycode.SDL_Keycode.SDLK_ESCAPE;
+import static io.github.libsdl4j.api.keycode.SDL_Keycode.SDLK_MINUS;
+import static io.github.libsdl4j.api.keycode.SDL_Keycode.SDLK_SPACE;
 import static io.github.libsdl4j.api.render.SDL_RendererFlags.SDL_RENDERER_ACCELERATED;
 import static io.github.libsdl4j.api.render.SdlRender.*;
 import static io.github.libsdl4j.api.video.SDL_WindowFlags.SDL_WINDOW_RESIZABLE;
 import static io.github.libsdl4j.api.video.SDL_WindowFlags.SDL_WINDOW_SHOWN;
 import static io.github.libsdl4j.api.video.SdlVideo.SDL_CreateWindow;
+import static io.github.libsdl4j.api.video.SdlVideo.SDL_DestroyWindow;
 import static io.github.libsdl4j.api.video.SdlVideoConst.SDL_WINDOWPOS_CENTERED;
 
 import app.pairs.asset.AssetManager;
@@ -25,13 +27,12 @@ import app.pairs.view.IsometricMapper;
 import app.pairs.view.ViewComponent;
 
 import io.github.libsdl4j.api.event.SDL_Event;
+import io.github.libsdl4j.api.hints.SdlHints;
 import io.github.libsdl4j.api.render.SDL_Renderer;
 import io.github.libsdl4j.api.video.SDL_Window;
-import io.github.libsdl4j.api.hints.SdlHints;
-import static io.github.libsdl4j.api.hints.SdlHintsConst.SDL_HINT_RENDER_SCALE_QUALITY;
 
 public class Main {
-	private static final int WINDOW_WIDTH = 1024;
+	private static final int WINDOW_WIDTH = 1_024;
 	private static final int WINDOW_HEIGHT = 768;
 	private static final int TILE_WIDTH = 16;
 	private static final int TILE_HEIGHT = 16;
@@ -79,6 +80,8 @@ public class Main {
 		} catch (Exception e) {
 			System.err.println("Failed to load assets: " + e.getMessage());
 			e.printStackTrace();
+			SDL_DestroyRenderer(renderer);
+			SDL_DestroyWindow(window);
 			SDL_Quit();
 			System.exit(1);
 		}
@@ -94,11 +97,11 @@ public class Main {
 		);
 
 		String[][] grid = createTestGrid(GRID_ROWS, GRID_COLS);
-		ViewComponent gridView = new IsometricGridView(
-			grid, tiles, mapper, renderer
-		);
+		ViewComponent gridView = new IsometricGridView(grid, tiles, mapper);
 
-		System.out.println("Controls: +/- zoom | 0 reset scale | SPACE regenerate | ESC quit");
+		System.out.println(
+			"Controls: +/- zoom | 0 reset scale | SPACE regenerate | ESC quit"
+		);
 
 		SDL_Event evt = new SDL_Event();
 		boolean shouldRun = true;
@@ -134,7 +137,9 @@ public class Main {
 			long deltaTime = currentTime - lastTime;
 			lastTime = currentTime;
 
-			SDL_SetRenderDrawColor(renderer, (byte)30, (byte)30, (byte)50, (byte)255);
+			SDL_SetRenderDrawColor(
+				renderer, (byte)30, (byte)30, (byte)50, (byte)255
+			);
 			SDL_RenderClear(renderer);
 
 			gridView.update(deltaTime);
@@ -143,6 +148,9 @@ public class Main {
 			SDL_RenderPresent(renderer);
 		}
 
+		gridView.destroy();
+		SDL_DestroyRenderer(renderer);
+		SDL_DestroyWindow(window);
 		SDL_Quit();
 	}
 

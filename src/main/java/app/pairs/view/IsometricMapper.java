@@ -11,95 +11,97 @@ package app.pairs.view;
  * footprint height is half its width (2:1 ratio).
  */
 public class IsometricMapper {
-    private final int tileWidth;
-    private final int tileHeight;
-    private final int originX;
-    private final int originY;
+	private final int tileWidth;
+	private final int tileHeight;
+	private final int originX;
+	private final int originY;
 
-    public IsometricMapper(int tileWidth, int tileHeight, int originX, int originY) {
-        this.tileWidth = tileWidth;
-        this.tileHeight = tileHeight;
-        this.originX = originX;
-        this.originY = originY;
-    }
+	public IsometricMapper(
+		int tileWidth, int tileHeight, int originX, int originY
+	) {
+		this.tileWidth = tileWidth;
+		this.tileHeight = tileHeight;
+		this.originX = originX;
+		this.originY = originY;
+	}
 
-    /**
-     * Converts grid (row, col) to screen (x, y) at the given scale.
-     * The returned point represents the center of the tile's diamond footprint.
-     */
-    public IsometricCoordinate gridToScreen(int row, int col, int scale) {
-        int stepX = tileWidth * scale / 2;
-        int stepY = tileWidth * scale / 4;
-        int x = originX + (col - row) * stepX;
-        int y = originY + (col + row) * stepY;
-        return new IsometricCoordinate(x, y);
-    }
+	/**
+	 * Converts grid (row, col) to screen (x, y) at the given scale.
+	 * The returned point represents the center of the tile's diamond footprint.
+	 */
+	public IsometricCoordinate gridToScreen(int row, int col, int scale) {
+		int stepX = tileWidth * scale / 2;
+		int stepY = tileWidth * scale / 4;
+		int x = originX + (col - row) * stepX;
+		int y = originY + (col + row) * stepY;
+		return new IsometricCoordinate(x, y);
+	}
 
-    /**
-     * Converts screen (x, y) to grid (row, col) at the given scale.
-     */
-    public int[] screenToGrid(int screenX, int screenY, int scale) {
-        int halfStepX = tileWidth * scale / 2;
-        int halfStepY = tileWidth * scale / 4;
+	/**
+	 * Converts screen (x, y) to grid (row, col) at the given scale.
+	 */
+	public int[] screenToGrid(int screenX, int screenY, int scale) {
+		int halfStepX = tileWidth * scale / 2;
+		int halfStepY = tileWidth * scale / 4;
 
-        int relX = screenX - originX;
-        int relY = screenY - originY;
+		int relX = screenX - originX;
+		int relY = screenY - originY;
 
-        double colMinusRow = (double) relX / halfStepX;
-        double colPlusRow = (double) relY / halfStepY;
+		double colMinusRow = (double)relX / halfStepX;
+		double colPlusRow = (double)relY / halfStepY;
 
-        double col = (colMinusRow + colPlusRow) / 2.0;
-        double row = colPlusRow - col;
+		double col = (colMinusRow + colPlusRow) / 2.0;
+		double row = colPlusRow - col;
 
-        int r = (int) Math.floor(row);
-        int c = (int) Math.floor(col);
+		int r = (int)Math.floor(row);
+		int c = (int)Math.floor(col);
 
-        return new int[] { r, c };
-    }
+		return new int[] {r, c};
+	}
 
-    /**
-     * Gets the draw order for proper depth sorting.
-     * Returns tiles sorted back-to-front (increasing row+col sum).
-     */
-    public int[][] getDepthSortedOrder(int gridRows, int gridCols) {
-        int count = gridRows * gridCols;
-        int[][] order = new int[count][];
+	/**
+	 * Gets the draw order for proper depth sorting.
+	 * Returns tiles sorted back-to-front (increasing row+col sum).
+	 */
+	public int[][] getDepthSortedOrder(int gridRows, int gridCols) {
+		int count = gridRows * gridCols;
+		int[][] order = new int[count][];
 
-        int idx = 0;
-        for (int sum = 0; sum < gridRows + gridCols - 1; sum++) {
-            for (int row = 0; row < gridRows; row++) {
-                int col = sum - row;
-                if (col >= 0 && col < gridCols) {
-                    order[idx++] = new int[] { row, col };
-                }
-            }
-        }
-        return order;
-    }
+		int idx = 0;
+		for (int sum = 0; sum < gridRows + gridCols - 1; sum++) {
+			for (int row = 0; row < gridRows; row++) {
+				int col = sum - row;
+				if (col >= 0 && col < gridCols) {
+					order[idx++] = new int[] {row, col};
+				}
+			}
+		}
+		return order;
+	}
 
-    public int getTileWidth() {
-        return tileWidth;
-    }
+	public int getTileWidth() {
+		return tileWidth;
+	}
 
-    public int getTileHeight() {
-        return tileHeight;
-    }
+	public int getTileHeight() {
+		return tileHeight;
+	}
 
-    public int getOriginX() {
-        return originX;
-    }
+	public int getOriginX() {
+		return originX;
+	}
 
-    public int getOriginY() {
-        return originY;
-    }
+	public int getOriginY() {
+		return originY;
+	}
 
-    public static class IsometricCoordinate {
-        public final int x;
-        public final int y;
+	public static class IsometricCoordinate {
+		public final int x;
+		public final int y;
 
-        public IsometricCoordinate(int x, int y) {
-            this.x = x;
-            this.y = y;
-        }
-    }
+		public IsometricCoordinate(int x, int y) {
+			this.x = x;
+			this.y = y;
+		}
+	}
 }
