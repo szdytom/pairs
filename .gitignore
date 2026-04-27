@@ -9,3 +9,5 @@ bin/
 # Editor
 .vscode/
 *.sw?
+
+CLAUDE.local.md
