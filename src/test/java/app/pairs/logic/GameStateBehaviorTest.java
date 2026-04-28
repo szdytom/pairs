@@ -77,7 +77,7 @@ class GameStateBehaviorTest {
 		GameState state = GameState.customized(2, 2, 1);
 		assertThat(state.getOpLogs()).isEmpty();
 
-		assertThat(state.operate(0, 0, 0, 1)).isTrue();
+		state.operate(0, 0, 0, 1);
 		assertThat(state.getTile(0, 0)).isZero();
 		assertThat(state.getTile(0, 1)).isZero();
 		assertThat(state.getOpLogs()).hasSize(1);
@@ -88,16 +88,17 @@ class GameStateBehaviorTest {
 		GameState state = GameState.customized(2, 2, 1);
 		state.operate(0, 0, 0, 1);
 
-		assertThat(state.undo()).isTrue();
+		state.undo();
 		assertThat(state.getTile(0, 0)).isEqualTo(1);
 		assertThat(state.getTile(0, 1)).isEqualTo(1);
 		assertThat(state.getOpLogs()).isEmpty();
 	}
 
 	@Test
-	void gameStateUndoOnEmptyHistoryReturnsFalse() {
+	void gameStateUndoOnEmptyHistoryThrows() {
 		GameState state = GameState.customized(2, 2, 1);
-		assertThat(state.undo()).isFalse();
+		assertThatThrownBy(state::undo)
+			.isInstanceOf(IllegalStateException.class);
 	}
 
 	@Test
@@ -119,7 +120,8 @@ class GameStateBehaviorTest {
 		GameState state = GameState.customized(2, 2, 1);
 		// Same cell.
 		assertThat(state.canEliminate(0, 0, 0, 0)).isFalse();
-		assertThat(state.operate(0, 0, 0, 0)).isFalse();
+		assertThatThrownBy(() -> state.operate(0, 0, 0, 0))
+			.isInstanceOf(IllegalStateException.class);
 		assertThat(state.getOpLogs()).isEmpty();
 
 		// Empty cell after a successful elimination.

@@ -7,6 +7,7 @@ import app.pairs.map.TilemapFactory;
 import app.pairs.model.OpLogs;
 import app.pairs.model.Tilemap;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -95,27 +96,30 @@ public final class GameState {
 	}
 
 	/**
-	 * Attempt to eliminate the pair. Returns {@code true} when the move is
-	 * legal; the operation is then applied and pushed onto the history stack.
-	 * Returns {@code false} (and changes nothing) when the move is illegal.
+	 * Eliminate the pair. The move must be legal (see
+	 * {@link #canEliminate}); on success the operation is applied and pushed
+	 * onto the history stack. Throws {@link IllegalStateException} if the
+	 * move is illegal — callers should gate on {@link #canEliminate} first.
 	 */
-	public boolean operate(int row1, int col1, int row2, int col2) {
+	public void operate(int row1, int col1, int row2, int col2) {
 		if (!canEliminate(row1, col1, row2, col2)) {
-			return false;
+			throw new IllegalStateException(
+				"illegal elimination: (" + row1 + "," + col1 + ") -> (" + row2
+				+ "," + col2 + ")"
+			);
 		}
 		new OpElimination(tilemap, row1, col1, row2, col2, opLogs::push)
 			.operate();
-		return true;
 	}
 
 	/**
-	 * Undo the most recent recorded operation.
-	 *
-	 * @return {@code true} if an operation was undone, {@code false} if the
-	 *         history was empty
+	 * Undo the most recent recorded operation. Throws
+	 * {@link IllegalStateException} if the history is empty.
 	 */
-	public boolean undo() {
-		return Operation.undoFrom(opLogs::pop);
+	public void undo() {
+		if (!Operation.undoFrom(opLogs::pop)) {
+			throw new IllegalStateException("no operation to undo");
+		}
 	}
 
 	/** Returns the operation history in chronological order (oldest first). */
@@ -126,5 +130,11 @@ public final class GameState {
 	/** Check whether the game is in a stalled state (no more valid moves). */
 	public boolean isStall() {
 		return IsStall.isStall(tilemap);
+	}
+
+	public ArrayList<Integer> path(
+		int startRow, int startCol, int targetRow, int targetCol
+	) {
+		return Path.path(tilemap, startRow, startCol, targetRow, targetCol);
 	}
 }
