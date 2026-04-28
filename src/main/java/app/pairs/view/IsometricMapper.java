@@ -60,15 +60,17 @@ public class IsometricMapper {
 	}
 
 	/**
-	 * Returns true if the screen point is inside the diamond footprint
-	 * of the tile at (row, col). Uses integer-only arithmetic.
+	 * Returns true if the screen point is inside the visual diamond of the
+	 * tile at (row, col). The diamond matches the tile sprite extents
+	 * (half-width = tileWidth * scale / 2, half-height = tileHeight * scale /
+	 * 2). Uses integer-only arithmetic.
 	 */
 	public boolean contains(
 		int screenX, int screenY, int row, int col, int scale
 	) {
 		IsometricCoordinate center = gridToScreen(row, col, scale);
 		int halfW = tileWidth * scale / 2;
-		int halfH = tileWidth * scale / 4;
+		int halfH = tileHeight * scale / 2;
 		int dx = Math.abs(screenX - center.x);
 		int dy = Math.abs(screenY - center.y);
 		return dx * halfH + dy * halfW <= halfW * halfH;
