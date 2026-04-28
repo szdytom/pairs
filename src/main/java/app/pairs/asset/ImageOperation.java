@@ -1,13 +1,13 @@
 package app.pairs.asset;
 
+import static io.github.libsdl4j.api.pixels.SDL_PixelFormatEnum.SDL_PIXELFORMAT_ABGR8888;
+
 import java.awt.image.BufferedImage;
 import java.io.InputStream;
-
 import javax.imageio.ImageIO;
 
 import com.google.gson.JsonObject;
 
-import static io.github.libsdl4j.api.pixels.SDL_PixelFormatEnum.SDL_PIXELFORMAT_ABGR8888;
 import io.github.libsdl4j.api.surface.SDL_Surface;
 import io.github.libsdl4j.api.surface.SdlSurface;
 
@@ -45,22 +45,24 @@ public class ImageOperation implements AssetOperation {
 		byte[] rgba = new byte[width * height * 4];
 		for (int i = 0; i < argb.length; i++) {
 			int pixel = argb[i];
-			rgba[i * 4 + 0] = (byte) ((pixel >> 16) & 0xFF); // R
-			rgba[i * 4 + 1] = (byte) ((pixel >> 8) & 0xFF); // G
-			rgba[i * 4 + 2] = (byte) (pixel & 0xFF); // B
-			rgba[i * 4 + 3] = (byte) ((pixel >> 24) & 0xFF); // A
+			rgba[i * 4 + 0] = (byte)((pixel >> 16) & 0xFF); // R
+			rgba[i * 4 + 1] = (byte)((pixel >> 8) & 0xFF);  // G
+			rgba[i * 4 + 2] = (byte)(pixel & 0xFF);         // B
+			rgba[i * 4 + 3] = (byte)((pixel >> 24) & 0xFF); // A
 		}
 
 		// Create SDL surface with SDL-owned pixel memory
 		SDL_Surface surface = SdlSurface.SDL_CreateRGBSurfaceWithFormat(
-				0, width, height, 32, SDL_PIXELFORMAT_ABGR8888);
+			0, width, height, 32, SDL_PIXELFORMAT_ABGR8888
+		);
 		if (surface == null) {
 			throw new RuntimeException("Failed to create surface for: " + file);
 		}
 		surface.getPixels().write(0, rgba, 0, rgba.length);
 
 		System.out.println(
-				"  Loaded image: " + id + " (" + width + "x" + height + ")");
+			"  Loaded image: " + id + " (" + width + "x" + height + ")"
+		);
 		ctx.put(id, surface);
 	}
 

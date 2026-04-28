@@ -1,13 +1,13 @@
 package app.pairs.logic;
 
+import java.util.List;
+
 import app.pairs.map.CustomizedTilemapFactory;
 import app.pairs.map.EasyTilemapFactory;
 import app.pairs.map.HardTilemapFactory;
 import app.pairs.map.TilemapFactory;
 import app.pairs.model.OpLogs;
 import app.pairs.model.Tilemap;
-
-import java.util.List;
 
 /**
  * Single facade exposed to the frontend. Bundles a {@link Tilemap}, an
@@ -36,9 +36,9 @@ public final class GameState {
 	/** Create a game state with custom dimensions and tile-type count. */
 	public static GameState customized(int width, int height, int types) {
 		CustomizedTilemapFactory factory = new CustomizedTilemapFactory()
-											   .setWidth(width)
-											   .setHeight(height)
-											   .setTypes(types);
+				.setWidth(width)
+				.setHeight(height)
+				.setTypes(types);
 		return fromFactory(factory);
 	}
 
@@ -64,9 +64,17 @@ public final class GameState {
 
 	/**
 	 * Check whether the two tiles can be eliminated (same id and a clear path
-	 * exists between them). Performs no state mutation.
+	 * exists between them). Performs no state mutation. Returns {@code false}
+	 * for any selection that touches an empty cell or the same cell twice.
 	 */
 	public boolean canEliminate(int row1, int col1, int row2, int col2) {
+		if (row1 == row2 && col1 == col2) {
+			return false;
+		}
+		if (tilemap.getTile(row1, col1) <= 0
+				|| tilemap.getTile(row2, col2) <= 0) {
+			return false;
+		}
 		return TileTransition.transition(tilemap, row1, col1, row2, col2);
 	}
 
@@ -80,7 +88,7 @@ public final class GameState {
 			return false;
 		}
 		new OpElimination(tilemap, row1, col1, row2, col2, opLogs::push)
-			.operate();
+				.operate();
 		return true;
 	}
 
