@@ -32,6 +32,8 @@ public class IsometricGridView implements ViewComponent {
 	private final TileRegistry tileRegistry;
 	private final IsometricMapper mapper;
 	private Map<String, SDL_Texture> typeTextures;
+	private Map<String, SDL_Texture> hlTypeTextures;
+	private final TileRegistry hlTileRegistry;
 	private boolean texturesInitialized;
 	private int mouseX = -1;
 	private int mouseY = -1;
@@ -41,10 +43,12 @@ public class IsometricGridView implements ViewComponent {
 	private int prevHoveredCol = -1;
 
 	public IsometricGridView(
-		String[][] grid, TileRegistry tileRegistry, IsometricMapper mapper
+		String[][] grid, TileRegistry tileRegistry, TileRegistry hlTileRegistry,
+		IsometricMapper mapper
 	) {
 		this.grid = grid;
 		this.tileRegistry = tileRegistry;
+		this.hlTileRegistry = hlTileRegistry;
 		this.mapper = mapper;
 		this.texturesInitialized = false;
 	}
@@ -94,7 +98,10 @@ public class IsometricGridView implements ViewComponent {
 				row, col, scale
 			);
 
-			SDL_Texture tex = typeTextures.get(typeId);
+			boolean isHovered = row == hoveredRow && col == hoveredCol;
+			SDL_Texture tex = isHovered && hlTypeTextures.containsKey(typeId)
+				? hlTypeTextures.get(typeId)
+				: typeTextures.get(typeId);
 			if (tex != null) {
 				dstRect.x = screenPos.x - dstW / 2;
 				dstRect.y = screenPos.y - dstH / 2
@@ -171,21 +178,35 @@ public class IsometricGridView implements ViewComponent {
 
 	private void initializeTextures(SDL_Renderer renderer) {
 		typeTextures = new HashMap<>();
+		hlTypeTextures = new HashMap<>();
 
 		for (int row = 0; row < tileRegistry.getRows(); row++) {
 			for (int col = 0; col < tileRegistry.getColumns(); col++) {
 				String typeId = tileRegistry.getTypeId(row, col);
 				if (typeId == null)
 					continue;
-				if (typeTextures.containsKey(typeId))
-					continue;
-
-				SDL_Surface surface = tileRegistry.getTile(row, col);
-				if (surface != null) {
-					SDL_Texture tex = SdlRender.SDL_CreateTextureFromSurface(
-						renderer, surface
-					);
-					typeTextures.put(typeId, tex);
+				if (!typeTextures.containsKey(typeId)) {
+					SDL_Surface surface = tileRegistry.getTile(row, col);
+					if (surface != null) {
+						typeTextures.put(
+							typeId,
+							SdlRender.SDL_CreateTextureFromSurface(
+								renderer, surface
+							)
+						);
+					}
+				}
+				if (hlTileRegistry != null
+				    && !hlTypeTextures.containsKey(typeId)) {
+					SDL_Surface hlSurface = hlTileRegistry.getTile(row, col);
+					if (hlSurface != null) {
+						hlTypeTextures.put(
+							typeId,
+							SdlRender.SDL_CreateTextureFromSurface(
+								renderer, hlSurface
+							)
+						);
+					}
 				}
 			}
 		}
@@ -199,6 +220,12 @@ public class IsometricGridView implements ViewComponent {
 				SdlRender.SDL_DestroyTexture(tex);
 			}
 			typeTextures.clear();
+		}
+		if (hlTypeTextures != null) {
+			for (SDL_Texture tex : hlTypeTextures.values()) {
+				SdlRender.SDL_DestroyTexture(tex);
+			}
+			hlTypeTextures.clear();
 		}
 	}
 }

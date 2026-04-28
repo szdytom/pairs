@@ -94,6 +94,7 @@ public class Main {
 		}
 
 		TileRegistry tiles = AssetManager.instance().get("tiles/typed");
+		TileRegistry hlTiles = AssetManager.instance().get("hl-tiles/typed");
 
 		int originX = WINDOW_WIDTH / 2;
 		int originY = 80;
@@ -104,7 +105,9 @@ public class Main {
 		);
 
 		String[][] grid = createTestGrid(GRID_ROWS, GRID_COLS);
-		IsometricGridView gridView = new IsometricGridView(grid, tiles, mapper);
+		IsometricGridView gridView = new IsometricGridView(
+			grid, tiles, hlTiles, mapper
+		);
 
 		System.out.println(
 			"Controls: +/- zoom | 0 reset scale | SPACE regenerate | ESC quit"

@@ -18,10 +18,9 @@
 			"description": "Cropping tinyblocks into tiles"
 		},
 		{
-			"id": "tiles/typed",
-			"type": "tile-type-mapping",
-			"input": "tiles/raw",
-			"mapping": [
+			"id": "tile-mapping",
+			"type": "mapping",
+			"value": [
 				["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"],
 				["10", "11", "12", "13", "14", "15", "16", "17", "18", "19"],
 				["20", "21", "22", "23", "24", "25", "26", "27", "28", "29"],
@@ -33,13 +32,49 @@
 				["80", "81", "82", "83", "84", "85", "86", "87", "88", "89"],
 				["90", "91", "92", "93", "94", "95", "96", "97", "98", "99"]
 			],
-			"description": "Mapping tile positions to unique string IDs"
+			"description": "Defining tile type mapping"
+		},
+		{
+			"id": "tiles/typed",
+			"type": "tile-type-mapping",
+			"input": "tiles/raw",
+			"mapping-id": "tile-mapping",
+			"description": "Applying type mapping to tinyblocks tiles"
 		},
 		{
 			"id": "tinyblocks/texture",
 			"type": "create-texture",
 			"input": "tinyblocks/raw",
 			"description": "Creating texture from tinyblocks"
+		},
+		{
+			"id": "hl-tinyblocks/raw",
+			"type": "image",
+			"file": "tinyblocks-hl.png",
+			"description": "Loading highlighted tinyblocks-hl.png"
+		},
+		{
+			"id": "hl-tiles/raw",
+			"type": "crop-tiles",
+			"input": "hl-tinyblocks/raw",
+			"tileWidth": 18,
+			"tileHeight": 18,
+			"columns": 10,
+			"rows": 10,
+			"description": "Cropping highlighted tinyblocks into tiles"
+		},
+		{
+			"id": "hl-tiles/typed",
+			"type": "tile-type-mapping",
+			"input": "hl-tiles/raw",
+			"mapping-id": "tile-mapping",
+			"description": "Applying type mapping to highlighted tiles"
+		},
+		{
+			"id": "hl-tinyblocks/texture",
+			"type": "create-texture",
+			"input": "hl-tinyblocks/raw",
+			"description": "Creating texture from highlighted tinyblocks"
 		}
 	]
 }

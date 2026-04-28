@@ -46,6 +46,7 @@ public class AssetManager {
 		registry.register("create-texture", CreateTextureOperation::new);
 		registry.register("crop-tiles", CropTilesOperation::new);
 		registry.register("tile-type-mapping", TileTypeMappingOperation::new);
+		registry.register("mapping", MappingOperation::new);
 	}
 
 	public void loadManifest(String path) throws Exception {

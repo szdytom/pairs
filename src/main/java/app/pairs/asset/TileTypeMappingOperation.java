@@ -12,6 +12,7 @@ public class TileTypeMappingOperation implements AssetOperation {
 	private String id;
 	private String input;
 	private String[][] mapping;
+	private String mappingId;
 
 	@Override
 	public String type() {
@@ -23,25 +24,34 @@ public class TileTypeMappingOperation implements AssetOperation {
 		id(item.get("id").getAsString());
 		input(item.get("input").getAsString());
 
-		JsonArray mappingArray = item.getAsJsonArray("mapping");
-		int rows = mappingArray.size();
-		String[][] mapping = new String[rows][];
-		for (int r = 0; r < rows; r++) {
-			JsonArray rowArray = mappingArray.get(r).getAsJsonArray();
-			int cols = rowArray.size();
-			mapping[r] = new String[cols];
-			for (int c = 0; c < cols; c++) {
-				JsonElement elem = rowArray.get(c);
-				mapping[r][c] = elem.isJsonNull() ? null : elem.getAsString();
+		if (item.has("mapping-id")) {
+			mappingId(item.get("mapping-id").getAsString());
+		} else {
+			JsonArray mappingArray = item.getAsJsonArray("mapping");
+			int rows = mappingArray.size();
+			String[][] mapping = new String[rows][];
+			for (int r = 0; r < rows; r++) {
+				JsonArray rowArray = mappingArray.get(r).getAsJsonArray();
+				int cols = rowArray.size();
+				mapping[r] = new String[cols];
+				for (int c = 0; c < cols; c++) {
+					JsonElement elem = rowArray.get(c);
+					mapping[r][c] = elem.isJsonNull()
+						? null
+						: elem.getAsString();
+				}
 			}
+			mapping(mapping);
 		}
-		mapping(mapping);
 	}
 
 	@Override
 	public void process(Context ctx) throws Exception {
+		String[][] resolved = mapping != null
+			? mapping
+			: ctx.getInput(mappingId);
 		TileRegistry registry = ctx.getInput(input);
-		registry.setTypeMapping(mapping);
+		registry.setTypeMapping(resolved);
 		ctx.put(id, registry);
 	}
 
@@ -57,6 +67,11 @@ public class TileTypeMappingOperation implements AssetOperation {
 
 	public TileTypeMappingOperation mapping(String[][] mapping) {
 		this.mapping = mapping;
+		return this;
+	}
+
+	public TileTypeMappingOperation mappingId(String mappingId) {
+		this.mappingId = mappingId;
 		return this;
 	}
 }
