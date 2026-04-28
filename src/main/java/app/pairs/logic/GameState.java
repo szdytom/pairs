@@ -1,14 +1,14 @@
 package app.pairs.logic;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import app.pairs.map.CustomizedTilemapFactory;
 import app.pairs.map.EasyTilemapFactory;
 import app.pairs.map.HardTilemapFactory;
 import app.pairs.map.TilemapFactory;
 import app.pairs.model.OpLogs;
 import app.pairs.model.Tilemap;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Single facade exposed to the frontend. Bundles a {@link Tilemap}, an
@@ -39,9 +39,9 @@ public final class GameState {
 	/** Create a game state with custom dimensions and tile-type count. */
 	public static GameState customized(int width, int height, int types) {
 		CustomizedTilemapFactory factory = new CustomizedTilemapFactory()
-				.setWidth(width)
-				.setHeight(height)
-				.setTypes(types);
+											   .setWidth(width)
+											   .setHeight(height)
+											   .setTypes(types);
 		return fromFactory(factory);
 	}
 
@@ -79,7 +79,7 @@ public final class GameState {
 			return false;
 		}
 		if (tilemap.getTile(row1, col1) <= 0
-				|| tilemap.getTile(row2, col2) <= 0) {
+		    || tilemap.getTile(row2, col2) <= 0) {
 			return false;
 		}
 		return TileTransition.transition(tilemap, row1, col1, row2, col2);
@@ -87,10 +87,11 @@ public final class GameState {
 
 	private void requireInBounds(int row, int col) {
 		if (row < 0 || row >= tilemap.getHeight() || col < 0
-				|| col >= tilemap.getWidth()) {
+		    || col >= tilemap.getWidth()) {
 			throw new IllegalStateException(
-					"coordinate out of range: (" + row + "," + col + ") on "
-							+ tilemap.getHeight() + "x" + tilemap.getWidth() + " map");
+				"coordinate out of range: (" + row + "," + col + ") on "
+				+ tilemap.getHeight() + "x" + tilemap.getWidth() + " map"
+			);
 		}
 	}
 
@@ -103,11 +104,12 @@ public final class GameState {
 	public void operate(int row1, int col1, int row2, int col2) {
 		if (!canEliminate(row1, col1, row2, col2)) {
 			throw new IllegalStateException(
-					"illegal elimination: (" + row1 + "," + col1 + ") -> (" + row2
-							+ "," + col2 + ")");
+				"illegal elimination: (" + row1 + "," + col1 + ") -> (" + row2
+				+ "," + col2 + ")"
+			);
 		}
 		new OpElimination(tilemap, row1, col1, row2, col2, opLogs::push)
-				.operate();
+			.operate();
 	}
 
 	/**
@@ -131,7 +133,8 @@ public final class GameState {
 	}
 
 	public ArrayList<Integer> path(
-			int startRow, int startCol, int targetRow, int targetCol) {
+		int startRow, int startCol, int targetRow, int targetCol
+	) {
 		requireInBounds(startRow, startCol);
 		requireInBounds(targetRow, targetCol);
 		return Path.path(tilemap, startRow, startCol, targetRow, targetCol);
