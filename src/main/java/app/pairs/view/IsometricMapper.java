@@ -53,10 +53,25 @@ public class IsometricMapper {
 		double col = (colMinusRow + colPlusRow) / 2.0;
 		double row = colPlusRow - col;
 
-		int r = (int)Math.floor(row);
-		int c = (int)Math.floor(col);
+		int r = (int)Math.round(row);
+		int c = (int)Math.round(col);
 
 		return new int[] {r, c};
+	}
+
+	/**
+	 * Returns true if the screen point is inside the diamond footprint
+	 * of the tile at (row, col). Uses integer-only arithmetic.
+	 */
+	public boolean contains(
+		int screenX, int screenY, int row, int col, int scale
+	) {
+		IsometricCoordinate center = gridToScreen(row, col, scale);
+		int halfW = tileWidth * scale / 2;
+		int halfH = tileWidth * scale / 4;
+		int dx = Math.abs(screenX - center.x);
+		int dy = Math.abs(screenY - center.y);
+		return dx * halfH + dy * halfW <= halfW * halfH;
 	}
 
 	/**
