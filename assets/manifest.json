@@ -40,6 +40,12 @@
 			"type": "create-texture",
 			"input": "tinyblocks/raw",
 			"description": "Creating texture from tinyblocks"
+		},
+		{
+			"id": "monogram/font",
+			"type": "bitmap-font",
+			"file": "monogram-bitmap.json",
+			"description": "Loading monogram bitmap font"
 		}
 	]
 }
