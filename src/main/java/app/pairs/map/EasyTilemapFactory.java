@@ -1,8 +1,8 @@
 package app.pairs.map;
 
-import java.util.Random;
-
 import app.pairs.model.Tilemap;
+
+import java.util.Random;
 
 public class EasyTilemapFactory implements TilemapFactory {
 	private static final int WIDTH = 9;

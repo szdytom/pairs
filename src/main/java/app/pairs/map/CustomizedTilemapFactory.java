@@ -1,8 +1,8 @@
 package app.pairs.map;
 
-import java.util.Random;
-
 import app.pairs.model.Tilemap;
+
+import java.util.Random;
 
 public class CustomizedTilemapFactory implements TilemapFactory {
 	private static final int DEFAULT_WIDTH = 10;

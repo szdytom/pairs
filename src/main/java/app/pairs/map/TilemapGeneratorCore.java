@@ -1,17 +1,19 @@
 package app.pairs.map;
 
+import app.pairs.logic.TileTransition;
+import app.pairs.model.Tilemap;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
-import app.pairs.logic.TileTransition;
-import app.pairs.model.Tilemap;
-
 final class TilemapGeneratorCore {
 	static Tilemap generate(int[][] map, int types, Random random) {
 		if (types < 1) {
-			throw new IllegalArgumentException("types must be >= 1, got: " + types);
+			throw new IllegalArgumentException(
+				"types must be >= 1, got: " + types
+			);
 		}
 		int fillableTiles = 0;
 		for (int[] row : map) {
@@ -23,20 +25,22 @@ final class TilemapGeneratorCore {
 		}
 		if (fillableTiles % 2 != 0) {
 			throw new IllegalArgumentException(
-					"Fillable tile count must be even, got: " + fillableTiles);
+				"Fillable tile count must be even, got: " + fillableTiles
+			);
 		}
 		if (fillableTiles / 2 < types) {
 			throw new IllegalArgumentException(
-					"Not enough fillable tiles for " + types
-							+ " types: fillable=" + fillableTiles
-							+ ", need at least " + (types * 2));
+				"Not enough fillable tiles for " + types + " types: fillable="
+				+ fillableTiles + ", need at least " + (types * 2)
+			);
 		}
 
 		int pairCount = fillSolvablePairs(map, random);
 		if (pairCount < 0 || pairCount < types) {
 			throw new IllegalStateException(
-					"Not enough pairs to cover all tile types: pairs=" + pairCount
-							+ ", types=" + types);
+				"Not enough pairs to cover all tile types: pairs=" + pairCount
+				+ ", types=" + types
+			);
 		}
 
 		int[] pairToType = buildRandomTypeMapping(pairCount, types, random);
@@ -62,11 +66,13 @@ final class TilemapGeneratorCore {
 			int secondIdx = -1;
 			for (int i = 0; i < remainingTiles.size(); i++) {
 				List<Integer> candidates = connectableCandidates(
-						tilemap, i, remainingTiles);
+					tilemap, i, remainingTiles
+				);
 				if (!candidates.isEmpty()) {
 					firstIdx = i;
 					secondIdx = candidates.get(
-							random.nextInt(candidates.size()));
+						random.nextInt(candidates.size())
+					);
 					break;
 				}
 			}
@@ -100,7 +106,8 @@ final class TilemapGeneratorCore {
 	}
 
 	private static List<Integer> connectableCandidates(
-			Tilemap map, int firstIdx, List<TileIndex> candidatesPool) {
+		Tilemap map, int firstIdx, List<TileIndex> candidatesPool
+	) {
 		TileIndex first = candidatesPool.get(firstIdx);
 		List<Integer> candidates = new ArrayList<>();
 		for (int j = 0; j < candidatesPool.size(); j++) {
@@ -109,7 +116,8 @@ final class TilemapGeneratorCore {
 			}
 			TileIndex other = candidatesPool.get(j);
 			if (TileTransition.transition(
-					map, first.row, first.col, other.row, other.col)) {
+					map, first.row, first.col, other.row, other.col
+				)) {
 				candidates.add(j);
 			}
 		}
@@ -117,7 +125,8 @@ final class TilemapGeneratorCore {
 	}
 
 	private static int[] buildRandomTypeMapping(
-			int pairCount, int typeCount, Random random) {
+		int pairCount, int typeCount, Random random
+	) {
 		int[] pairToType = new int[pairCount + 1];
 		for (int i = 0; i < typeCount; i++) {
 			pairToType[i + 1] = i + 1;
@@ -162,7 +171,7 @@ final class TilemapGeneratorCore {
 			if (!(obj instanceof TileIndex)) {
 				return false;
 			}
-			TileIndex other = (TileIndex) obj;
+			TileIndex other = (TileIndex)obj;
 			return row == other.row && col == other.col;
 		}
 

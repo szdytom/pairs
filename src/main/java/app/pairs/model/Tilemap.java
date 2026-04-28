@@ -4,7 +4,6 @@ public class Tilemap {
 	private final int width;
 	private final int height;
 	private final int[][] id;
-	
 
 	public Tilemap(int[][] id) {
 		this.id = id;
