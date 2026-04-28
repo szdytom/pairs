@@ -46,6 +46,7 @@ public class AssetManager {
 		registry.register("create-texture", CreateTextureOperation::new);
 		registry.register("crop-tiles", CropTilesOperation::new);
 		registry.register("tile-type-mapping", TileTypeMappingOperation::new);
+		registry.register("bitmap-font", BitmapFontOperation::new);
 	}
 
 	public void loadManifest(String path) throws Exception {
@@ -106,6 +107,21 @@ public class AssetManager {
 
 	public boolean has(String id) {
 		return assets.containsKey(id);
+	}
+
+	public void dispose() {
+		for (Object asset : assets.values()) {
+			if (asset instanceof AutoCloseable ac) {
+				try {
+					ac.close();
+				} catch (Exception e) {
+					System.err.println(
+						"[AssetManager] Error disposing asset: " + e.getMessage()
+					);
+				}
+			}
+		}
+		assets.clear();
 	}
 
 	private class ContextImpl implements AssetOperation.Context {

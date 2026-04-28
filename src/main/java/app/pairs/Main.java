@@ -26,7 +26,9 @@ import static io.github.libsdl4j.api.video.SdlVideo.SDL_DestroyWindow;
 import static io.github.libsdl4j.api.video.SdlVideoConst.SDL_WINDOWPOS_CENTERED;
 
 import app.pairs.asset.AssetManager;
+import app.pairs.asset.BitmapFont;
 import app.pairs.asset.TileRegistry;
+import app.pairs.view.BitmapFontRenderer;
 import app.pairs.view.IsometricGridView;
 import app.pairs.view.IsometricMapper;
 import app.pairs.view.ViewComponent;
@@ -92,6 +94,7 @@ public class Main {
 		}
 
 		TileRegistry tiles = AssetManager.instance().get("tiles/typed");
+		BitmapFont font = AssetManager.instance().get("monogram/font");
 
 		int originX = WINDOW_WIDTH / 2;
 		int originY = 80;
@@ -150,10 +153,19 @@ public class Main {
 			gridView.update(deltaTime);
 			gridView.render(renderer, scale);
 
+			BitmapFontRenderer.renderText(
+				renderer, font, "Pairs", 1, 1, 1, scale, 200, 200, 255
+			);
+			BitmapFontRenderer.renderText(
+				renderer, font, "Scale: " + scale + "x", 1, 14, 1, scale, 180,
+				180, 180
+			);
+
 			SDL_RenderPresent(renderer);
 		}
 
 		gridView.destroy();
+		AssetManager.instance().dispose();
 		SDL_DestroyRenderer(renderer);
 		SDL_DestroyWindow(window);
 		SDL_Quit();
