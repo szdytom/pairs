@@ -12,9 +12,10 @@ public class OpElimination implements Operation {
 	private final int col2;
 	private final int tileId;
 	private final Consumer<Operation> pushFn;
-	// `executed` flips on `operate()` and back on `undo()`. Re-entering either
-	// state is illegal and indicates a caller bug (e.g. replaying a history
-	// entry).
+	// `executed` is true after `operate()` and false after `undo()`. Calling
+	// `operate()` twice in a row or `undo()` before `operate()` is illegal and
+	// indicates a caller bug (e.g. replaying a history entry). Re-executing
+	// after a successful undo is supported.
 	private boolean executed;
 
 	public OpElimination(

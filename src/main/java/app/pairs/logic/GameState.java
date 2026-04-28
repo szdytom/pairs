@@ -12,7 +12,9 @@ import app.pairs.model.Tilemap;
 /**
  * Single facade exposed to the frontend. Bundles a {@link Tilemap}, an
  * {@link OpLogs} history stack, transition checking and elimination semantics
- * so callers do not need to import any of the internal types.
+ * behind one entry point. Callers should treat {@link Operation} entries
+ * returned by {@link #getOpLogs()} as opaque history records and only act on
+ * them via {@link #undo()}; invoking their methods directly is undefined.
  */
 public final class GameState {
 	private final Tilemap tilemap;
@@ -66,8 +68,12 @@ public final class GameState {
 	 * Check whether the two tiles can be eliminated (same id and a clear path
 	 * exists between them). Performs no state mutation. Returns {@code false}
 	 * for any selection that touches an empty cell or the same cell twice.
+	 * Out-of-range coordinates throw {@link IllegalStateException} since the
+	 * frontend is expected to only pass valid grid positions.
 	 */
 	public boolean canEliminate(int row1, int col1, int row2, int col2) {
+		requireInBounds(row1, col1);
+		requireInBounds(row2, col2);
 		if (row1 == row2 && col1 == col2) {
 			return false;
 		}
@@ -76,6 +82,15 @@ public final class GameState {
 			return false;
 		}
 		return TileTransition.transition(tilemap, row1, col1, row2, col2);
+	}
+
+	private void requireInBounds(int row, int col) {
+		if (row < 0 || row >= tilemap.getHeight() || col < 0
+				|| col >= tilemap.getWidth()) {
+			throw new IllegalStateException(
+					"coordinate out of range: (" + row + "," + col + ") on "
+							+ tilemap.getHeight() + "x" + tilemap.getWidth() + " map");
+		}
 	}
 
 	/**
