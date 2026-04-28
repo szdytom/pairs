@@ -264,3 +264,25 @@ SDL_Quit();                     // finally quit SDL subsystems
 
 Textures and surfaces created by sub-components should be cleaned up by those components via a `destroy()` / `dispose()` method, called before the renderer/window are destroyed.
 
+---
+
+## macOS Setup Issues
+
+### `UnsatisfiedLinkError: Unable to load library 'SDL2'`
+
+On Apple Silicon macOS, Homebrew installs to `/opt/homebrew` which is not in JNA's
+default library search path, so `./gradlew run` fails with an `UnsatisfiedLinkError`
+even when SDL2 is installed.
+
+**Fix:** Pass the SDL2 lib dir via `jna.library.path` (handled in `build.gradle`'s
+`run` task using `brew --prefix sdl2`).
+
+### `NSInternalInconsistencyException`: setting main menu on a non-main thread
+
+SDL2's Cocoa backend (`Cocoa_RegisterApp`) must execute on macOS thread 0 (the native
+main thread). When launched via Gradle, the JVM main thread is not thread 0, causing
+AppKit to throw this exception immediately on startup.
+
+**Fix:** Add `-XstartOnFirstThread` to the `run` task's `jvmArgs` (already wired up
+in `build.gradle`, gated on `os.name` containing "mac").
+

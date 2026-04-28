@@ -23,6 +23,23 @@ application {
 	//applicationDefaultJvmArgs = ['--enable-native-access=javafx.graphics']
 }
 
+// macOS-specific JVM configuration for SDL2:
+// - Homebrew (Apple Silicon) installs SDL2 to /opt/homebrew, outside JNA's
+//   default search path, so we pass the path via `jna.library.path`.
+// - `-XstartOnFirstThread` is required because SDL2's Cocoa backend must run
+//   on the native main thread (thread 0); without it AppKit throws
+//   NSInternalInconsistencyException. macOS-only flag.
+// Linux/Windows users adapt SDL2 setup themselves.
+tasks.named('run') {
+	if (System.properties['os.name'].toLowerCase().contains('mac')) {
+		def sdl2Prefix = ['brew', '--prefix', 'sdl2'].execute().text.trim()
+		if (sdl2Prefix) {
+			jvmArgs "-Djna.library.path=${sdl2Prefix}/lib"
+		}
+		jvmArgs '-XstartOnFirstThread'
+	}
+}
+
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
 }

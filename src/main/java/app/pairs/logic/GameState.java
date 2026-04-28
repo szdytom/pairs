@@ -122,4 +122,9 @@ public final class GameState {
 	public List<Operation> getOpLogs() {
 		return opLogs.history();
 	}
+
+	/** Check whether the game is in a stalled state (no more valid moves). */
+	public boolean isStall() {
+		return IsStall.isStall(tilemap);
+	}
 }
