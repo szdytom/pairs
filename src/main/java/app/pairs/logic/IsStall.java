@@ -1,8 +1,8 @@
 package app.pairs.logic;
 
-import java.util.List;
-
 import app.pairs.model.Tilemap;
+
+import java.util.List;
 
 public class IsStall {
 	public static boolean isStall(Tilemap map) {
