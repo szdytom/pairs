@@ -45,7 +45,7 @@ public final class GameState {
 		return fromFactory(factory);
 	}
 
-	private static GameState fromFactory(TilemapFactory factory) {
+	public static GameState fromFactory(TilemapFactory factory) {
 		return new GameState(factory.generate());
 	}
 
@@ -138,5 +138,17 @@ public final class GameState {
 		requireInBounds(startRow, startCol);
 		requireInBounds(targetRow, targetCol);
 		return Path.path(tilemap, startRow, startCol, targetRow, targetCol);
+	}
+
+	/** Check whether all tiles have been eliminated. */
+	public boolean isCleared() {
+		for (int r = 0; r < tilemap.getHeight(); r++) {
+			for (int c = 0; c < tilemap.getWidth(); c++) {
+				if (tilemap.getTile(r, c) > 0) {
+					return false;
+				}
+			}
+		}
+		return true;
 	}
 }

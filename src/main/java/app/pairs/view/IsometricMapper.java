@@ -1,14 +1,18 @@
 package app.pairs.view;
 
 /**
- * Converts 2D grid coordinates to isometric screen coordinates.
+ * Converts 2D grid coordinates to isometric logical-pixel coordinates.
  *
  * Isometric projection with 2:1 width-to-height ratio:
- *   screenX = originX + (col - row) * tileWidth * scale / 2
- *   screenY = originY + (col + row) * tileWidth * scale / 4
+ *   logicalX = originX + (col - row) * tileWidth / 2
+ *   logicalY = originY + (col + row) * tileWidth / 4
  *
  * The vertical step is half the horizontal step because the diamond
  * footprint height is half its width (2:1 ratio).
+ *
+ * <p>This mapper only bridges grid ({@code row, col}) ⟷ {@linkplain
+ * #gridToLogical(int, int) logical pixels}. Converting to screen pixels
+ * (multiplying by {@code scale}) is handled by the renderer.
  */
 public class IsometricMapper {
 	private final int tileWidth;
@@ -26,26 +30,26 @@ public class IsometricMapper {
 	}
 
 	/**
-	 * Converts grid (row, col) to screen (x, y) at the given scale.
-	 * The returned point represents the center of the tile's diamond footprint.
+	 * Converts grid {@code (row, col)} to logical-pixel coordinates
+	 * (positions at scale 1).
 	 */
-	public IsometricCoordinate gridToScreen(int row, int col, int scale) {
-		int stepX = tileWidth * scale / 2;
-		int stepY = tileWidth * scale / 4;
+	public IsometricCoordinate gridToLogical(int row, int col) {
+		int stepX = tileWidth / 2;
+		int stepY = tileWidth / 4;
 		int x = originX + (col - row) * stepX;
 		int y = originY + (col + row) * stepY;
 		return new IsometricCoordinate(x, y);
 	}
 
 	/**
-	 * Converts screen (x, y) to grid (row, col) at the given scale.
+	 * Converts logical-pixel coordinates back to grid {@code (row, col)}.
 	 */
-	public int[] screenToGrid(int screenX, int screenY, int scale) {
-		int halfStepX = tileWidth * scale / 2;
-		int halfStepY = tileWidth * scale / 4;
+	public int[] logicalToGrid(int logicalX, int logicalY) {
+		int halfStepX = tileWidth / 2;
+		int halfStepY = tileWidth / 4;
 
-		int relX = screenX - originX;
-		int relY = screenY - originY;
+		int relX = logicalX - originX;
+		int relY = logicalY - originY;
 
 		double colMinusRow = (double)relX / halfStepX;
 		double colPlusRow = (double)relY / halfStepY;
@@ -60,19 +64,15 @@ public class IsometricMapper {
 	}
 
 	/**
-	 * Returns true if the screen point is inside the visual diamond of the
-	 * tile at (row, col). The diamond matches the tile sprite extents
-	 * (half-width = tileWidth * scale / 2, half-height = tileHeight * scale /
-	 * 2). Uses integer-only arithmetic.
+	 * Returns {@code true} if the logical-pixel point is inside the visual
+	 * diamond of the tile at {@code (row, col)}.
 	 */
-	public boolean contains(
-		int screenX, int screenY, int row, int col, int scale
-	) {
-		IsometricCoordinate center = gridToScreen(row, col, scale);
-		int halfW = tileWidth * scale / 2;
-		int halfH = tileHeight * scale / 2;
-		int dx = Math.abs(screenX - center.x);
-		int dy = Math.abs(screenY - center.y);
+	public boolean contains(int logicalX, int logicalY, int row, int col) {
+		IsometricCoordinate center = gridToLogical(row, col);
+		int halfW = tileWidth / 2;
+		int halfH = tileHeight / 2;
+		int dx = Math.abs(logicalX - center.x);
+		int dy = Math.abs(logicalY - center.y);
 		return dx * halfH + dy * halfW <= halfW * halfH;
 	}
 

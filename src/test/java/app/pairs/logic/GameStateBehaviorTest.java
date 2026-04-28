@@ -137,4 +137,27 @@ class GameStateBehaviorTest {
 		assertThatThrownBy(() -> state.canEliminate(0, 0, 5, 5))
 			.isInstanceOf(IllegalStateException.class);
 	}
+
+	// ---- `isCleared` tests ------------------------------------------------
+
+	@Test
+	void clearedEmptyBoardReturnsTrue() {
+		GameState state = GameState.customized(2, 2, 1);
+		state.operate(0, 0, 0, 1);
+		state.operate(1, 0, 1, 1);
+		assertThat(state.isCleared()).isTrue();
+	}
+
+	@Test
+	void freshGameIsNotCleared() {
+		GameState state = GameState.customized(2, 2, 1);
+		assertThat(state.isCleared()).isFalse();
+	}
+
+	@Test
+	void partialEliminationNotCleared() {
+		GameState state = GameState.customized(2, 2, 1);
+		state.operate(0, 0, 0, 1);
+		assertThat(state.isCleared()).isFalse();
+	}
 }

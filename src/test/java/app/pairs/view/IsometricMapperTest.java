@@ -9,21 +9,20 @@ class IsometricMapperTest {
 	private static final int TILE_HEIGHT = 16;
 	private static final int ORIGIN_X = 512;
 	private static final int ORIGIN_Y = 80;
-	private static final int SCALE = 6;
 
 	private final IsometricMapper mapper = new IsometricMapper(
 		TILE_WIDTH, TILE_HEIGHT, ORIGIN_X, ORIGIN_Y
 	);
 
 	@Test
-	void screenToGridRoundTripsCenter() {
+	void logicalToGridRoundTripsCenter() {
 		int[][] points = {{0, 0}, {5, 5}, {0, 9}, {9, 0}, {3, 7}};
 		for (int[] p : points) {
 			int row = p[0], col = p[1];
-			IsometricMapper.IsometricCoordinate screen = mapper.gridToScreen(
-				row, col, SCALE
+			IsometricMapper.IsometricCoordinate logical = mapper.gridToLogical(
+				row, col
 			);
-			int[] grid = mapper.screenToGrid(screen.x, screen.y, SCALE);
+			int[] grid = mapper.logicalToGrid(logical.x, logical.y);
 			assertThat(grid[0]).isEqualTo(row);
 			assertThat(grid[1]).isEqualTo(col);
 		}
@@ -34,60 +33,40 @@ class IsometricMapperTest {
 		int[][] points = {{0, 0}, {5, 5}, {9, 9}};
 		for (int[] p : points) {
 			int row = p[0], col = p[1];
-			IsometricMapper.IsometricCoordinate screen = mapper.gridToScreen(
-				row, col, SCALE
+			IsometricMapper.IsometricCoordinate logical = mapper.gridToLogical(
+				row, col
 			);
-			assertThat(mapper.contains(screen.x, screen.y, row, col, SCALE))
+			assertThat(mapper.contains(logical.x, logical.y, row, col))
 				.isTrue();
 		}
 	}
 
 	@Test
 	void containsReturnsFalseForFarPoint() {
-		assertThat(mapper.contains(0, 0, 5, 5, SCALE)).isFalse();
+		assertThat(mapper.contains(0, 0, 5, 5)).isFalse();
 	}
 
 	@Test
 	void containsDiamondExtendsToTopVertex() {
 		int row = 5, col = 5;
-		IsometricMapper.IsometricCoordinate center = mapper.gridToScreen(
-			row, col, SCALE
+		IsometricMapper.IsometricCoordinate center = mapper.gridToLogical(
+			row, col
 		);
-		int halfH = TILE_HEIGHT * SCALE / 2;
-		// Top vertex should be inside
-		assertThat(mapper.contains(center.x, center.y - halfH, row, col, SCALE))
+		int halfH = TILE_HEIGHT / 2;
+		assertThat(mapper.contains(center.x, center.y - halfH, row, col))
 			.isTrue();
-		// Just above top vertex should be outside
-		assertThat(
-			mapper.contains(center.x, center.y - halfH - 1, row, col, SCALE)
-		)
+		assertThat(mapper.contains(center.x, center.y - halfH - 1, row, col))
 			.isFalse();
 	}
 
 	@Test
-	void screenToGridWorksWithNegativeFractionalRegion() {
-		// Points on the upper-left side of the grid where col < row
-		// produce negative colMinusRow, exercising the rounding fix.
-		IsometricMapper.IsometricCoordinate screen = mapper.gridToScreen(
-			7, 2, SCALE
+	void logicalToGridWorksWithNegativeFractionalRegion() {
+		IsometricMapper.IsometricCoordinate logical = mapper.gridToLogical(
+			7, 2
 		);
-		// The diamond footprint extends halfStep in each direction.
-		// Test the top vertex where dy is negative relative to center.
-		int topY = screen.y - TILE_WIDTH * SCALE / 4;
-		int[] grid = mapper.screenToGrid(screen.x, topY, SCALE);
+		int topY = logical.y - TILE_WIDTH / 4;
+		int[] grid = mapper.logicalToGrid(logical.x, topY);
 		assertThat(grid[0]).isEqualTo(7);
 		assertThat(grid[1]).isEqualTo(2);
-	}
-
-	@Test
-	void screenToGridRoundTripWithDifferentScale() {
-		int scale = 3;
-		int row = 4, col = 6;
-		IsometricMapper.IsometricCoordinate screen = mapper.gridToScreen(
-			row, col, scale
-		);
-		int[] grid = mapper.screenToGrid(screen.x, screen.y, scale);
-		assertThat(grid[0]).isEqualTo(row);
-		assertThat(grid[1]).isEqualTo(col);
 	}
 }

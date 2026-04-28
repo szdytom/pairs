@@ -35,12 +35,7 @@ public class IsometricGridView implements ViewComponent {
 	private Map<String, SDL_Texture> hlTypeTextures;
 	private final TileRegistry hlTileRegistry;
 	private boolean texturesInitialized;
-	private int mouseX = -1;
-	private int mouseY = -1;
-	private int hoveredRow = -1;
-	private int hoveredCol = -1;
-	private int prevHoveredRow = -1;
-	private int prevHoveredCol = -1;
+	private boolean[][] highlighted;
 
 	public IsometricGridView(
 		String[][] grid, TileRegistry tileRegistry, TileRegistry hlTileRegistry,
@@ -57,9 +52,8 @@ public class IsometricGridView implements ViewComponent {
 		this.grid = grid;
 	}
 
-	public void setMousePosition(int x, int y) {
-		this.mouseX = x;
-		this.mouseY = y;
+	public void setHighlighted(boolean[][] highlighted) {
+		this.highlighted = highlighted;
 	}
 
 	@Override
@@ -80,11 +74,9 @@ public class IsometricGridView implements ViewComponent {
 		int dstW = TILE_CONTENT_WIDTH * scale;
 		int dstH = TILE_CONTENT_HEIGHT * scale;
 
-		resolveHoveredCell(mouseX, mouseY, depthOrder, scale);
-		prevHoveredRow = hoveredRow;
-		prevHoveredCol = hoveredCol;
-
 		int hoverOffset = TILE_CONTENT_HEIGHT * scale / 3;
+		int origX = mapper.getOriginX();
+		int origY = mapper.getOriginY();
 
 		for (int[] pos : depthOrder) {
 			int row = pos[0];
@@ -94,86 +86,29 @@ public class IsometricGridView implements ViewComponent {
 			if (typeId == null || typeId.isEmpty())
 				continue;
 
-			IsometricMapper.IsometricCoordinate screenPos = mapper.gridToScreen(
-				row, col, scale
+			// Logical → screen:  screen = origin + (logical - origin) * scale
+			IsometricMapper.IsometricCoordinate logical = mapper.gridToLogical(
+				row, col
 			);
+			int screenCenterX = origX + (logical.x - origX) * scale;
+			int screenCenterY = origY + (logical.y - origY) * scale;
 
-			boolean isHovered = row == hoveredRow && col == hoveredCol;
-			SDL_Texture tex = isHovered && hlTypeTextures.containsKey(typeId)
+			boolean isHighlighted = highlighted != null
+				&& highlighted[row][col];
+			SDL_Texture tex = isHighlighted
+					&& hlTypeTextures.containsKey(typeId)
 				? hlTypeTextures.get(typeId)
 				: typeTextures.get(typeId);
 			if (tex != null) {
-				dstRect.x = screenPos.x - dstW / 2;
-				dstRect.y = screenPos.y - dstH / 2
-					- ((row == hoveredRow && col == hoveredCol) ? hoverOffset
-				                                                : 0);
+				dstRect.x = screenCenterX - dstW / 2;
+				dstRect.y = screenCenterY - dstH / 2
+					- (isHighlighted ? hoverOffset : 0);
 				dstRect.w = dstW;
 				dstRect.h = dstH;
 
 				SdlRender.SDL_RenderCopy(renderer, tex, SRC_RECT, dstRect);
 			}
 		}
-	}
-
-	/**
-	 * Resolves which grid cell is under the mouse cursor by testing tiles
-	 * front-to-back (reverse depth order) against their sprite rectangles.
-	 *
-	 * <p>For the previously hovered tile, also tests the raised position so
-	 * the hover doesn't glitch when the tile lifts.</p>
-	 */
-	private void resolveHoveredCell(
-		int mouseX, int mouseY, int[][] depthOrder, int scale
-	) {
-		if (mouseX < 0 || mouseY < 0) {
-			hoveredRow = -1;
-			hoveredCol = -1;
-			return;
-		}
-
-		int dstW = TILE_CONTENT_WIDTH * scale;
-		int dstH = TILE_CONTENT_HEIGHT * scale;
-		int hoverOffset = TILE_CONTENT_HEIGHT * scale / 3;
-
-		for (int i = depthOrder.length - 1; i >= 0; i--) {
-			int[] pos = depthOrder[i];
-			int r = pos[0];
-			int c = pos[1];
-			String typeId = grid[r][c];
-			if (typeId == null || typeId.isEmpty())
-				continue;
-
-			IsometricMapper.IsometricCoordinate center = mapper.gridToScreen(
-				r, c, scale
-			);
-			int left = center.x - dstW / 2;
-			int right = center.x + dstW / 2;
-			int top = center.y - dstH / 2;
-			int bottom = center.y + dstH / 2;
-
-			// Normal position
-			if (mouseX >= left && mouseX < right && mouseY >= top
-			    && mouseY < bottom) {
-				hoveredRow = r;
-				hoveredCol = c;
-				return;
-			}
-
-			// Previously hovered tile: raised position with diamond check.
-			// Previously hovered tile: also check raised position
-			if (r == prevHoveredRow && c == prevHoveredCol) {
-				int raisedTop = top - hoverOffset;
-				int raisedBottom = bottom - hoverOffset;
-				if (mouseX >= left && mouseX < right && mouseY >= raisedTop
-				    && mouseY < raisedBottom) {
-					hoveredRow = r;
-					hoveredCol = c;
-					return;
-				}
-			}
-		}
-		hoveredRow = -1;
-		hoveredCol = -1;
 	}
 
 	private void initializeTextures(SDL_Renderer renderer) {

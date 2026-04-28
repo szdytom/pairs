@@ -5,6 +5,7 @@ import static io.github.libsdl4j.api.Sdl.SDL_Quit;
 import static io.github.libsdl4j.api.SdlSubSystemConst.SDL_INIT_EVERYTHING;
 import static io.github.libsdl4j.api.error.SdlError.SDL_GetError;
 import static io.github.libsdl4j.api.event.SDL_EventType.SDL_KEYDOWN;
+import static io.github.libsdl4j.api.event.SDL_EventType.SDL_MOUSEBUTTONDOWN;
 import static io.github.libsdl4j.api.event.SDL_EventType.SDL_MOUSEMOTION;
 import static io.github.libsdl4j.api.event.SDL_EventType.SDL_QUIT;
 import static io.github.libsdl4j.api.event.SDL_EventType.SDL_WINDOWEVENT;
@@ -31,9 +32,10 @@ import static io.github.libsdl4j.api.video.SdlVideoConst.SDL_WINDOWPOS_CENTERED;
 import app.pairs.asset.AssetManager;
 import app.pairs.asset.BitmapFont;
 import app.pairs.asset.TileRegistry;
+import app.pairs.map.HardTilemapFactory;
 import app.pairs.view.BitmapFontRenderer;
-import app.pairs.view.IsometricGridView;
 import app.pairs.view.IsometricMapper;
+import app.pairs.view.LevelComponent;
 
 import io.github.libsdl4j.api.event.SDL_Event;
 import io.github.libsdl4j.api.hints.SdlHints;
@@ -45,8 +47,6 @@ public class Main {
 	private static final int WINDOW_HEIGHT = 768;
 	private static final int TILE_WIDTH = 16;
 	private static final int TILE_HEIGHT = 16;
-	private static final int GRID_COLS = 10;
-	private static final int GRID_ROWS = 10;
 
 	private static final int MIN_SCALE = 1;
 	private static final int MAX_SCALE = 12;
@@ -107,9 +107,8 @@ public class Main {
 			TILE_WIDTH, TILE_HEIGHT, originX, originY
 		);
 
-		String[][] grid = createTestGrid(GRID_ROWS, GRID_COLS);
-		IsometricGridView gridView = new IsometricGridView(
-			grid, tiles, hlTiles, mapper
+		LevelComponent level = new LevelComponent(
+			new HardTilemapFactory(), tiles, hlTiles, mapper, font
 		);
 
 		System.out.println(
@@ -130,8 +129,7 @@ public class Main {
 					if (evt.key.keysym.sym == SDLK_ESCAPE) {
 						shouldRun = false;
 					} else if (evt.key.keysym.sym == SDLK_SPACE) {
-						grid = createTestGrid(GRID_ROWS, GRID_COLS);
-						gridView.setGrid(grid);
+						level.restart();
 					} else if (evt.key.keysym.sym == SDLK_EQUALS) {
 						scale = Math.min(MAX_SCALE, scale + SCALE_STEP);
 						System.out.println("Scale: " + scale);
@@ -144,11 +142,16 @@ public class Main {
 					}
 					break;
 				case SDL_MOUSEMOTION:
-					gridView.setMousePosition(evt.motion.x, evt.motion.y);
+					level.setMousePosition(
+						evt.motion.x / scale, evt.motion.y / scale
+					);
+					break;
+				case SDL_MOUSEBUTTONDOWN:
+					level.handleClick();
 					break;
 				case SDL_WINDOWEVENT:
 					if (evt.window.event == SDL_WINDOWEVENT_LEAVE)
-						gridView.setMousePosition(-1, -1);
+						level.setMousePosition(-1, -1);
 					break;
 				}
 			}
@@ -162,8 +165,8 @@ public class Main {
 			);
 			SDL_RenderClear(renderer);
 
-			gridView.update(deltaTime);
-			gridView.render(renderer, scale);
+			level.update(deltaTime);
+			level.render(renderer, scale);
 
 			BitmapFontRenderer.renderText(
 				renderer, font, "Pairs", 1, 1, 1, scale, 200, 200, 255
@@ -176,20 +179,10 @@ public class Main {
 			SDL_RenderPresent(renderer);
 		}
 
-		gridView.destroy();
+		level.destroy();
 		AssetManager.instance().dispose();
 		SDL_DestroyRenderer(renderer);
 		SDL_DestroyWindow(window);
 		SDL_Quit();
-	}
-
-	private static String[][] createTestGrid(int rows, int cols) {
-		String[][] grid = new String[rows][cols];
-		for (int r = 0; r < rows; r++) {
-			for (int c = 0; c < cols; c++) {
-				grid[r][c] = String.valueOf((r * cols + c) % 25);
-			}
-		}
-		return grid;
 	}
 }
