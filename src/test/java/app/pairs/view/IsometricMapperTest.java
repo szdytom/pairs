@@ -48,6 +48,23 @@ class IsometricMapperTest {
 	}
 
 	@Test
+	void containsDiamondExtendsToTopVertex() {
+		int row = 5, col = 5;
+		IsometricMapper.IsometricCoordinate center = mapper.gridToScreen(
+			row, col, SCALE
+		);
+		int halfH = TILE_HEIGHT * SCALE / 2;
+		// Top vertex should be inside
+		assertThat(mapper.contains(center.x, center.y - halfH, row, col, SCALE))
+			.isTrue();
+		// Just above top vertex should be outside
+		assertThat(
+			mapper.contains(center.x, center.y - halfH - 1, row, col, SCALE)
+		)
+			.isFalse();
+	}
+
+	@Test
 	void screenToGridWorksWithNegativeFractionalRegion() {
 		// Points on the upper-left side of the grid where col < row
 		// produce negative colMinusRow, exercising the rounding fix.

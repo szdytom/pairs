@@ -112,8 +112,8 @@ public class IsometricGridView implements ViewComponent {
 	 * Resolves which grid cell is under the mouse cursor by testing tiles
 	 * front-to-back (reverse depth order) against their sprite rectangles.
 	 *
-	 * <p>For the previously hovered tile, also tests the raised sprite
-	 * rectangle so the hover doesn't glitch when the tile lifts.</p>
+	 * <p>For the previously hovered tile, also tests the raised position so
+	 * the hover doesn't glitch when the tile lifts.</p>
 	 */
 	private void resolveHoveredCell(
 		int mouseX, int mouseY, int[][] depthOrder, int scale
@@ -144,7 +144,7 @@ public class IsometricGridView implements ViewComponent {
 			int top = center.y - dstH / 2;
 			int bottom = center.y + dstH / 2;
 
-			// Check normal sprite rectangle
+			// Normal position
 			if (mouseX >= left && mouseX < right && mouseY >= top
 			    && mouseY < bottom) {
 				hoveredRow = r;
@@ -152,7 +152,8 @@ public class IsometricGridView implements ViewComponent {
 				return;
 			}
 
-			// For the previously hovered tile, also check raised position
+			// Previously hovered tile: raised position with diamond check.
+			// Previously hovered tile: also check raised position
 			if (r == prevHoveredRow && c == prevHoveredCol) {
 				int raisedTop = top - hoverOffset;
 				int raisedBottom = bottom - hoverOffset;
