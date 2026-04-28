@@ -33,6 +33,12 @@ public class IsometricGridView implements ViewComponent {
 	private final IsometricMapper mapper;
 	private Map<String, SDL_Texture> typeTextures;
 	private boolean texturesInitialized;
+	private int mouseX = -1;
+	private int mouseY = -1;
+	private int hoveredRow = -1;
+	private int hoveredCol = -1;
+	private int prevHoveredRow = -1;
+	private int prevHoveredCol = -1;
 
 	public IsometricGridView(
 		String[][] grid, TileRegistry tileRegistry, IsometricMapper mapper
@@ -45,6 +51,11 @@ public class IsometricGridView implements ViewComponent {
 
 	public void setGrid(String[][] grid) {
 		this.grid = grid;
+	}
+
+	public void setMousePosition(int x, int y) {
+		this.mouseX = x;
+		this.mouseY = y;
 	}
 
 	@Override
@@ -61,12 +72,17 @@ public class IsometricGridView implements ViewComponent {
 		int rows = grid.length;
 		int cols = grid[0].length;
 
-		int[][] renderOrder = mapper.getDepthSortedOrder(rows, cols);
-
+		int[][] depthOrder = mapper.getDepthSortedOrder(rows, cols);
 		int dstW = TILE_CONTENT_WIDTH * scale;
 		int dstH = TILE_CONTENT_HEIGHT * scale;
 
-		for (int[] pos : renderOrder) {
+		resolveHoveredCell(mouseX, mouseY, depthOrder, scale);
+		prevHoveredRow = hoveredRow;
+		prevHoveredCol = hoveredCol;
+
+		int hoverOffset = TILE_CONTENT_HEIGHT * scale / 3;
+
+		for (int[] pos : depthOrder) {
 			int row = pos[0];
 			int col = pos[1];
 			String typeId = grid[row][col];
@@ -81,13 +97,75 @@ public class IsometricGridView implements ViewComponent {
 			SDL_Texture tex = typeTextures.get(typeId);
 			if (tex != null) {
 				dstRect.x = screenPos.x - dstW / 2;
-				dstRect.y = screenPos.y - dstH / 2;
+				dstRect.y = screenPos.y - dstH / 2
+					- ((row == hoveredRow && col == hoveredCol) ? hoverOffset
+				                                                : 0);
 				dstRect.w = dstW;
 				dstRect.h = dstH;
 
 				SdlRender.SDL_RenderCopy(renderer, tex, SRC_RECT, dstRect);
 			}
 		}
+	}
+
+	/**
+	 * Resolves which grid cell is under the mouse cursor by testing tiles
+	 * front-to-back (reverse depth order) against their sprite rectangles.
+	 *
+	 * <p>For the previously hovered tile, also tests the raised sprite
+	 * rectangle so the hover doesn't glitch when the tile lifts.</p>
+	 */
+	private void resolveHoveredCell(
+		int mouseX, int mouseY, int[][] depthOrder, int scale
+	) {
+		if (mouseX < 0 || mouseY < 0) {
+			hoveredRow = -1;
+			hoveredCol = -1;
+			return;
+		}
+
+		int dstW = TILE_CONTENT_WIDTH * scale;
+		int dstH = TILE_CONTENT_HEIGHT * scale;
+		int hoverOffset = TILE_CONTENT_HEIGHT * scale / 3;
+
+		for (int i = depthOrder.length - 1; i >= 0; i--) {
+			int[] pos = depthOrder[i];
+			int r = pos[0];
+			int c = pos[1];
+			String typeId = grid[r][c];
+			if (typeId == null || typeId.isEmpty())
+				continue;
+
+			IsometricMapper.IsometricCoordinate center = mapper.gridToScreen(
+				r, c, scale
+			);
+			int left = center.x - dstW / 2;
+			int right = center.x + dstW / 2;
+			int top = center.y - dstH / 2;
+			int bottom = center.y + dstH / 2;
+
+			// Check normal sprite rectangle
+			if (mouseX >= left && mouseX < right && mouseY >= top
+			    && mouseY < bottom) {
+				hoveredRow = r;
+				hoveredCol = c;
+				return;
+			}
+
+			// For the previously hovered tile, also check raised position
+			if (r == prevHoveredRow && c == prevHoveredCol) {
+				int raisedTop = top - hoverOffset;
+				int raisedBottom = bottom - hoverOffset;
+				if (mouseX >= left && mouseX < right && mouseY >= raisedTop
+				    && mouseY < raisedBottom) {
+					hoveredRow = r;
+					hoveredCol = c;
+					return;
+				}
+			}
+		}
+		hoveredRow = -1;
+		hoveredCol = -1;
 	}
 
 	private void initializeTextures(SDL_Renderer renderer) {

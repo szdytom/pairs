@@ -5,7 +5,9 @@ import static io.github.libsdl4j.api.Sdl.SDL_Quit;
 import static io.github.libsdl4j.api.SdlSubSystemConst.SDL_INIT_EVERYTHING;
 import static io.github.libsdl4j.api.error.SdlError.SDL_GetError;
 import static io.github.libsdl4j.api.event.SDL_EventType.SDL_KEYDOWN;
+import static io.github.libsdl4j.api.event.SDL_EventType.SDL_MOUSEMOTION;
 import static io.github.libsdl4j.api.event.SDL_EventType.SDL_QUIT;
+import static io.github.libsdl4j.api.event.SDL_EventType.SDL_WINDOWEVENT;
 import static io.github.libsdl4j.api.event.SdlEvents.SDL_PollEvent;
 import static io.github.libsdl4j.api.hints.SdlHintsConst.SDL_HINT_RENDER_SCALE_QUALITY;
 import static io.github.libsdl4j.api.keycode.SDL_Keycode.SDLK_0;
@@ -19,6 +21,7 @@ import static io.github.libsdl4j.api.render.SdlRender.SDL_DestroyRenderer;
 import static io.github.libsdl4j.api.render.SdlRender.SDL_RenderClear;
 import static io.github.libsdl4j.api.render.SdlRender.SDL_RenderPresent;
 import static io.github.libsdl4j.api.render.SdlRender.SDL_SetRenderDrawColor;
+import static io.github.libsdl4j.api.video.SDL_WindowEventID.SDL_WINDOWEVENT_LEAVE;
 import static io.github.libsdl4j.api.video.SDL_WindowFlags.SDL_WINDOW_RESIZABLE;
 import static io.github.libsdl4j.api.video.SDL_WindowFlags.SDL_WINDOW_SHOWN;
 import static io.github.libsdl4j.api.video.SdlVideo.SDL_CreateWindow;
@@ -31,7 +34,6 @@ import app.pairs.asset.TileRegistry;
 import app.pairs.view.BitmapFontRenderer;
 import app.pairs.view.IsometricGridView;
 import app.pairs.view.IsometricMapper;
-import app.pairs.view.ViewComponent;
 
 import io.github.libsdl4j.api.event.SDL_Event;
 import io.github.libsdl4j.api.hints.SdlHints;
@@ -105,7 +107,7 @@ public class Main {
 		);
 
 		String[][] grid = createTestGrid(GRID_ROWS, GRID_COLS);
-		ViewComponent gridView = new IsometricGridView(grid, tiles, mapper);
+		IsometricGridView gridView = new IsometricGridView(grid, tiles, mapper);
 
 		System.out.println(
 			"Controls: +/- zoom | 0 reset scale | SPACE regenerate | ESC quit"
@@ -126,7 +128,7 @@ public class Main {
 						shouldRun = false;
 					} else if (evt.key.keysym.sym == SDLK_SPACE) {
 						grid = createTestGrid(GRID_ROWS, GRID_COLS);
-						((IsometricGridView)gridView).setGrid(grid);
+						gridView.setGrid(grid);
 					} else if (evt.key.keysym.sym == SDLK_EQUALS) {
 						scale = Math.min(MAX_SCALE, scale + SCALE_STEP);
 						System.out.println("Scale: " + scale);
@@ -137,6 +139,13 @@ public class Main {
 						scale = 6;
 						System.out.println("Scale reset to " + scale);
 					}
+					break;
+				case SDL_MOUSEMOTION:
+					gridView.setMousePosition(evt.motion.x, evt.motion.y);
+					break;
+				case SDL_WINDOWEVENT:
+					if (evt.window.event == SDL_WINDOWEVENT_LEAVE)
+						gridView.setMousePosition(-1, -1);
 					break;
 				}
 			}
