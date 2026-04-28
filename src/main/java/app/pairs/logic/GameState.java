@@ -38,9 +38,9 @@ public final class GameState {
 	/** Create a game state with custom dimensions and tile-type count. */
 	public static GameState customized(int width, int height, int types) {
 		CustomizedTilemapFactory factory = new CustomizedTilemapFactory()
-				.setWidth(width)
-				.setHeight(height)
-				.setTypes(types);
+											   .setWidth(width)
+											   .setHeight(height)
+											   .setTypes(types);
 		return fromFactory(factory);
 	}
 
@@ -78,7 +78,7 @@ public final class GameState {
 			return false;
 		}
 		if (tilemap.getTile(row1, col1) <= 0
-				|| tilemap.getTile(row2, col2) <= 0) {
+		    || tilemap.getTile(row2, col2) <= 0) {
 			return false;
 		}
 		return TileTransition.transition(tilemap, row1, col1, row2, col2);
@@ -86,10 +86,11 @@ public final class GameState {
 
 	private void requireInBounds(int row, int col) {
 		if (row < 0 || row >= tilemap.getHeight() || col < 0
-				|| col >= tilemap.getWidth()) {
+		    || col >= tilemap.getWidth()) {
 			throw new IllegalStateException(
-					"coordinate out of range: (" + row + "," + col + ") on "
-							+ tilemap.getHeight() + "x" + tilemap.getWidth() + " map");
+				"coordinate out of range: (" + row + "," + col + ") on "
+				+ tilemap.getHeight() + "x" + tilemap.getWidth() + " map"
+			);
 		}
 	}
 
@@ -103,7 +104,7 @@ public final class GameState {
 			return false;
 		}
 		new OpElimination(tilemap, row1, col1, row2, col2, opLogs::push)
-				.operate();
+			.operate();
 		return true;
 	}
 

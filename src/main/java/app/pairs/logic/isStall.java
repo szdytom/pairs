@@ -12,7 +12,8 @@ public class IsStall {
 				for (int j = i + 1; j < positions.size(); j++) {
 					if (TileTransition.transition(
 							map, positions.get(i).row(), positions.get(i).col(),
-							positions.get(j).row(), positions.get(j).col())) {
+							positions.get(j).row(), positions.get(j).col()
+						)) {
 						return false;
 					}
 				}
