@@ -46,6 +46,7 @@ public class AssetManager {
 		registry.register("create-texture", CreateTextureOperation::new);
 		registry.register("crop-tiles", CropTilesOperation::new);
 		registry.register("tile-type-mapping", TileTypeMappingOperation::new);
+		registry.register("mapping", MappingOperation::new);
 		registry.register("bitmap-font", BitmapFontOperation::new);
 	}
 
@@ -116,7 +117,8 @@ public class AssetManager {
 					ac.close();
 				} catch (Exception e) {
 					System.err.println(
-						"[AssetManager] Error disposing asset: " + e.getMessage()
+						"[AssetManager] Error disposing asset: "
+						+ e.getMessage()
 					);
 				}
 			}
