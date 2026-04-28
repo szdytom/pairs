@@ -4,7 +4,7 @@ import app.pairs.model.Tilemap;
 
 public final class TileTransition {
 	private TileTransition() {}
-
+	
 	public static boolean transition(
 		Tilemap map, int startRow, int startCol, int targetRow, int targetCol
 	) {
