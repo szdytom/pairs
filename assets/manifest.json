@@ -81,6 +81,33 @@
 			"type": "bitmap-font",
 			"file": "monogram-bitmap.json",
 			"description": "Loading monogram bitmap font"
+		},
+		{
+			"id": "tilemap/easy",
+			"type": "tilemap-preset",
+			"width": 9,
+			"height": 9,
+			"types": 6,
+			"initial": [
+				[0, 0, 0, 0, -1, -1, -1, -1, -1],
+				[0, 0, 0, 0, -1, -1, -1, -1, -1],
+				[0, 0, 0, 0, -1, -1, -1, -1, -1],
+				[0, 0, 0, 0, -1, -1, -1, -1, -1],
+				[-1, -1, -1, -1, -1, -1, -1, -1, -1],
+				[-1, -1, -1, -1, -1, 0, 0, 0, 0],
+				[-1, -1, -1, -1, -1, 0, 0, 0, 0],
+				[-1, -1, -1, -1, -1, 0, 0, 0, 0],
+				[-1, -1, -1, -1, -1, 0, 0, 0, 0]
+			],
+			"description": "Defining easy mode tilemap preset"
+		},
+		{
+			"id": "tilemap/hard",
+			"type": "tilemap-preset",
+			"width": 12,
+			"height": 12,
+			"types": 20,
+			"description": "Defining hard mode tilemap preset"
 		}
 	]
 }

@@ -16,7 +16,8 @@ import static io.github.libsdl4j.api.video.SdlVideoConst.*;
 
 import app.pairs.asset.AssetManager;
 import app.pairs.asset.TileRegistry;
-import app.pairs.map.HardTilemapFactory;
+import app.pairs.map.PresetTilemapFactory;
+import app.pairs.map.TilemapPreset;
 import app.pairs.view.IsometricMapper;
 import app.pairs.view.LevelComponent;
 
@@ -86,7 +87,10 @@ public class Main {
 		IsometricMapper mapper = new IsometricMapper(TILE_WIDTH, TILE_HEIGHT);
 
 		LevelComponent level = new LevelComponent(
-			new HardTilemapFactory(), tiles, hlTiles, mapper
+			new PresetTilemapFactory(
+				AssetManager.instance().<TilemapPreset>get("tilemap/hard")
+			),
+			tiles, hlTiles, mapper
 		);
 		relayout(level, scale);
 

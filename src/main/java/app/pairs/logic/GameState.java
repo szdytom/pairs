@@ -1,9 +1,10 @@
 package app.pairs.logic;
 
+import app.pairs.asset.AssetManager;
 import app.pairs.map.CustomizedTilemapFactory;
-import app.pairs.map.EasyTilemapFactory;
-import app.pairs.map.HardTilemapFactory;
+import app.pairs.map.PresetTilemapFactory;
 import app.pairs.map.TilemapFactory;
+import app.pairs.map.TilemapPreset;
 import app.pairs.model.OpLogs;
 import app.pairs.model.Tilemap;
 
@@ -28,12 +29,17 @@ public final class GameState {
 
 	/** Create a game state for the easy mode preset. */
 	public static GameState easy() {
-		return fromFactory(new EasyTilemapFactory());
+		return fromPreset("tilemap/easy");
 	}
 
 	/** Create a game state for the hard mode preset. */
 	public static GameState hard() {
-		return fromFactory(new HardTilemapFactory());
+		return fromPreset("tilemap/hard");
+	}
+
+	private static GameState fromPreset(String presetId) {
+		TilemapPreset preset = AssetManager.instance().get(presetId);
+		return fromFactory(new PresetTilemapFactory(preset));
 	}
 
 	/** Create a game state with custom dimensions and tile-type count. */
