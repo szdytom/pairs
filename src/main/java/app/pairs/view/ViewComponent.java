@@ -66,6 +66,13 @@ public interface ViewComponent {
 	void render(SDL_Renderer renderer, int parentX, int parentY, int scale);
 
 	/**
+	 * Handles a UI event.  Return true to stop propagation.
+	 */
+	default boolean onEvent(Event event) {
+		return false;
+	}
+
+	/**
 	 * Releases any SDL resources (textures, surfaces) held by this component.
 	 */
 	default void destroy() {}

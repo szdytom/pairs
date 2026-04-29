@@ -13,7 +13,7 @@ import io.github.libsdl4j.api.surface.*;
  * Renders a 2D grid of tile types using isometric projection.
  * The grid uses string tile IDs; null represents an empty cell.
  */
-public class IsometricGridView implements ViewComponent {
+public class IsometricGridView extends Widget {
 	private static final int TILE_CONTENT_WIDTH = 16;
 	private static final int TILE_CONTENT_HEIGHT = 16;
 	private final SDL_Rect srcRect = new SDL_Rect();
@@ -27,8 +27,6 @@ public class IsometricGridView implements ViewComponent {
 	private final TileRegistry hlTileRegistry;
 	private boolean texturesInitialized;
 	private boolean[][] highlighted;
-	private int layoutX;
-	private int layoutY;
 	private int[][] depthOrder;
 	private final int[] measuredSize = new int[2];
 
@@ -62,11 +60,6 @@ public class IsometricGridView implements ViewComponent {
 	}
 
 	@Override
-	public void update(long deltaTimeMs) {
-		// No dynamic state to update
-	}
-
-	@Override
 	public int[] measure() {
 		int rows = grid.length;
 		int cols = grid[0].length;
@@ -75,12 +68,6 @@ public class IsometricGridView implements ViewComponent {
 		measuredSize[0] = (cols - 1 + rows - 1) * stepX + TILE_CONTENT_WIDTH;
 		measuredSize[1] = (rows - 1 + cols - 1) * stepY + TILE_CONTENT_HEIGHT;
 		return measuredSize;
-	}
-
-	@Override
-	public void layout(int x, int y, int w, int h) {
-		this.layoutX = x;
-		this.layoutY = y;
 	}
 
 	@Override

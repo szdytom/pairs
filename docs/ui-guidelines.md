@@ -16,7 +16,9 @@ This note describes the general rules and best practices for UI development in t
 
 ## References
 
-- [UI Layout](ui-layout.md)
+- [UI System](ui-system.md) — architecture, lifecycle, coordinate systems
+- [Event System](ui-events.md) — event dispatch, hit testing, bubbling
+- [Component Reference](ui-components.md) — Widget, Container, layout classes, TextComponent
 - [Isometric Projection](isometric-projection.md)
 - [SDL Related](libsdl4j.md)
 
