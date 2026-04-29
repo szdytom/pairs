@@ -9,15 +9,13 @@ import io.github.libsdl4j.api.render.*;
  * A leaf {@link ViewComponent} that renders a line of text using a
  * {@link BitmapFont}.
  */
-public class TextComponent implements ViewComponent {
+public class TextComponent extends Widget {
 	private final BitmapFont font;
 	private String text;
 	private int size;
 	private int r;
 	private int g;
 	private int b;
-	private int layoutX;
-	private int layoutY;
 	private final int[] measuredSize = new int[2];
 
 	public TextComponent(
@@ -56,17 +54,6 @@ public class TextComponent implements ViewComponent {
 		}
 		measuredSize[0] = Math.max(0, w);
 		return measuredSize;
-	}
-
-	@Override
-	public void layout(int x, int y, int w, int h) {
-		this.layoutX = x;
-		this.layoutY = y;
-	}
-
-	@Override
-	public void update(long deltaTimeMs) {
-		// No dynamic state to update.
 	}
 
 	@Override

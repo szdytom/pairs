@@ -18,8 +18,11 @@ import app.pairs.asset.AssetManager;
 import app.pairs.asset.TileRegistry;
 import app.pairs.map.PresetTilemapFactory;
 import app.pairs.map.TilemapPreset;
+import app.pairs.view.Event;
 import app.pairs.view.IsometricMapper;
+import app.pairs.view.KeyEvent;
 import app.pairs.view.LevelComponent;
+import app.pairs.view.MouseEvent;
 
 import io.github.libsdl4j.api.event.*;
 import io.github.libsdl4j.api.hints.*;
@@ -111,8 +114,6 @@ public class Main {
 				case SDL_KEYDOWN:
 					if (evt.key.keysym.sym == SDLK_ESCAPE) {
 						shouldRun = false;
-					} else if (evt.key.keysym.sym == SDLK_SPACE) {
-						level.restart();
 					} else if (evt.key.keysym.sym == SDLK_EQUALS) {
 						scale = Math.min(MAX_SCALE, scale + SCALE_STEP);
 						System.out.println("Scale: " + scale);
@@ -125,19 +126,39 @@ public class Main {
 						scale = 6;
 						System.out.println("Scale reset to " + scale);
 						relayout(level, scale);
+					} else {
+						level.dispatchEvent(
+							new KeyEvent(
+								Event.Type.KEY_PRESSED, evt.key.keysym.sym
+							),
+							0, 0
+						);
 					}
 					break;
 				case SDL_MOUSEMOTION:
-					level.setMousePosition(
-						evt.motion.x / scale, evt.motion.y / scale
+					level.dispatchEvent(
+						new MouseEvent(
+							Event.Type.MOUSE_MOVED, evt.motion.x / scale,
+							evt.motion.y / scale, 0
+						),
+						0, 0
 					);
 					break;
 				case SDL_MOUSEBUTTONDOWN:
-					level.handleClick();
+					level.dispatchEvent(
+						new MouseEvent(
+							Event.Type.MOUSE_PRESSED, evt.button.x / scale,
+							evt.button.y / scale, evt.button.button
+						),
+						0, 0
+					);
 					break;
 				case SDL_WINDOWEVENT:
 					if (evt.window.event == SDL_WINDOWEVENT_LEAVE)
-						level.setMousePosition(-1, -1);
+						level.dispatchEvent(
+							new MouseEvent(Event.Type.MOUSE_LEAVE, -1, -1, 0),
+							0, 0
+						);
 					break;
 				}
 			}

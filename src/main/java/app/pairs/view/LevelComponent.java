@@ -1,5 +1,7 @@
 package app.pairs.view;
 
+import static io.github.libsdl4j.api.keycode.SDL_Keycode.*;
+
 import app.pairs.asset.TileRegistry;
 import app.pairs.logic.GameState;
 import app.pairs.map.TilemapFactory;
@@ -12,7 +14,7 @@ import io.github.libsdl4j.api.render.*;
  * the string-based IDs expected by the view, resolves mouse-over cells, and
  * drives the selection/elimination interaction.
  */
-public class LevelComponent implements ViewComponent {
+public class LevelComponent extends Container {
 	private static final int TILE_CONTENT_WIDTH = 16;
 	private static final int TILE_CONTENT_HEIGHT = 16;
 
@@ -45,8 +47,6 @@ public class LevelComponent implements ViewComponent {
 	private boolean cleared;
 
 	// Layout state
-	private int levelX;
-	private int levelY;
 	private final int[] measuredSize = new int[2];
 	/** Grid origin offset relative to this component in logical pixels. */
 	private int gridOriginX;
@@ -81,6 +81,12 @@ public class LevelComponent implements ViewComponent {
 		this.titleText = new TextComponent("Pairs", 1, 200, 200, 255);
 		this.scaleText = new TextComponent("Scale: 6x", 1, 180, 180, 180);
 		this.clearedText = new TextComponent("CLEARED!", 2, 255, 255, 100);
+		clearedText.setVisible(false);
+
+		addChild(gridView);
+		addChild(titleText);
+		addChild(scaleText);
+		addChild(clearedText);
 	}
 
 	public void setMousePosition(int x, int y) {
@@ -104,6 +110,7 @@ public class LevelComponent implements ViewComponent {
 			highlighted = new boolean[gridHeight][gridWidth];
 		}
 		cleared = false;
+		clearedText.setVisible(false);
 		selectedRow = -1;
 		selectedCol = -1;
 		hoveredRow = -1;
@@ -147,6 +154,7 @@ public class LevelComponent implements ViewComponent {
 				gridView.setGrid(buildGrid());
 				if (gameState.isCleared()) {
 					cleared = true;
+					clearedText.setVisible(true);
 				}
 				selectedRow = -1;
 				selectedCol = -1;
@@ -159,15 +167,6 @@ public class LevelComponent implements ViewComponent {
 	}
 
 	@Override
-	public void update(long deltaTimeMs) {
-		// Propagate update to child components
-		gridView.update(deltaTimeMs);
-		titleText.update(deltaTimeMs);
-		scaleText.update(deltaTimeMs);
-		clearedText.update(deltaTimeMs);
-	}
-
-	@Override
 	public int[] measure() {
 		int[] gridSize = gridView.measure();
 		measuredSize[0] = gridSize[0];
@@ -177,27 +176,33 @@ public class LevelComponent implements ViewComponent {
 
 	@Override
 	public void layout(int x, int y, int w, int h) {
-		this.levelX = x;
-		this.levelY = y;
+		super.layout(x, y, w, h);
 		// Distance from grid origin to the leftmost pixel of the bounding box.
 		int stepX = mapper.getTileWidth() / 2;
 		int leftHalf = (gridHeight - 1) * stepX + TILE_CONTENT_WIDTH / 2;
 		int margin = 5;
 		gridOriginX = leftHalf + margin;
 		gridOriginY = margin + TILE_CONTENT_HEIGHT / 2;
-		gridView.layout(gridOriginX, gridOriginY, 0, 0);
 
-		titleText.layout(1, 1, 0, 0);
-		scaleText.layout(1, 14, 0, 0);
-		clearedText.layout(4, 12, 0, 0);
+		int[] gridSize = gridView.measure();
+		gridView.layout(gridOriginX, gridOriginY, gridSize[0], gridSize[1]);
+
+		int[] titleSize = titleText.measure();
+		titleText.layout(1, 1, titleSize[0], titleSize[1]);
+
+		int[] scaleSize = scaleText.measure();
+		scaleText.layout(1, 14, scaleSize[0], scaleSize[1]);
+
+		int[] clearedSize = clearedText.measure();
+		clearedText.layout(4, 12, clearedSize[0], clearedSize[1]);
 	}
 
 	@Override
 	public void render(
 		SDL_Renderer renderer, int parentX, int parentY, int scale
 	) {
-		int myGlobalX = parentX + levelX;
-		int myGlobalY = parentY + levelY;
+		int myGlobalX = parentX + layoutX;
+		int myGlobalY = parentY + layoutY;
 
 		// Cache grid origin in global logical space for hit-testing.
 		gridGlobalX = myGlobalX + gridOriginX;
@@ -205,46 +210,37 @@ public class LevelComponent implements ViewComponent {
 
 		resolveHoveredCell();
 		updateHighlighted();
-		gridView.render(renderer, myGlobalX, myGlobalY, scale);
-		titleText.render(renderer, myGlobalX, myGlobalY, scale);
-		scaleText.render(renderer, myGlobalX, myGlobalY, scale);
 
-		if (cleared) {
-			clearedText.render(renderer, myGlobalX, myGlobalY, scale);
-		}
+		clearedText.setVisible(cleared);
+		super.render(renderer, parentX, parentY, scale);
 	}
 
 	@Override
-	public void destroy() {
-		gridView.destroy();
+	public boolean onEvent(Event event) {
+		if (event instanceof MouseEvent me) {
+			switch (me.type()) {
+			case MOUSE_MOVED:
+			case MOUSE_LEAVE:
+				mouseX = me.x();
+				mouseY = me.y();
+				return true;
+			case MOUSE_PRESSED:
+				handleClick();
+				return true;
+			default:
+				break;
+			}
+		} else if (event instanceof KeyEvent ke) {
+			if (ke.keycode() == SDLK_SPACE) {
+				restart();
+				return true;
+			}
+		}
+		return false;
 	}
 
 	// ---- private helpers ---------------------------------------------------
 
-	private String[][] buildGrid() {
-		String[][] grid = new String[gridHeight][gridWidth];
-		for (int r = 0; r < gridHeight; r++) {
-			for (int c = 0; c < gridWidth; c++) {
-				int tile = gameState.getTile(r, c);
-				grid[r][c] = tile > 0 ? textureId(tile) : null;
-			}
-		}
-		return grid;
-	}
-
-	/** Map a GameState tile type ID (1-based) to the sprite-sheet string ID. */
-	private static String textureId(int typeId) {
-		if (typeId >= 1 && typeId <= TYPE_TEXTURE_MAP.length) {
-			return TYPE_TEXTURE_MAP[typeId - 1];
-		}
-		return Integer.toString(typeId);
-	}
-
-	/**
-	 * Hit-test tiles front-to-back in logical-pixel space.  The grid origin
-	 * {@link #gridGlobalX}/{@link #gridGlobalY} was cached in
-	 * {@link #render(SDL_Renderer, int, int, int)}.
-	 */
 	private void resolveHoveredCell() {
 		prevHoveredRow = hoveredRow;
 		prevHoveredCol = hoveredCol;
@@ -317,5 +313,23 @@ public class LevelComponent implements ViewComponent {
 		}
 
 		gridView.setHighlighted(highlighted);
+	}
+
+	private String[][] buildGrid() {
+		String[][] grid = new String[gridHeight][gridWidth];
+		for (int r = 0; r < gridHeight; r++) {
+			for (int c = 0; c < gridWidth; c++) {
+				int tile = gameState.getTile(r, c);
+				grid[r][c] = tile > 0 ? textureId(tile) : null;
+			}
+		}
+		return grid;
+	}
+
+	private static String textureId(int typeId) {
+		if (typeId >= 1 && typeId <= TYPE_TEXTURE_MAP.length) {
+			return TYPE_TEXTURE_MAP[typeId - 1];
+		}
+		return Integer.toString(typeId);
 	}
 }

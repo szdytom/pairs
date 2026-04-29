@@ -1,21 +1,13 @@
 package app.pairs.view;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import io.github.libsdl4j.api.render.*;
-
 /**
  * Simplified CSS-grid container that places children in a fixed-column grid
  * with uniform horizontal and vertical gaps.
  */
-public class GridLayout implements ViewComponent {
+public class GridLayout extends Container {
 	private final int fixedColumns;
 	private final int gapX;
 	private final int gapY;
-	private final List<ViewComponent> children = new ArrayList<>();
-	private int layoutX;
-	private int layoutY;
 	private final int[] measuredSize = new int[2];
 	private final int[] cellSize = new int[2];
 
@@ -31,18 +23,16 @@ public class GridLayout implements ViewComponent {
 		this.gapY = gapY;
 	}
 
-	public void addChild(ViewComponent child) {
-		children.add(child);
-	}
-
 	@Override
 	public int[] measure() {
 		if (children.isEmpty()) {
+			measuredSize[0] = 0;
+			measuredSize[1] = 0;
 			return measuredSize;
 		}
 		int cellW = 0;
 		int cellH = 0;
-		for (ViewComponent child : children) {
+		for (Widget child : children) {
 			int[] size = child.measure();
 			if (size[0] > cellW) {
 				cellW = size[0];
@@ -61,8 +51,7 @@ public class GridLayout implements ViewComponent {
 
 	@Override
 	public void layout(int x, int y, int w, int h) {
-		this.layoutX = x;
-		this.layoutY = y;
+		super.layout(x, y, w, h);
 		int cellW, cellH;
 		if (w > 0 && h > 0) {
 			cellW = (w - (fixedColumns - 1) * gapX) / fixedColumns;
@@ -72,38 +61,13 @@ public class GridLayout implements ViewComponent {
 			cellH = cellSize[1];
 		}
 		int index = 0;
-		for (ViewComponent child : children) {
+		for (Widget child : children) {
 			int col = index % fixedColumns;
 			int row = index / fixedColumns;
 			child.layout(
 				col * (cellW + gapX), row * (cellH + gapY), cellW, cellH
 			);
 			index++;
-		}
-	}
-
-	@Override
-	public void update(long deltaTimeMs) {
-		for (ViewComponent child : children) {
-			child.update(deltaTimeMs);
-		}
-	}
-
-	@Override
-	public void render(
-		SDL_Renderer renderer, int parentX, int parentY, int scale
-	) {
-		int myGlobalX = parentX + layoutX;
-		int myGlobalY = parentY + layoutY;
-		for (ViewComponent child : children) {
-			child.render(renderer, myGlobalX, myGlobalY, scale);
-		}
-	}
-
-	@Override
-	public void destroy() {
-		for (ViewComponent child : children) {
-			child.destroy();
 		}
 	}
 }
