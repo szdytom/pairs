@@ -18,15 +18,8 @@ import io.github.libsdl4j.api.surface.SDL_Surface;
 public class IsometricGridView implements ViewComponent {
 	private static final int TILE_CONTENT_WIDTH = 16;
 	private static final int TILE_CONTENT_HEIGHT = 16;
-	private static final SDL_Rect SRC_RECT = new SDL_Rect();
+	private final SDL_Rect srcRect = new SDL_Rect();
 	private final SDL_Rect dstRect = new SDL_Rect();
-
-	static {
-		SRC_RECT.x = 1;
-		SRC_RECT.y = 1;
-		SRC_RECT.w = TILE_CONTENT_WIDTH;
-		SRC_RECT.h = TILE_CONTENT_HEIGHT;
-	}
 
 	private String[][] grid;
 	private final TileRegistry tileRegistry;
@@ -36,6 +29,10 @@ public class IsometricGridView implements ViewComponent {
 	private final TileRegistry hlTileRegistry;
 	private boolean texturesInitialized;
 	private boolean[][] highlighted;
+	private int layoutX;
+	private int layoutY;
+	private int[][] depthOrder;
+	private final int[] measuredSize = new int[2];
 
 	public IsometricGridView(
 		String[][] grid, TileRegistry tileRegistry, TileRegistry hlTileRegistry,
@@ -46,10 +43,20 @@ public class IsometricGridView implements ViewComponent {
 		this.hlTileRegistry = hlTileRegistry;
 		this.mapper = mapper;
 		this.texturesInitialized = false;
+		this.depthOrder = mapper.getDepthSortedOrder(
+			grid.length, grid[0].length
+		);
+		srcRect.x = 1;
+		srcRect.y = 1;
+		srcRect.w = TILE_CONTENT_WIDTH;
+		srcRect.h = TILE_CONTENT_HEIGHT;
 	}
 
 	public void setGrid(String[][] grid) {
 		this.grid = grid;
+		this.depthOrder = mapper.getDepthSortedOrder(
+			grid.length, grid[0].length
+		);
 	}
 
 	public void setHighlighted(boolean[][] highlighted) {
@@ -62,21 +69,36 @@ public class IsometricGridView implements ViewComponent {
 	}
 
 	@Override
-	public void render(SDL_Renderer renderer, int scale) {
+	public int[] measure() {
+		int rows = grid.length;
+		int cols = grid[0].length;
+		int stepX = mapper.getTileWidth() / 2;
+		int stepY = mapper.getTileWidth() / 4;
+		measuredSize[0] = (cols - 1 + rows - 1) * stepX + TILE_CONTENT_WIDTH;
+		measuredSize[1] = (rows - 1 + cols - 1) * stepY + TILE_CONTENT_HEIGHT;
+		return measuredSize;
+	}
+
+	@Override
+	public void layout(int x, int y, int w, int h) {
+		this.layoutX = x;
+		this.layoutY = y;
+	}
+
+	@Override
+	public void render(
+		SDL_Renderer renderer, int parentX, int parentY, int scale
+	) {
 		if (!texturesInitialized) {
 			initializeTextures(renderer);
 		}
 
-		int rows = grid.length;
-		int cols = grid[0].length;
-
-		int[][] depthOrder = mapper.getDepthSortedOrder(rows, cols);
 		int dstW = TILE_CONTENT_WIDTH * scale;
 		int dstH = TILE_CONTENT_HEIGHT * scale;
 
 		int hoverOffset = TILE_CONTENT_HEIGHT * scale / 3;
-		int origX = mapper.getOriginX();
-		int origY = mapper.getOriginY();
+		int gridGlobalX = parentX + layoutX;
+		int gridGlobalY = parentY + layoutY;
 
 		for (int[] pos : depthOrder) {
 			int row = pos[0];
@@ -86,12 +108,12 @@ public class IsometricGridView implements ViewComponent {
 			if (typeId == null || typeId.isEmpty())
 				continue;
 
-			// Logical → screen:  screen = origin + (logical - origin) * scale
+			// Global logical → screen: screen = globalLogical * scale
 			IsometricMapper.IsometricCoordinate logical = mapper.gridToLogical(
 				row, col
 			);
-			int screenCenterX = origX + (logical.x - origX) * scale;
-			int screenCenterY = origY + (logical.y - origY) * scale;
+			int screenCenterX = (gridGlobalX + logical.x) * scale;
+			int screenCenterY = (gridGlobalY + logical.y) * scale;
 
 			boolean isHighlighted = highlighted != null
 				&& highlighted[row][col];
@@ -106,7 +128,7 @@ public class IsometricGridView implements ViewComponent {
 				dstRect.w = dstW;
 				dstRect.h = dstH;
 
-				SdlRender.SDL_RenderCopy(renderer, tex, SRC_RECT, dstRect);
+				SdlRender.SDL_RenderCopy(renderer, tex, srcRect, dstRect);
 			}
 		}
 	}

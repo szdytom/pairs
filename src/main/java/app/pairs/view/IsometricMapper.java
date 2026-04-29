@@ -4,55 +4,46 @@ package app.pairs.view;
  * Converts 2D grid coordinates to isometric logical-pixel coordinates.
  *
  * Isometric projection with 2:1 width-to-height ratio:
- *   logicalX = originX + (col - row) * tileWidth / 2
- *   logicalY = originY + (col + row) * tileWidth / 4
+ *   localX = (col - row) * tileWidth / 2
+ *   localY = (col + row) * tileWidth / 4
  *
  * The vertical step is half the horizontal step because the diamond
  * footprint height is half its width (2:1 ratio).
  *
- * <p>This mapper only bridges grid ({@code row, col}) ⟷ {@linkplain
- * #gridToLogical(int, int) logical pixels}. Converting to screen pixels
- * (multiplying by {@code scale}) is handled by the renderer.
+ * <p>All coordinates returned are <em>local logical pixels</em> — offsets
+ * from the grid's own origin.  The renderer adds a parent-supplied global
+ * position and multiplies by scale to get screen coordinates.
  */
 public class IsometricMapper {
 	private final int tileWidth;
 	private final int tileHeight;
-	private final int originX;
-	private final int originY;
 
-	public IsometricMapper(
-		int tileWidth, int tileHeight, int originX, int originY
-	) {
+	public IsometricMapper(int tileWidth, int tileHeight) {
 		this.tileWidth = tileWidth;
 		this.tileHeight = tileHeight;
-		this.originX = originX;
-		this.originY = originY;
 	}
 
 	/**
-	 * Converts grid {@code (row, col)} to logical-pixel coordinates
-	 * (positions at scale 1).
+	 * Converts grid {@code (row, col)} to local logical-pixel coordinates
+	 * (offset from the grid origin).
 	 */
 	public IsometricCoordinate gridToLogical(int row, int col) {
 		int stepX = tileWidth / 2;
 		int stepY = tileWidth / 4;
-		int x = originX + (col - row) * stepX;
-		int y = originY + (col + row) * stepY;
+		int x = (col - row) * stepX;
+		int y = (col + row) * stepY;
 		return new IsometricCoordinate(x, y);
 	}
 
 	/**
-	 * Converts logical-pixel coordinates back to grid {@code (row, col)}.
+	 * Converts local logical-pixel coordinates back to grid {@code (row, col)}.
 	 */
-	public int[] logicalToGrid(int logicalX, int logicalY) {
+	public int[] logicalToGrid(int localX, int localY) {
 		int halfStepX = tileWidth / 2;
 		int halfStepY = tileWidth / 4;
 
-		int relX = logicalX - originX;
-		int relY = logicalY - originY;
-
-		double colMinusRow = (double)relX / halfStepX;
-		double colPlusRow = (double)relY / halfStepY;
+		double colMinusRow = (double)localX / halfStepX;
+		double colPlusRow = (double)localY / halfStepY;
 
 		double col = (colMinusRow + colPlusRow) / 2.0;
 		double row = colPlusRow - col;
@@ -64,15 +55,15 @@ public class IsometricMapper {
 	}
 
 	/**
-	 * Returns {@code true} if the logical-pixel point is inside the visual
-	 * diamond of the tile at {@code (row, col)}.
+	 * Returns {@code true} if the local-logical-pixel point is inside the
+	 * visual diamond of the tile at {@code (row, col)}.
 	 */
-	public boolean contains(int logicalX, int logicalY, int row, int col) {
+	public boolean contains(int localX, int localY, int row, int col) {
 		IsometricCoordinate center = gridToLogical(row, col);
 		int halfW = tileWidth / 2;
 		int halfH = tileHeight / 2;
-		int dx = Math.abs(logicalX - center.x);
-		int dy = Math.abs(logicalY - center.y);
+		int dx = Math.abs(localX - center.x);
+		int dy = Math.abs(localY - center.y);
 		return dx * halfH + dy * halfW <= halfW * halfH;
 	}
 
@@ -102,14 +93,6 @@ public class IsometricMapper {
 
 	public int getTileHeight() {
 		return tileHeight;
-	}
-
-	public int getOriginX() {
-		return originX;
-	}
-
-	public int getOriginY() {
-		return originY;
 	}
 
 	public static class IsometricCoordinate {
