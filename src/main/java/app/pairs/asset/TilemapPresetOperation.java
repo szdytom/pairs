@@ -27,9 +27,28 @@ public class TilemapPresetOperation implements AssetOperation {
 		width = item.get("width").getAsInt();
 		height = item.get("height").getAsInt();
 		types = item.get("types").getAsInt();
-		initial = item.has("initial")
-			? parseGrid(item.getAsJsonArray("initial"))
-			: null;
+		if (item.has("initial")) {
+			initial = parseGrid(item.getAsJsonArray("initial"));
+			validateGrid(initial, width, height);
+		}
+	}
+
+	private static void validateGrid(int[][] grid, int width, int height) {
+		if (grid.length != height) {
+			throw new IllegalArgumentException(
+				"initial row count (" + grid.length
+				+ ") does not match height (" + height + ")"
+			);
+		}
+		for (int r = 0; r < grid.length; r++) {
+			if (grid[r] == null || grid[r].length != width) {
+				int len = grid[r] == null ? 0 : grid[r].length;
+				throw new IllegalArgumentException(
+					"initial row " + r + " column count (" + len
+					+ ") does not match width (" + width + ")"
+				);
+			}
+		}
 	}
 
 	@Override

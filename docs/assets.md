@@ -48,8 +48,8 @@ Each entry in `sequence` has:
 | `image` | `ImageOperation` | — (uses `file`) | `SDL_Surface` | Load a PNG and produce an ABGR8888 surface. |
 | `crop-tiles` | `CropTilesOperation` | `SDL_Surface` | `TileRegistry` | Split a spritesheet surface into individual tile surfaces stored in a registry. |
 | `mapping` | `MappingOperation` | — (uses `value`) | `String[][]` | Store a 2D string array as a named mapping for later reuse. |
-| `tile-type-mapping` | `TileTypeMappingOperation` | `TileRegistry` | `TileRegistry` | Overlay a 2D string-ID mapping on a registry (same obj
-| `tilemap-preset` | `TilemapPresetOperation` | — (uses `width`/`height`/`types`/`initial`) | `TilemapPreset` | Define a tilemap configuration consumed by `PresetTilemapFactory`. |ect, new ID). Accepts `mapping-id` to reference a `mapping` operation. |
+| `tile-type-mapping` | `TileTypeMappingOperation` | `TileRegistry` | `TileRegistry` | Overlay a 2D string-ID mapping on a registry (same object, new ID). Accepts `mapping-id` to reference a `mapping` operation. |
+| `tilemap-preset` | `TilemapPresetOperation` | — (uses `width`/`height`/`types`/`initial`) | `TilemapPreset` | Define a tilemap configuration consumed by `PresetTilemapFactory`. |
 | `create-texture` | `CreateTextureOperation` | `SDL_Surface` | `SDL_Texture` | Upload a surface as an SDL texture for GPU rendering. |
 | `bitmap-font` | `BitmapFontOperation` | — (uses `file`) | `BitmapFont` | Load a JSON bitmap font definition and pre-build glyph textures. |
 
@@ -147,15 +147,15 @@ The `Context` also provides access to the `Registry`, enabling operations to int
   > See [`docs/bitmap-font.md`](bitmap-font.md) for the JSON format and pixel encoding scheme.
 
 #### CreateTextureOperation
+- Takes an input `SDL_Surface`
+- Creates an `SDL_Texture` via `SDL_CreateTextureFromSurface` using the `SDL_Renderer` from `AssetManager.instance().renderer()`
+- Stores the texture under the configured `id`
 
 #### TilemapPresetOperation
 - No input; reads `width`, `height`, `types`, and an optional `initial` 2D int array directly from the manifest entry
 - Stores a `TilemapPreset` (record of `width`, `height`, `types`, `initial`) under the configured `id`
 - Used by `PresetTilemapFactory` to generate `Tilemap`s for built-in difficulty levels (`tilemap/easy`, `tilemap/hard`)
 - Decouples gameplay parameters and the easy-mode initial blocked-cell pattern from Java source — tweak the manifest to retune difficulty without recompiling
-- Takes an input `SDL_Surface`
-- Creates an `SDL_Texture` via `SDL_CreateTextureFromSurface` using the `SDL_Renderer` from `AssetManager.instance().renderer()`
-- Stores the texture under the configured `id`
 
 ---
 
