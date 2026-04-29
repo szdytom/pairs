@@ -17,21 +17,27 @@ This document describes the coordinate systems, projection math, rendering pipel
 
 ## Coordinate Systems
 
-Three coordinate spaces exist in the codebase:
+Four coordinate spaces exist in the codebase — the last three apply to non-isometric 2D components as well:
 
 | Space | Axes | Description |
 |---|---|---|
 | **Grid** | `(row, col)`, row ↓ col → | Logical tile position in the map array |
-| **Logical pixel** | `(x, y)` | Orthographic projection output; scale-independent (scale = 1) |
-| **Screen pixel** | `(sx, sy)` | Actual position on the SDL render target; scale = s |
+| **Local logical pixel** | `(x, y)` | Position relative to the parent component; set by `layout()`. |
+| **Global logical pixel** | `(gx, gy)` | `parentGlobal + localLogical`; computed in `render()`. |
+| **Screen pixel** | `(sx, sy)` | Actual position on the SDL render target; `globalLogical × scale`. |
 
-The grid origin `(0, 0)` maps to a fixed screen-pixel origin `(originX, originY)`,
-typically placed at the top-centre of the window.  `IsometricMapper` bridges
-grid ⟷ logical pixel; scale is injected only at the outermost render boundary.
+The data flow:
 
 ```
-Grid ──gridToLogical──▶ Logical pixel ──× scale──▶ Screen pixel
+Grid ──gridToLogical──▶ Local logical ──+ parent pos──▶ Global logical ──× scale──▶ Screen pixel
 ```
+
+`IsometricMapper` bridges grid ⟷ local logical pixel. Scale and parent position
+are injected only in `render()`.
+
+Unlike the old system, the mapper no longer stores an origin — it returns offsets
+relative to the grid's own origin. The renderer supplies the grid's global
+position via the `(x, y)` parameter.
 
 ---
 
@@ -41,19 +47,20 @@ The projection uses a 2:1 isometric ratio — the vertical step is half the
 horizontal step, producing diamond-shaped tile footprints that tile the plane
 without gaps.
 
-### Grid → Logical pixel
+### Grid → Local logical pixel
 
 ```
 stepX  = tileWidth / 2
 stepY  = tileWidth / 4
-logicalX = originX + (col − row) × stepX
-logicalY = originY + (col + row) × stepY
+localX = (col − row) × stepX
+localY = (col + row) × stepY
 ```
 
-The result is the **centre** of the tile's diamond footprint.  Diamond
-vertices extend stepX/stepY from the centre in each cardinal direction.
+The result is an **offset from the grid origin** to the centre of the tile's
+diamond footprint. The renderer then adds the grid's global position and
+multiplies by scale to produce screen coordinates.
 
-### Logical pixel → Grid
+### Local logical pixel → Grid
 
 Invert the linear system, then round to the nearest integer.  The diamond
 footprint of tile `(r, c)` in `(col, row)` space is the axis-aligned unit
@@ -86,18 +93,18 @@ The source rectangle crops the 1 px spritesheet padding: `(1, 1, 16, 16)`.
 
 | Boundary | Operation |
 |---|---|
-| **Event entry** | Screen mouse coords → logical by `/ scale` |
-| **Render exit**   | Logical pixel coords → screen by `× scale` |
+| **Event entry** | Screen mouse coords → global logical by `/ scale` |
+| **Render exit**   | Global logical coords → screen by `× scale` |
 
-### Logical → screen
+### Global logical → screen
 
 ```
-screenX = originX + (logicalX − originX) × scale
-screenY = originY + (logicalY − originY) × scale
+screenX = globalLogicalX × scale
+screenY = globalLogicalY × scale
 ```
 
-This is equivalent to `originX + (col − row) × tileWidth × scale / 2` but
-keeps the projection and scale concerns separate.
+This is equivalent to `(parentX + localX) × scale` and keeps the projection,
+layout, and scale concerns separate.
 
 ---
 
@@ -111,13 +118,26 @@ in any order; tiles at the next sum are drawn on top.
 
 ## Rendering Pipeline
 
-Each frame, `IsometricGridView.render()`:
+Each frame follows the two-phase layout cycle before rendering:
+
+1. **Measure** (only when layout is dirty) — `component.measure()` reports
+   natural logical-pixel size bottom-up.
+2. **Layout** (only when layout is dirty) — the root assigns rectangles
+   top-down via `component.layout(x, y, w, h)`. Each component stores its
+   local position relative to its parent.
+3. **Render** — the root calls `component.render(renderer, 0, 0, scale)` and
+   each component:
+   - Computes its global position: `global = parentGlobal + localLayout`
+   - Calls children with its own global position
+   - Renders itself at the computed screen position
+
+In `IsometricGridView.render()`:
 
 1. **Initialise textures** (first frame only) — one `SDL_Texture` per tile type.
 2. **Depth sort** — `getDepthSortedOrder(gridRows, gridCols)`.
 3. **Draw loop** — iterate depth order back-to-front.  For each non-empty tile:
-   - `logicalPos = mapper.gridToLogical(row, col)`
-   - `screenPos = origin + (logicalPos − origin) × scale`
+   - `localPos = mapper.gridToLogical(row, col)`
+   - `screenPos = (gridGlobalPos + localPos) × scale`
    - Apply hover lift if highlighted: `screenY −= TILE_CONTENT_HEIGHT × scale / 3`
    - Blit via `SDL_RenderCopy`
 
@@ -132,9 +152,9 @@ SRC_RECT = (x=1, y=1, w=16, h=16)
 ## Hit-Testing
 
 Hit-testing resolves which tile is under the mouse cursor.  The mouse
-coordinates are already in logical-pixel space (divided by scale in the event
-loop).  Tile positions are computed in logical-pixel space, so **no scale
-is involved**.
+coordinates are already in global logical-pixel space (divided by scale in the
+event loop).  Tile positions are computed in the same space, using the grid's
+global logical position cached in `render()`.
 
 ### Algorithm
 
@@ -144,13 +164,17 @@ The first hit is the frontmost visible tile — this correctly handles occlusion
 since tiles in front are tested first.
 
 ```
-logicalOriginX = originX / scale     (cached each frame in render)
-logicalOriginY = originY / scale
+gridOriginGlobalX = levelGlobalX + gridLayoutX
+gridOriginGlobalY = levelGlobalY + gridLayoutY
 
-cx = logicalOriginX + (col − row) × tileWidth / 2
-cy = logicalOriginY + (col + row) × tileWidth / 4
+cx = gridOriginGlobalX + (col − row) × tileWidth / 2
+cy = gridOriginGlobalY + (col + row) × tileWidth / 4
 rect = [cx − 8, cx + 8) × [cy − 8, cy + 8)
 ```
+
+Note the contrast with the old system: no division by scale is needed because
+the grid origin is already stored in global logical-pixel space, matching the
+mouse coordinates.
 
 ### Raised-tile fix
 
@@ -172,7 +196,7 @@ independent of scale.
 - **Sprite rectangle** hit-testing is used instead of diamond containment
   because the tile sprites fill most of the 16 × 16 area — a diamond inequality
   would reject valid hits near corners.
-- `mouseX`/`mouseY` store **logical-pixel** coordinates and are cleared on
+- `mouseX`/`mouseY` store **global logical-pixel** coordinates and are cleared on
   `SDL_WINDOWEVENT_LEAVE`.
 
 ---
@@ -193,9 +217,8 @@ The tile is drawn at its natural depth-sorted order, so:
 
 | Method | Description |
 |---|---|
-| `gridToLogical(row, col)` | Grid → logical-pixel coords. Returns `{x, y}` (diamond centre). |
-| `logicalToGrid(x, y)` | Logical-pixel → grid coords. Returns `{row, col}`. |
-| `contains(x, y, row, col)` | Test if a logical point is inside a tile's visual diamond. |
+| `gridToLogical(row, col)` | Grid → local logical-pixel coords (offset from grid origin). Returns `{x, y}` (diamond centre). |
+| `logicalToGrid(x, y)` | Local logical-pixel → grid coords. Returns `{row, col}`. |
+| `contains(x, y, row, col)` | Test if a local-logical point is inside a tile's visual diamond. |
 | `getDepthSortedOrder(rows, cols)` | Painter's-algorithm order (back to front). |
-| `getOriginX()` / `getOriginY()` | Logical-pixel origin of tile `(0, 0)`. |
 | `getTileWidth()` / `getTileHeight()` | Tile dimensions in logical pixels. |
