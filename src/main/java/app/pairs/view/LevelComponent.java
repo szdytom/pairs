@@ -1,6 +1,5 @@
 package app.pairs.view;
 
-import app.pairs.asset.BitmapFont;
 import app.pairs.asset.TileRegistry;
 import app.pairs.logic.GameState;
 import app.pairs.map.TilemapFactory;
@@ -44,20 +43,32 @@ public class LevelComponent implements ViewComponent {
 	private int selectedCol = -1;
 
 	private boolean cleared;
-	private final BitmapFont font;
 
-	/** Cached logical-grid origin (= originX/scale, originY/scale). */
-	private int logicalOriginX;
-	private int logicalOriginY;
+	// Layout state
+	private int levelX;
+	private int levelY;
+	private final int[] measuredSize = new int[2];
+	/** Grid origin offset relative to this component in logical pixels. */
+	private int gridOriginX;
+	private int gridOriginY;
+	/**
+	 * Grid origin in global logical space, cached in render() for hit-testing.
+	 */
+	private int gridGlobalX;
+	private int gridGlobalY;
+
+	// Child text components
+	private final TextComponent titleText;
+	private final TextComponent scaleText;
+	private final TextComponent clearedText;
 
 	public LevelComponent(
 		TilemapFactory factory, TileRegistry tileRegistry,
-		TileRegistry hlTileRegistry, IsometricMapper mapper, BitmapFont font
+		TileRegistry hlTileRegistry, IsometricMapper mapper
 	) {
 		this.factory = factory;
 		this.gameState = GameState.fromFactory(factory);
 		this.mapper = mapper;
-		this.font = font;
 		this.gridWidth = gameState.getWidth();
 		this.gridHeight = gameState.getHeight();
 		this.depthOrder = mapper.getDepthSortedOrder(gridHeight, gridWidth);
@@ -66,11 +77,19 @@ public class LevelComponent implements ViewComponent {
 		this.gridView = new IsometricGridView(
 			buildGrid(), tileRegistry, hlTileRegistry, mapper
 		);
+
+		this.titleText = new TextComponent("Pairs", 1, 200, 200, 255);
+		this.scaleText = new TextComponent("Scale: 6x", 1, 180, 180, 180);
+		this.clearedText = new TextComponent("CLEARED!", 2, 255, 255, 100);
 	}
 
 	public void setMousePosition(int x, int y) {
 		this.mouseX = x;
 		this.mouseY = y;
+	}
+
+	public void setScaleText(int scale) {
+		scaleText.setText("Scale: " + scale + "x");
 	}
 
 	/** Reset the level with a newly generated map. */
@@ -141,23 +160,57 @@ public class LevelComponent implements ViewComponent {
 
 	@Override
 	public void update(long deltaTimeMs) {
-		// Hover is resolved in render() where the current scale is available.
+		// Propagate update to child components
+		gridView.update(deltaTimeMs);
+		titleText.update(deltaTimeMs);
+		scaleText.update(deltaTimeMs);
+		clearedText.update(deltaTimeMs);
 	}
 
 	@Override
-	public void render(SDL_Renderer renderer, int scale) {
-		// Cache logical-grid origin for hit-testing in resolveHoveredCell().
-		logicalOriginX = mapper.getOriginX() / scale;
-		logicalOriginY = mapper.getOriginY() / scale;
+	public int[] measure() {
+		int[] gridSize = gridView.measure();
+		measuredSize[0] = gridSize[0];
+		measuredSize[1] = gridSize[1] + 40;
+		return measuredSize;
+	}
+
+	@Override
+	public void layout(int x, int y, int w, int h) {
+		this.levelX = x;
+		this.levelY = y;
+		// Distance from grid origin to the leftmost pixel of the bounding box.
+		int stepX = mapper.getTileWidth() / 2;
+		int leftHalf = (gridHeight - 1) * stepX + TILE_CONTENT_WIDTH / 2;
+		int margin = 5;
+		gridOriginX = leftHalf + margin;
+		gridOriginY = margin + TILE_CONTENT_HEIGHT / 2;
+		gridView.layout(gridOriginX, gridOriginY, 0, 0);
+
+		titleText.layout(1, 1, 0, 0);
+		scaleText.layout(1, 14, 0, 0);
+		clearedText.layout(4, 12, 0, 0);
+	}
+
+	@Override
+	public void render(
+		SDL_Renderer renderer, int parentX, int parentY, int scale
+	) {
+		int myGlobalX = parentX + levelX;
+		int myGlobalY = parentY + levelY;
+
+		// Cache grid origin in global logical space for hit-testing.
+		gridGlobalX = myGlobalX + gridOriginX;
+		gridGlobalY = myGlobalY + gridOriginY;
 
 		resolveHoveredCell();
 		updateHighlighted();
-		gridView.render(renderer, scale);
+		gridView.render(renderer, myGlobalX, myGlobalY, scale);
+		titleText.render(renderer, myGlobalX, myGlobalY, scale);
+		scaleText.render(renderer, myGlobalX, myGlobalY, scale);
 
 		if (cleared) {
-			BitmapFontRenderer.renderText(
-				renderer, font, "CLEARED!", 4, 12, 2, scale, 255, 255, 100
-			);
+			clearedText.render(renderer, myGlobalX, myGlobalY, scale);
 		}
 	}
 
@@ -188,9 +241,9 @@ public class LevelComponent implements ViewComponent {
 	}
 
 	/**
-	 * Hit-test tiles front-to-back in logical-pixel space.  The cached
-	 * {@link #logicalOriginX}/{@link #logicalOriginY} were computed from the
-	 * current scale in {@link #render(SDL_Renderer, int)}.
+	 * Hit-test tiles front-to-back in logical-pixel space.  The grid origin
+	 * {@link #gridGlobalX}/{@link #gridGlobalY} was cached in
+	 * {@link #render(SDL_Renderer, int, int, int)}.
 	 */
 	private void resolveHoveredCell() {
 		prevHoveredRow = hoveredRow;
@@ -215,9 +268,9 @@ public class LevelComponent implements ViewComponent {
 			if (gameState.getTile(r, c) <= 0)
 				continue;
 
-			// Tile diamond centre in logical-pixel space.
-			int cx = logicalOriginX + (c - r) * TILE_CONTENT_WIDTH / 2;
-			int cy = logicalOriginY + (c + r) * TILE_CONTENT_WIDTH / 4;
+			// Tile diamond centre in global logical-pixel space.
+			int cx = gridGlobalX + (c - r) * TILE_CONTENT_WIDTH / 2;
+			int cy = gridGlobalY + (c + r) * TILE_CONTENT_WIDTH / 4;
 			int left = cx - halfW;
 			int right = cx + halfW;
 			int top = cy - halfH;

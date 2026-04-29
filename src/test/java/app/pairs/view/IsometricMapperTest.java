@@ -7,11 +7,9 @@ import org.junit.jupiter.api.Test;
 class IsometricMapperTest {
 	private static final int TILE_WIDTH = 16;
 	private static final int TILE_HEIGHT = 16;
-	private static final int ORIGIN_X = 512;
-	private static final int ORIGIN_Y = 80;
 
 	private final IsometricMapper mapper = new IsometricMapper(
-		TILE_WIDTH, TILE_HEIGHT, ORIGIN_X, ORIGIN_Y
+		TILE_WIDTH, TILE_HEIGHT
 	);
 
 	@Test

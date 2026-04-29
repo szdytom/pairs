@@ -30,10 +30,8 @@ import static io.github.libsdl4j.api.video.SdlVideo.SDL_DestroyWindow;
 import static io.github.libsdl4j.api.video.SdlVideoConst.SDL_WINDOWPOS_CENTERED;
 
 import app.pairs.asset.AssetManager;
-import app.pairs.asset.BitmapFont;
 import app.pairs.asset.TileRegistry;
 import app.pairs.map.HardTilemapFactory;
-import app.pairs.view.BitmapFontRenderer;
 import app.pairs.view.IsometricMapper;
 import app.pairs.view.LevelComponent;
 
@@ -97,19 +95,15 @@ public class Main {
 
 		TileRegistry tiles = AssetManager.instance().get("tiles/typed");
 		TileRegistry hlTiles = AssetManager.instance().get("hl-tiles/typed");
-		BitmapFont font = AssetManager.instance().get("monogram/font");
 
-		int originX = WINDOW_WIDTH / 2;
-		int originY = 80;
 		int scale = 6;
 
-		IsometricMapper mapper = new IsometricMapper(
-			TILE_WIDTH, TILE_HEIGHT, originX, originY
-		);
+		IsometricMapper mapper = new IsometricMapper(TILE_WIDTH, TILE_HEIGHT);
 
 		LevelComponent level = new LevelComponent(
-			new HardTilemapFactory(), tiles, hlTiles, mapper, font
+			new HardTilemapFactory(), tiles, hlTiles, mapper
 		);
+		relayout(level, scale);
 
 		System.out.println(
 			"Controls: +/- zoom | 0 reset scale | SPACE regenerate | ESC quit"
@@ -133,12 +127,15 @@ public class Main {
 					} else if (evt.key.keysym.sym == SDLK_EQUALS) {
 						scale = Math.min(MAX_SCALE, scale + SCALE_STEP);
 						System.out.println("Scale: " + scale);
+						relayout(level, scale);
 					} else if (evt.key.keysym.sym == SDLK_MINUS) {
 						scale = Math.max(MIN_SCALE, scale - SCALE_STEP);
 						System.out.println("Scale: " + scale);
+						relayout(level, scale);
 					} else if (evt.key.keysym.sym == SDLK_0) {
 						scale = 6;
 						System.out.println("Scale reset to " + scale);
+						relayout(level, scale);
 					}
 					break;
 				case SDL_MOUSEMOTION:
@@ -166,15 +163,7 @@ public class Main {
 			SDL_RenderClear(renderer);
 
 			level.update(deltaTime);
-			level.render(renderer, scale);
-
-			BitmapFontRenderer.renderText(
-				renderer, font, "Pairs", 1, 1, 1, scale, 200, 200, 255
-			);
-			BitmapFontRenderer.renderText(
-				renderer, font, "Scale: " + scale + "x", 1, 14, 1, scale, 180,
-				180, 180
-			);
+			level.render(renderer, 0, 0, scale);
 
 			SDL_RenderPresent(renderer);
 		}
@@ -184,5 +173,11 @@ public class Main {
 		SDL_DestroyRenderer(renderer);
 		SDL_DestroyWindow(window);
 		SDL_Quit();
+	}
+
+	private static void relayout(LevelComponent level, int scale) {
+		level.setScaleText(scale);
+		level.measure();
+		level.layout(0, 0, WINDOW_WIDTH / scale, WINDOW_HEIGHT / scale);
 	}
 }
