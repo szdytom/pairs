@@ -8,6 +8,8 @@ import io.github.libsdl4j.api.surface.*;
 /**
  * Crops a sprite sheet into individual tiles.
  * Expects a grid layout: tiles are extracted row-major from top-left.
+ * The output is a {@link CropData} containing the flat tile array plus
+ * the tile dimensions and column count needed for downstream processing.
  */
 public class CropTilesOperation implements AssetOperation {
 	private String id;
@@ -38,9 +40,7 @@ public class CropTilesOperation implements AssetOperation {
 
 		SDL_Surface source = ctx.getInput(input);
 
-		TileRegistry registry = new TileRegistry(
-			columns, rows, tileWidth, tileHeight
-		);
+		SDL_Surface[] surfaces = new SDL_Surface[rows * columns];
 
 		for (int row = 0; row < rows; row++) {
 			for (int col = 0; col < columns; col++) {
@@ -68,13 +68,17 @@ public class CropTilesOperation implements AssetOperation {
 					source, srcRect, tileSurface, dstRect
 				);
 
-				registry.setTile(row, col, tileSurface);
+				surfaces[row * columns + col] = tileSurface;
 			}
 		}
 
 		System.out.println("  Cropped " + (columns * rows) + " tiles");
-		ctx.put(id, registry);
+		ctx.put(id, new CropData(tileWidth, tileHeight, columns, surfaces));
 	}
+
+	public record CropData(
+		int tileWidth, int tileHeight, int columns, SDL_Surface[] surfaces
+	) {}
 
 	public CropTilesOperation id(String id) {
 		this.id = id;

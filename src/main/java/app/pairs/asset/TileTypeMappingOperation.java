@@ -1,12 +1,20 @@
 package app.pairs.asset;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
+import io.github.libsdl4j.api.surface.*;
+
 /**
- * Assigns a 2D type mapping to a TileRegistry.
- * Each cell maps a tilesheet position to a string tile ID, or null (empty).
+ * Builds a flat {@link TileRegistry} from a {@link CropTilesOperation.CropData}
+ * and a 2D string-type mapping.  Filters out null entries — only valid tile
+ * surfaces with non-null string IDs are registered.
  */
 public class TileTypeMappingOperation implements AssetOperation {
 	private String id;
@@ -50,8 +58,37 @@ public class TileTypeMappingOperation implements AssetOperation {
 		String[][] resolved = mapping != null
 			? mapping
 			: ctx.getInput(mappingId);
-		TileRegistry registry = ctx.getInput(input);
-		registry.setTypeMapping(resolved);
+
+		CropTilesOperation.CropData crop = ctx.getInput(input);
+		int cols = crop.columns();
+
+		List<SDL_Surface> validSurfaces = new ArrayList<>();
+		List<String> validIds = new ArrayList<>();
+		Set<String> seen = new HashSet<>();
+
+		for (int r = 0; r < resolved.length; r++) {
+			for (int c = 0; c < resolved[r].length; c++) {
+				String sid = resolved[r][c];
+				if (sid == null || !seen.add(sid))
+					continue;
+				SDL_Surface surface = crop.surfaces()[r * cols + c];
+				if (surface != null) {
+					validSurfaces.add(surface);
+					validIds.add(sid);
+				}
+			}
+		}
+
+		TileRegistry registry = new TileRegistry(
+			crop.tileWidth(), crop.tileHeight(),
+			validSurfaces.toArray(new SDL_Surface[0]),
+			validIds.toArray(new String[0])
+		);
+
+		System.out.println(
+			"  Created TileRegistry with " + registry.getTypeCount()
+			+ " tiles: " + id
+		);
 		ctx.put(id, registry);
 	}
 

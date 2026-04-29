@@ -11,19 +11,12 @@ import io.github.libsdl4j.api.render.*;
 /**
  * Top-level component that owns a {@link GameState} and an
  * {@link IsometricGridView}. Bridges the int-based tile IDs from the model to
- * the string-based IDs expected by the view, resolves mouse-over cells, and
- * drives the selection/elimination interaction.
+ * the view, resolves mouse-over cells, and drives the selection/elimination
+ * interaction.
  */
 public class LevelComponent extends Container {
 	private static final int TILE_CONTENT_WIDTH = 16;
 	private static final int TILE_CONTENT_HEIGHT = 16;
-
-	/** Remap generated type IDs (1..12) to visually interesting textures. */
-	private static final String[] TYPE_TEXTURE_MAP = {
-		/*  1 */ "80", /*  2 */ "81", /*  3 */ "82", /*  4 */ "83",
-		/*  5 */ "84", /*  6 */ "90", /*  7 */ "91", /*  8 */ "92",
-		/*  9 */ "93", /* 10 */ "94", /* 11 */ "95", /* 12 */ "96",
-	};
 
 	private final TilemapFactory factory;
 	private GameState gameState;
@@ -124,8 +117,6 @@ public class LevelComponent extends Container {
 
 	/** Handle a mouse click at the current cursor position. */
 	public void handleClick() {
-		// Re-resolve hovered cell so the click sees current mouseX/mouseY even
-		// when no MOUSEMOTION was processed this frame before the click.
 		resolveHoveredCell();
 
 		if (hoveredRow < 0 || hoveredCol < 0) {
@@ -136,15 +127,12 @@ public class LevelComponent extends Container {
 		}
 
 		if (selectedRow < 0) {
-			// First selection.
 			selectedRow = hoveredRow;
 			selectedCol = hoveredCol;
 		} else if (selectedRow == hoveredRow && selectedCol == hoveredCol) {
-			// Click the same tile again — deselect.
 			selectedRow = -1;
 			selectedCol = -1;
 		} else {
-			// Second selection — attempt elimination.
 			if (gameState.canEliminate(
 					selectedRow, selectedCol, hoveredRow, hoveredCol
 				)) {
@@ -159,7 +147,6 @@ public class LevelComponent extends Container {
 				selectedRow = -1;
 				selectedCol = -1;
 			} else {
-				// Invalid — move selection to the new tile.
 				selectedRow = hoveredRow;
 				selectedCol = hoveredCol;
 			}
@@ -177,7 +164,6 @@ public class LevelComponent extends Container {
 	@Override
 	public void layout(int x, int y, int w, int h) {
 		super.layout(x, y, w, h);
-		// Distance from grid origin to the leftmost pixel of the bounding box.
 		int stepX = mapper.getTileWidth() / 2;
 		int leftHalf = (gridHeight - 1) * stepX + TILE_CONTENT_WIDTH / 2;
 		int margin = 5;
@@ -204,7 +190,6 @@ public class LevelComponent extends Container {
 		int myGlobalX = parentX + layoutX;
 		int myGlobalY = parentY + layoutY;
 
-		// Cache grid origin in global logical space for hit-testing.
 		gridGlobalX = myGlobalX + gridOriginX;
 		gridGlobalY = myGlobalY + gridOriginY;
 
@@ -255,7 +240,6 @@ public class LevelComponent extends Container {
 		int halfH = TILE_CONTENT_HEIGHT / 2;
 		int hoverOffset = TILE_CONTENT_HEIGHT / 3;
 
-		// Front-to-back (reverse depth order)
 		for (int i = depthOrder.length - 1; i >= 0; i--) {
 			int[] pos = depthOrder[i];
 			int r = pos[0];
@@ -264,7 +248,6 @@ public class LevelComponent extends Container {
 			if (gameState.getTile(r, c) <= 0)
 				continue;
 
-			// Tile diamond centre in global logical-pixel space.
 			int cx = gridGlobalX + (c - r) * TILE_CONTENT_WIDTH / 2;
 			int cy = gridGlobalY + (c + r) * TILE_CONTENT_WIDTH / 4;
 			int left = cx - halfW;
@@ -272,7 +255,6 @@ public class LevelComponent extends Container {
 			int top = cy - halfH;
 			int bottom = cy + halfH;
 
-			// Normal position
 			if (mouseX >= left && mouseX < right && mouseY >= top
 			    && mouseY < bottom) {
 				hoveredRow = r;
@@ -280,8 +262,6 @@ public class LevelComponent extends Container {
 				return;
 			}
 
-			// Previously hovered tile: also check the raised position so the
-			// hover doesn't glitch when the tile lifts.
 			if (r == prevHoveredRow && c == prevHoveredCol) {
 				int raisedTop = top - hoverOffset;
 				int raisedBottom = bottom - hoverOffset;
@@ -315,21 +295,13 @@ public class LevelComponent extends Container {
 		gridView.setHighlighted(highlighted);
 	}
 
-	private String[][] buildGrid() {
-		String[][] grid = new String[gridHeight][gridWidth];
+	private int[][] buildGrid() {
+		int[][] grid = new int[gridHeight][gridWidth];
 		for (int r = 0; r < gridHeight; r++) {
 			for (int c = 0; c < gridWidth; c++) {
-				int tile = gameState.getTile(r, c);
-				grid[r][c] = tile > 0 ? textureId(tile) : null;
+				grid[r][c] = gameState.getTile(r, c);
 			}
 		}
 		return grid;
-	}
-
-	private static String textureId(int typeId) {
-		if (typeId >= 1 && typeId <= TYPE_TEXTURE_MAP.length) {
-			return TYPE_TEXTURE_MAP[typeId - 1];
-		}
-		return Integer.toString(typeId);
 	}
 }
