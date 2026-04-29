@@ -14,6 +14,12 @@ public interface Operation {
 	void undo();
 
 	/**
+	 * Return a human-readable notation string for this operation, in the form
+	 * `<type> <coords...>`. Example: `elim (0,0)->(3,4) [7]`.
+	 */
+	String toNotation();
+
+	/**
 	 * Pop the most recent operation from the supplied source and undo it.
 	 *
 	 * @param popFn a supplier that returns the last operation, or {@code null}

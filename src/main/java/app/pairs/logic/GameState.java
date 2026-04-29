@@ -127,6 +127,14 @@ public final class GameState {
 		return opLogs.history();
 	}
 
+	/**
+	 * Returns a notation log of all operations in chronological order, one
+	 * entry per operation. Format matches {@link Operation#toNotation()}.
+	 */
+	public List<String> getLog() {
+		return opLogs.history().stream().map(Operation::toNotation).toList();
+	}
+
 	/** Check whether the game is in a stalled state (no more valid moves). */
 	public boolean isStall() {
 		return IsStall.isStall(tilemap);

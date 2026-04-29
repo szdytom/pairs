@@ -85,4 +85,10 @@ public class OpElimination implements Operation {
 	public int getTileId() {
 		return tileId;
 	}
+
+	@Override
+	public String toNotation() {
+		return "elim (" + row1 + "," + col1 + ") - (" + row2 + "," + col2
+			+ ") [" + tileId + "]";
+	}
 }
