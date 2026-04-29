@@ -85,6 +85,9 @@ public class Main {
 		TileRegistry tiles = AssetManager.instance().get("tiles/typed");
 		TileRegistry hlTiles = AssetManager.instance().get("hl-tiles/typed");
 
+		tiles.createTextures(renderer);
+		hlTiles.createTextures(renderer);
+
 		int scale = 6;
 
 		IsometricMapper mapper = new IsometricMapper(TILE_WIDTH, TILE_HEIGHT);
