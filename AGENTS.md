@@ -1,28 +1,12 @@
 # AGENTS.md
 
-## Common Commands
-
-### Build & Run
-
-- `./gradlew build`: Build the entire project
-- `./gradlew run`: Run the main application
-- `./gradlew test`: Run unit tests
-- `./gradlew clean`: Clean build artifacts
-
-On Windows, use `gradlew.bat` instead of `./gradlew` for all commands above.
-
-### Scripts
-
-- `./scripts/format-j.sh`: Format all Java source files (Run before committing code)
-
-Application entry point: `app.pairs.Main` (configured in `build.gradle`)
+This project is a link and cancel game (连连看) implemented in Java using libsdl4j. This note contains instructions for agents contributing to the project. These instructions MUST be STRICTLY followed.
 
 ## Code Style
 
-- Use `./scripts/format-j.sh` to format Java code according to project standards.
+- Use format-j script to format Java code according to project standards.
 
 - Use English for all comments in code.
-- Write comments using Markdown syntax, even though they are not rendered. For example, "// `object` is borrowed", not "// object is borrowed".
 - Keep comments concise: let the code explain itself if possible. Comment "what" and "why", not "how". Avoid redundant comments that restate the code.
 
 - Use wildcard imports for libsdl4j JNI bindings as much as possible, to reduce clutter.
@@ -34,5 +18,34 @@ Application entry point: `app.pairs.Main` (configured in `build.gradle`)
 ## General Instructions
 
 - Always run tests after making changes.
-- Consult `docs/libsdl4j.md` for common problems and solutions related to libsdl4j. Document any new issues and their fixes in that file.
-- Write tests, not too many, mostly integrated.
+- Write tests, not too many, mostly integration.
+- No error handling for impossible scenarios.
+- Simplicity is a virtue: If you write 200 lines and it could be 50, rewrite it.
+
+## Domain-Specific Guidelines Index
+
+For specific domains, READ and only read the relevant documentation:
+
+- When working on UI components, READ and FOLLOW the instructions in [UI Guidelines](ui-guidelines.md).
+- When working on isometric projection, consult [Isometric Projection](isometric-projection.md) for its algorithms and internals.
+- When working on assets loading and management, consult [Assets Management](assets-management.md) for best practices and patterns.
+
+## Common Commands
+
+### Build & Run
+
+Gradle is used as the build system for this project.
+
+- `./gradlew build`: Build the entire project
+- `./gradlew run`: Run the main application
+- `./gradlew test`: Run unit tests
+- `./gradlew clean`: Clean build artifacts
+
+On Windows, use `gradlew.bat` instead of `./gradlew` for all commands above.
+
+Application entry point: `app.pairs.Main` (configured in `build.gradle`)
+
+### Scripts
+
+- `./scripts/format-j.sh`: Format all Java source files (Run before committing code)
+- `./scripts/format-j.ps1`: PowerShell version of the above script for Windows users
