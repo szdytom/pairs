@@ -1,6 +1,6 @@
 package app.pairs.view;
 
-import io.github.libsdl4j.api.render.SDL_Renderer;
+import io.github.libsdl4j.api.render.*;
 
 /**
  * Common interface for view components.

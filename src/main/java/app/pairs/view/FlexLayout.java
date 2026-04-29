@@ -3,7 +3,7 @@ package app.pairs.view;
 import java.util.ArrayList;
 import java.util.List;
 
-import io.github.libsdl4j.api.render.SDL_Renderer;
+import io.github.libsdl4j.api.render.*;
 
 /**
  * Simplified flex-box container that lays out children sequentially in a row

@@ -1,7 +1,6 @@
 package app.pairs.asset;
 
-import io.github.libsdl4j.api.surface.SDL_Surface;
-import io.github.libsdl4j.api.surface.SdlSurface;
+import io.github.libsdl4j.api.surface.*;
 
 /**
  * Stores cropped tiles in a 1D array with auto-assigned numeric IDs.

@@ -2,10 +2,8 @@ package app.pairs.view;
 
 import app.pairs.asset.BitmapFont;
 
-import io.github.libsdl4j.api.rect.SDL_Rect;
-import io.github.libsdl4j.api.render.SDL_Renderer;
-import io.github.libsdl4j.api.render.SDL_Texture;
-import io.github.libsdl4j.api.render.SdlRender;
+import io.github.libsdl4j.api.rect.*;
+import io.github.libsdl4j.api.render.*;
 
 /**
  * Utility for rendering text with a BitmapFont.

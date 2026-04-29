@@ -2,9 +2,8 @@ package app.pairs.asset;
 
 import com.google.gson.JsonObject;
 
-import io.github.libsdl4j.api.rect.SDL_Rect;
-import io.github.libsdl4j.api.surface.SDL_Surface;
-import io.github.libsdl4j.api.surface.SdlSurface;
+import io.github.libsdl4j.api.rect.*;
+import io.github.libsdl4j.api.surface.*;
 
 /**
  * Crops a sprite sheet into individual tiles.

@@ -3,7 +3,7 @@ package app.pairs.view;
 import app.pairs.asset.AssetManager;
 import app.pairs.asset.BitmapFont;
 
-import io.github.libsdl4j.api.render.SDL_Renderer;
+import io.github.libsdl4j.api.render.*;
 
 /**
  * A leaf {@link ViewComponent} that renders a line of text using a
