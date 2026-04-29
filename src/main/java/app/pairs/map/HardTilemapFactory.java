@@ -5,9 +5,9 @@ import app.pairs.model.Tilemap;
 import java.util.Random;
 
 public class HardTilemapFactory implements TilemapFactory {
-	private static final int WIDTH = 10;
-	private static final int HEIGHT = 10;
-	private static final int TYPES = 12;
+	private static final int WIDTH = 16;
+	private static final int HEIGHT = 16;
+	private static final int TYPES = 20;
 
 	private final Random random = new Random();
 
