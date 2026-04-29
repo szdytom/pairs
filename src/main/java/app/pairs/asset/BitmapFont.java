@@ -1,16 +1,13 @@
 package app.pairs.asset;
 
-import static io.github.libsdl4j.api.blendmode.SDL_BlendMode.SDL_BLENDMODE_BLEND;
-import static io.github.libsdl4j.api.pixels.SDL_PixelFormatEnum.SDL_PIXELFORMAT_ABGR8888;
+import static io.github.libsdl4j.api.blendmode.SDL_BlendMode.*;
+import static io.github.libsdl4j.api.pixels.SDL_PixelFormatEnum.*;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import io.github.libsdl4j.api.render.SDL_Renderer;
-import io.github.libsdl4j.api.render.SDL_Texture;
-import io.github.libsdl4j.api.render.SdlRender;
-import io.github.libsdl4j.api.surface.SDL_Surface;
-import io.github.libsdl4j.api.surface.SdlSurface;
+import io.github.libsdl4j.api.render.*;
+import io.github.libsdl4j.api.surface.*;
 
 /**
  * Flyweight: glyph bitmap data and pre-created textures are intrinsic (shared)

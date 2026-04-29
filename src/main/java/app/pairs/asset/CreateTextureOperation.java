@@ -2,10 +2,8 @@ package app.pairs.asset;
 
 import com.google.gson.JsonObject;
 
-import io.github.libsdl4j.api.render.SDL_Renderer;
-import io.github.libsdl4j.api.render.SDL_Texture;
-import io.github.libsdl4j.api.render.SdlRender;
-import io.github.libsdl4j.api.surface.SDL_Surface;
+import io.github.libsdl4j.api.render.*;
+import io.github.libsdl4j.api.surface.*;
 
 public class CreateTextureOperation implements AssetOperation {
 	private String id;

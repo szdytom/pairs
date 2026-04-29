@@ -4,7 +4,7 @@ import app.pairs.asset.TileRegistry;
 import app.pairs.logic.GameState;
 import app.pairs.map.TilemapFactory;
 
-import io.github.libsdl4j.api.render.SDL_Renderer;
+import io.github.libsdl4j.api.render.*;
 
 /**
  * Top-level component that owns a {@link GameState} and an

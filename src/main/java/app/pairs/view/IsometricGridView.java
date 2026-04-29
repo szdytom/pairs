@@ -5,11 +5,9 @@ import app.pairs.asset.TileRegistry;
 import java.util.HashMap;
 import java.util.Map;
 
-import io.github.libsdl4j.api.rect.SDL_Rect;
-import io.github.libsdl4j.api.render.SDL_Renderer;
-import io.github.libsdl4j.api.render.SDL_Texture;
-import io.github.libsdl4j.api.render.SdlRender;
-import io.github.libsdl4j.api.surface.SDL_Surface;
+import io.github.libsdl4j.api.rect.*;
+import io.github.libsdl4j.api.render.*;
+import io.github.libsdl4j.api.surface.*;
 
 /**
  * Renders a 2D grid of tile types using isometric projection.

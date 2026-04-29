@@ -1,6 +1,6 @@
 package app.pairs.asset;
 
-import static io.github.libsdl4j.api.pixels.SDL_PixelFormatEnum.SDL_PIXELFORMAT_ABGR8888;
+import static io.github.libsdl4j.api.pixels.SDL_PixelFormatEnum.*;
 
 import java.awt.image.BufferedImage;
 import java.io.InputStream;
@@ -8,8 +8,7 @@ import javax.imageio.ImageIO;
 
 import com.google.gson.JsonObject;
 
-import io.github.libsdl4j.api.surface.SDL_Surface;
-import io.github.libsdl4j.api.surface.SdlSurface;
+import io.github.libsdl4j.api.surface.*;
 
 public class ImageOperation implements AssetOperation {
 	private String id;
