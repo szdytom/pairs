@@ -26,9 +26,9 @@ This project is a link and cancel game (连连看) implemented in Java using lib
 
 For specific domains, READ and only read the relevant documentation:
 
-- When working on UI components, READ and FOLLOW the instructions in [UI Guidelines](ui-guidelines.md).
-- When working on isometric projection, consult [Isometric Projection](isometric-projection.md) for its algorithms and internals.
-- When working on assets loading and management, consult [Assets Management](assets-management.md) for best practices and patterns.
+- When working on UI components, READ and FOLLOW the instructions in [UI Guidelines](docs/ui-guidelines.md).
+- When working on isometric projection, consult [Isometric Projection](docs/isometric-projection.md) for its algorithms and internals.
+- When working on assets loading and management, consult [Assets Management](docs/assets-management.md) for best practices and patterns.
 
 ## Common Commands
 
