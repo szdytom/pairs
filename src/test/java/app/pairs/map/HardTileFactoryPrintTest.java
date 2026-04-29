@@ -9,13 +9,13 @@ import org.junit.jupiter.api.Test;
 class HardTileFactoryPrintTest {
 	@Test
 	void printHardIdArray() {
-		HardTilemapFactory factory = new HardTilemapFactory();
-		Tilemap tilemap = factory.generate();
+		TilemapPreset preset = new TilemapPreset(12, 12, 20, null);
+		Tilemap tilemap = new PresetTilemapFactory(preset).generate();
 
 		System.out.println("===== HARD ID (tile type) =====");
 		MapTestHelper.printTilemap(tilemap);
 
-		assertThat(tilemap.getHeight()).isGreaterThan(0);
-		assertThat(tilemap.getWidth()).isGreaterThan(0);
+		assertThat(tilemap.getHeight()).isEqualTo(12);
+		assertThat(tilemap.getWidth()).isEqualTo(12);
 	}
 }

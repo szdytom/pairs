@@ -48,6 +48,7 @@ public class AssetManager {
 		registry.register("tile-type-mapping", TileTypeMappingOperation::new);
 		registry.register("mapping", MappingOperation::new);
 		registry.register("bitmap-font", BitmapFontOperation::new);
+		registry.register("tilemap-preset", TilemapPresetOperation::new);
 	}
 
 	public void loadManifest(String path) throws Exception {
