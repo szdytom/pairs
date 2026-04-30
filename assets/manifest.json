@@ -95,6 +95,12 @@
 			"description": "Loading monogram bitmap font"
 		},
 		{
+			"id": "tile-groups/default",
+			"type": "tile-groups",
+			"file": "tile-groups.json",
+			"description": "Loading tile similarity groups"
+		},
+		{
 			"id": "tilemap/easy",
 			"type": "tilemap-preset",
 			"width": 9,
@@ -120,6 +126,14 @@
 			"height": 12,
 			"types": 20,
 			"description": "Defining hard mode tilemap preset"
+		},
+		{
+			"id": "tilemap/extreme",
+			"type": "tilemap-preset",
+			"width": 12,
+			"height": 12,
+			"types": 20,
+			"description": "Defining extreme mode tilemap preset"
 		}
 	]
 }
