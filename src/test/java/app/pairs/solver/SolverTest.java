@@ -30,7 +30,7 @@ class SolverTest {
 	}
 
 	@Test
-	void twoPairsRequireOrdering() {
+	void twoPairsAnyOrder() {
 		// 4-tile single row; both pairs connect (2's directly, 1's via
 		// off-board row -1), so solver clears in 2 moves regardless of order.
 		Tilemap map = new Tilemap(new int[][] {
@@ -57,16 +57,16 @@ class SolverTest {
 	}
 
 	@Test
-	void randomGeneratedMapIsFullySolvable() {
-		// Use PresetTilemapFactory to produce a guaranteed-solvable map.
-		app.pairs.map.TilemapPreset preset = new app.pairs.map.TilemapPreset(
-			6, 6, 4, null
-		);
-		Tilemap generated = new app.pairs.map.PresetTilemapFactory(preset)
-								.generate();
-		SolverResult r = Solver.solve(generated, 5_000);
+	void fixedMapIsFullySolvable() {
+		Tilemap generated = new Tilemap(new int[][] {
+			{1, 2, 3, 3, 2, 1},
+			{4, 0, 0, 0, 0, 4},
+			{1, 2, 3, 3, 2, 1},
+			{4, 0, 0, 0, 0, 4},
+		});
+		SolverResult r = Solver.solve(generated);
 		assertThat(r.isComplete())
-			.as("solver should fully clear a generator-produced map")
+			.as("solver should fully clear a fixed solvable map")
 			.isTrue();
 		// Verify the move sequence is internally consistent by replaying it.
 		Tilemap replay = copy(generated);

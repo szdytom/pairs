@@ -1,20 +1,33 @@
 package app.pairs.solver;
 
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.Set;
+
 import app.pairs.logic.TileTransition;
 import app.pairs.model.Tilemap;
 
-import java.util.*;
-
 /**
+ * 
  * Solves (or partially solves) a {@link Tilemap} by enumerating elimination
  * sequences. Goal: minimize the number of tiles left after all valid moves
  * are exhausted; reaching 0 means a complete clear.
  *
- * <p>Strategy: DFS with Zobrist hashing + transposition table, forced-move
+ * 
+ * <p>
+ * Strategy: DFS with Zobrist hashing + transposition table, forced-move
  * propagation for size-2 types, most-constrained-first branching, and an
  * optional anytime time budget.
  *
- * <p>The input map is not mutated: the solver works on an internal copy.
+ * <p>
+ * The input map is not mutated: the solver works on an internal copy.
  */
 public final class Solver {
 	private static final long ZOBRIST_SEED = 0xC0FFEEL;
@@ -77,13 +90,12 @@ public final class Solver {
 	public static SolverResult solve(Tilemap map, long timeoutMillis) {
 		Solver s = new Solver(map);
 		s.deadlineNanos = timeoutMillis > 0
-			? System.nanoTime() + timeoutMillis * 1_000_000L
-			: Long.MAX_VALUE;
+				? System.nanoTime() + timeoutMillis * 1_000_000L
+				: Long.MAX_VALUE;
 		s.bestRemainingTiles = s.remainingTiles;
 		s.dfs();
 		return new SolverResult(
-			List.copyOf(s.bestPath), s.bestRemainingTiles / 2
-		);
+				List.copyOf(s.bestPath), s.bestRemainingTiles / 2);
 	}
 
 	private int dfs() {
@@ -95,16 +107,15 @@ public final class Solver {
 			deadlineHit = true;
 			return remainingTiles;
 		}
-		Integer cached = tt.get(hash);
-		if (cached != null) {
-			return cached;
-		}
-
 		int forcedDepth = applyForcedMoves();
 		try {
 			if (remainingTiles == 0) {
 				snapshotBest();
 				return 0;
+			}
+			Integer cached = tt.get(hash);
+			if (cached != null) {
+				return cached;
 			}
 			List<Move> moves = generateMoves();
 			if (moves.isEmpty()) {
@@ -143,7 +154,7 @@ public final class Solver {
 			}
 			int val = grid[f.r1()][f.c1()];
 			apply(f);
-			forcedStack.push(new int[] {f.r1(), f.c1(), f.r2(), f.c2(), val});
+			forcedStack.push(new int[] { f.r1(), f.c1(), f.r2(), f.c2(), val });
 			depth++;
 		}
 	}
@@ -169,9 +180,9 @@ public final class Solver {
 					continue;
 				}
 				if (!firstSeen.containsKey(v)) {
-					firstSeen.put(v, new int[] {r, c});
+					firstSeen.put(v, new int[] { r, c });
 				} else if (!secondSeen.containsKey(v)) {
-					secondSeen.put(v, new int[] {r, c});
+					secondSeen.put(v, new int[] { r, c });
 				} else {
 					overTwo.add(v);
 					firstSeen.remove(v);
@@ -196,7 +207,7 @@ public final class Solver {
 				int v = grid[r][c];
 				if (v > 0) {
 					byType.computeIfAbsent(v, k -> new ArrayList<>())
-						.add(new int[] {r, c});
+							.add(new int[] { r, c });
 				}
 			}
 		}
@@ -210,8 +221,7 @@ public final class Solver {
 				for (int j = i + 1; j < g.size(); j++) {
 					int[] b = g.get(j);
 					if (TileTransition.transition(
-							view, a[0], a[1], b[0], b[1]
-						)) {
+							view, a[0], a[1], b[0], b[1])) {
 						moves.add(new Move(a[0], a[1], b[0], b[1]));
 					}
 				}
