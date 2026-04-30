@@ -1,6 +1,9 @@
 package app.pairs.map;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import app.pairs.utils.Seed;
 import app.pairs.utils.Xoroshiro128PP;
@@ -53,15 +56,19 @@ class TileSelectionPolicyTest {
 
 	@Test
 	void extremeAllowsSlabsAndPrefersSameGroup() {
-		// Take 4 — should fit entirely inside the 4-element c group.
-		int[] subset = TileSelectionPolicy.extreme().select(IDS, REG, 4, rng());
+		// Request 7: pickSlabs takes up to MAX_SLABS=3 from the slab group,
+		// the remaining 4 come from PREFER_DUPLICATES which should drain the
+		// largest non-slab group (c, 4 members) in one go.
+		int[] subset = TileSelectionPolicy.extreme().select(IDS, REG, 7, rng());
 		Set<String> picked = pickedStrings(subset);
-		assertEquals(4, picked.size());
-		// all from same group
-		String prefix = picked.iterator().next().substring(0, 1);
-		picked.forEach(
-			s -> assertTrue(s.startsWith(prefix), s + " vs " + prefix)
+		assertEquals(7, picked.size());
+		long slabCount = picked.stream().filter(s -> s.startsWith("s")).count();
+		assertTrue(
+			slabCount <= TileSelectionPolicy.MAX_SLABS,
+			"slab count " + slabCount + " > MAX_SLABS"
 		);
+		long cCount = picked.stream().filter(s -> s.startsWith("c")).count();
+		assertEquals(4, cCount, "should drain the whole c group: " + picked);
 	}
 
 	@Test

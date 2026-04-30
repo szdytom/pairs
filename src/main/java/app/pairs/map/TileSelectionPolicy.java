@@ -17,13 +17,13 @@ import java.util.Random;
  * <li>{@code includeSlabs} — when {@code false}, members of any slab
  * {@link TileGroup} are excluded.</li>
  * <li>{@link Spread} — controls how the picks relate to non-slab groups:
- *   <ul>
- *   <li>{@link Spread#NO_DUPLICATES} — at most one tile per group.</li>
- *   <li>{@link Spread#FREE} — uniformly random among all eligible tiles.</li>
- *   <li>{@link Spread#PREFER_DUPLICATES} — greedily exhaust whole groups
- *   before drawing ungrouped tiles, maximising same-looking tiles in the
- *   final palette.</li>
- *   </ul>
+ * <ul>
+ * <li>{@link Spread#NO_DUPLICATES} — at most one tile per group.</li>
+ * <li>{@link Spread#FREE} — uniformly random among all eligible tiles.</li>
+ * <li>{@link Spread#PREFER_DUPLICATES} — greedily exhaust whole groups
+ * before drawing ungrouped tiles, maximising same-looking tiles in the
+ * final palette.</li>
+ * </ul>
  * </li>
  * </ul>
  *
@@ -32,6 +32,14 @@ import java.util.Random;
  */
 public final class TileSelectionPolicy {
 	public enum Spread { NO_DUPLICATES, FREE, PREFER_DUPLICATES }
+
+	/**
+	 * Hard cap on slab tiles in the final palette when {@link
+	 * #includeSlabs} is true. Slabs all look broadly similar, so a few of
+	 * them go a long way; pulling in the whole slab group would drown out
+	 * the rest of the palette.
+	 */
+	public static final int MAX_SLABS = 3;
 
 	private final boolean includeSlabs;
 	private final Spread spread;
@@ -56,6 +64,7 @@ public final class TileSelectionPolicy {
 	public boolean includeSlabs() {
 		return includeSlabs;
 	}
+
 	public Spread spread() {
 		return spread;
 	}
@@ -85,27 +94,67 @@ public final class TileSelectionPolicy {
 		List<String> stringIdsByNumeric, TileGroupRegistry groups, int count,
 		Random rnd
 	) {
-		List<Candidate> pool = buildPool(stringIdsByNumeric, groups);
+		List<Integer> slabPicks = pickSlabs(stringIdsByNumeric, groups, rnd);
+		int nonSlabCount = Math.max(0, count - slabPicks.size());
+		List<Candidate> pool = buildNonSlabPool(stringIdsByNumeric, groups);
 		List<Integer> picks = switch (spread) {
-			case FREE -> pickFree(pool, count, rnd);
-			case NO_DUPLICATES -> pickNoDuplicates(pool, count, rnd);
-			case PREFER_DUPLICATES -> pickPreferDuplicates(pool, count, rnd);
+			case FREE -> pickFree(pool, nonSlabCount, rnd);
+			case NO_DUPLICATES -> pickNoDuplicates(pool, nonSlabCount, rnd);
+			case PREFER_DUPLICATES ->
+				pickPreferDuplicates(pool, nonSlabCount, rnd);
 		};
-		if (picks.size() < count) {
+		List<Integer> all = new ArrayList<>(picks.size() + slabPicks.size());
+		all.addAll(picks);
+		all.addAll(slabPicks);
+		Collections.shuffle(all, rnd);
+		if (all.size() < count) {
 			throw new IllegalStateException(
 				"Not enough eligible tiles: requested=" + count + ", available="
-				+ picks.size() + " (includeSlabs=" + includeSlabs
+				+ all.size() + " (includeSlabs=" + includeSlabs
 				+ ", spread=" + spread + ")"
 			);
 		}
 		int[] out = new int[count + 1];
 		for (int i = 0; i < count; i++) {
-			out[i + 1] = picks.get(i);
+			out[i + 1] = all.get(i);
 		}
 		return out;
 	}
 
-	private List<Candidate> buildPool(
+	/**
+	 * Random sample of up to {@link #MAX_SLABS} slab tiles. Returns empty
+	 * when slabs are disabled. Slabs are intentionally NOT routed through
+	 * the {@link Spread} buckets — three near-identical slabs are already
+	 * confusing enough; flooding the palette with sixteen of them drowns
+	 * out everything else.
+	 */
+	private List<Integer> pickSlabs(
+		List<String> ids, TileGroupRegistry groups, Random rnd
+	) {
+		if (!includeSlabs) {
+			return List.of();
+		}
+		List<Integer> slabs = new ArrayList<>();
+		for (int i = 0; i < ids.size(); i++) {
+			String s = ids.get(i);
+			if (s == null) {
+				continue;
+			}
+			TileGroup g = groups.findGroup(s).orElse(null);
+			if (g != null && g.slab()) {
+				slabs.add(i + 1);
+			}
+		}
+		Collections.shuffle(slabs, rnd);
+		return slabs.subList(0, Math.min(MAX_SLABS, slabs.size()));
+	}
+
+	/**
+	 * Pool of non-slab candidates, each tagged with its (non-slab) group
+	 * so the {@link Spread} strategies can bucket them. Slab tiles are
+	 * handled separately by {@link #pickSlabs}.
+	 */
+	private List<Candidate> buildNonSlabPool(
 		List<String> ids, TileGroupRegistry groups
 	) {
 		List<Candidate> pool = new ArrayList<>();
@@ -115,13 +164,10 @@ public final class TileSelectionPolicy {
 				continue;
 			}
 			TileGroup g = groups.findGroup(s).orElse(null);
-			if (!includeSlabs && g != null && g.slab()) {
+			if (g != null && g.slab()) {
 				continue;
 			}
-			// Slab group is never used as a "spread group" — a single slab
-			// tile in the palette doesn't visually clash with itself.
-			TileGroup spreadGroup = (g != null && !g.slab()) ? g : null;
-			pool.add(new Candidate(i + 1, spreadGroup));
+			pool.add(new Candidate(i + 1, g));
 		}
 		return pool;
 	}

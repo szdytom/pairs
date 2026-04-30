@@ -99,8 +99,11 @@ public class Main {
 
 		IsometricMapper mapper = new IsometricMapper(TILE_WIDTH, TILE_HEIGHT);
 
+		java.util.function.Supplier<GameState> gameSupplier = pickDifficulty(
+			args
+		);
 		LevelComponent level = new LevelComponent(
-			GameState::hard, mapper
+			gameSupplier, mapper
 		);
 		relayout(level, scale);
 
@@ -196,5 +199,29 @@ public class Main {
 		level.setScaleText(scale);
 		level.measure();
 		level.layout(0, 0, WINDOW_WIDTH / scale, WINDOW_HEIGHT / scale);
+	}
+
+	/**
+	 * Pick a {@link GameState} supplier from {@code args[0]} so the renderer
+	 * can be launched against any difficulty. Defaults to {@code hard} when
+	 * no arg is given.
+	 */
+	private static java.util.function.Supplier<GameState> pickDifficulty(
+		String[] args
+	) {
+		String mode = args != null && args.length > 0
+			? args[0].toLowerCase()
+			: "hard";
+		System.out.println("[Main] difficulty=" + mode);
+		return switch (mode) {
+			case "easy" -> GameState::easy;
+			case "hard" -> GameState::hard;
+			case "extreme" -> GameState::extreme;
+			default ->
+				throw new IllegalArgumentException(
+					"unknown difficulty: " + mode
+					+ " (expected easy|hard|extreme)"
+				);
+		};
 	}
 }

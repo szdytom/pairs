@@ -1,167 +1,116 @@
-# Map Generation — Implementation Overview
+# Map Generation
 
-## Layer Structure
+## How it works
 
-Map generation is split into four layers, each with a single responsibility:
-
-```
-GameState  (logic facade — the only entry point for the frontend)
-  └─ MapInitializer  (wires difficulty policy + factory)
-       └─ SubsetTilemapFactory  (decorator: remaps type indices → registry IDs)
-            └─ PresetTilemapFactory / CustomizedTilemapFactory  (grid layout)
-                 └─ TilemapGeneratorCore  (core solvable-pair algorithm)
-```
-
----
-
-## Classes
-
-### `TilemapFactory` (interface)
-Single method: `generate() → Tilemap`. Every factory implements this.
-
----
-
-### `TilemapGeneratorCore`
-The core algorithm. Fills a grid of fillable cells with solvable pairs.
-
-1. Collect all zero (fillable) cells, shuffle them randomly.
-2. For each candidate pair, verify connectivity via `TileTransition` (straight or L-shaped path).
-3. Assign a sequential pair index (1…N) to each matched pair.
-4. Build a random mapping from pair index → tile type (1…`types`), guaranteeing every type appears at least once.
-5. Return a `Tilemap` with type IDs in each cell.
-
-All randomness comes from an injected `Random` (always a seeded `Xoroshiro128PP`).
-
----
-
-### `PresetTilemapFactory`
-Layout factory for fixed difficulty levels (easy / hard / extreme). Reads a `TilemapPreset` from `assets/manifest.json` (width, height, blocked-cell mask), then calls `TilemapGeneratorCore`.
-
----
-
-### `CustomizedTilemapFactory`
-Layout factory for arbitrary dimensions. Builds an all-zero grid of `width × height` and delegates to `TilemapGeneratorCore`. Used for custom games and unit tests (no asset dependency).
-
----
-
-### `SubsetTilemapFactory` (decorator)
-Wraps any `TilemapFactory`. After the inner factory produces a tilemap with generic type indices (1…N), it remaps every non-zero cell:
+A map is generated in two phases: **palette selection** (which tile types appear) and **layout** (where they go). Both phases are driven by a deterministic **seed**, so the same seed always reproduces the same map.
 
 ```
-raw_type  →  subset[raw_type]   (1-based index into a pre-selected palette)
+GameState  ← the only entry point for the frontend
+  └─ MapInitializer  ← wires difficulty policy + factory
+       └─ SubsetTilemapFactory  ← remaps generic type indices → registry IDs
+            └─ PresetTilemapFactory / CustomizedTilemapFactory  ← grid layout
+                 └─ TilemapGeneratorCore  ← core solvable-pair algorithm
 ```
 
-This separates *how many* types appear from *which* visual tiles represent them.
-
 ---
 
-### `TileSelectionPolicy`
-Selects the palette (`int[]` of registry IDs) that `SubsetTilemapFactory` will use.
-Configurable by two axes:
+## Seed
 
-| Field | Values |
-|---|---|
-| `includeSlabs` | `true` / `false` — whether slab-shaped tiles are eligible |
-| `spread` | `FREE`, `NO_DUPLICATES`, `PREFER_DUPLICATES` |
-
-**Spread strategies** (all draw from `TileGroupRegistry` similarity groups):
-
-- `FREE` — uniform random draw from all eligible tiles.
-- `NO_DUPLICATES` — at most one tile from each visual group → maximally varied palette (easy).
-- `PREFER_DUPLICATES` — exhausts groups before moving on → palette full of look-alikes (extreme).
-
-Preset policies:
-
-| Difficulty | `includeSlabs` | `spread` |
-|---|---|---|
-| easy | false | `NO_DUPLICATES` |
-| hard | false | `FREE` |
-| extreme | false | `PREFER_DUPLICATES` |
-
----
-
-### `TileGroup` / `TileGroupRegistry`
-`TileGroup` is an immutable record: a list of visually similar tile string IDs and a `slab` flag.
-`TileGroupRegistry` is a pure data container. Its contents are loaded from [assets/tile-groups.json](../assets/tile-groups.json) by `TileGroupsOperation` and registered in `AssetManager` under the id `tile-groups/default`.
-
----
-
-### `MapInitializer`
-Facade that combines a layout factory with a palette policy into a ready-to-use `TilemapFactory`.
+Every map starts from a `Seed` — an immutable 128-bit value (`long s0, s1`).
 
 ```java
-MapInitializer.hard(seed)
-// → loads "tilemap/hard" preset (12×12, 20 types)
-// → builds TileSelectionPolicy.hard() (FREE spread)
-// → picks 20-tile palette with Xoroshiro128PP(seed)
-// → returns SubsetTilemapFactory(PresetTilemapFactory(preset, seed), palette)
+Seed.deviceRandom()          // fresh game (OS entropy via SecureRandom)
+Seed.fromString("my-puzzle") // deterministic, hashed with SHA-256
+new Seed(0xDEADBEEFL, 0xCAFEBABEL) // explicit
 ```
 
-All public methods come in two forms: no-arg (draws a fresh seed) and `(…, Seed)` for replay.
+The PRNG is **Xoroshiro128++** (`app.pairs.utils.Xoroshiro128PP`), which extends `java.util.Random`. Palette selection and layout each get their own `new Xoroshiro128PP(seed)` — two independent streams from the same seed — so calling `GameState.hard(seed)` twice always gives identical results.
+
+**Replay:**
+```java
+GameState first = GameState.hard();
+Seed seed = first.getSeed();       // save this
+GameState replay = GameState.hard(seed); // identical map
+```
 
 ---
 
-### `GameState` (frontend facade)
+## Palette Selection — `TileSelectionPolicy`
+
+Picks `N` tile types from the registry. Two knobs control the character of the palette:
+
+| Knob | Options |
+|---|---|
+| `includeSlabs` | whether slab-shaped tiles are eligible |
+| `spread` | `FREE` · `NO_DUPLICATES` · `PREFER_DUPLICATES` |
+
+Slabs are always drawn separately (up to `MAX_SLABS = 3`) and never bucket into spread groups — a handful of slabs adds spice without flooding the palette.
+
+**Spread strategies** (applied to non-slab tiles, using `TileGroupRegistry` similarity groups):
+
+| Spread | Effect | Used by |
+|---|---|---|
+| `NO_DUPLICATES` | at most one tile per visual group — maximally varied | easy |
+| `FREE` | uniform random draw | hard |
+| `PREFER_DUPLICATES` | drains whole groups first — lots of look-alikes | extreme |
+
+**Difficulty presets:**
+
+| | easy | hard | extreme |
+|---|---|---|---|
+| slabs | ✗ | ✗ | ✓ (≤ 3) |
+| spread | `NO_DUPLICATES` | `FREE` | `PREFER_DUPLICATES` |
+
+Similarity groups (`TileGroup` records with a `slab` flag) live in [assets/tile-groups.json](../assets/tile-groups.json), loaded into `AssetManager` as `tile-groups/default`.
+
+---
+
+## Layout — `TilemapGeneratorCore`
+
+Given a grid of fillable cells and a type count, fills the grid with solvable pairs:
+
+1. Shuffle all fillable cells.
+2. Greedily pair cells that can connect via a straight or L-shaped path (`TileTransition`).
+3. Assign pair indices 1…N.
+4. Build a random type mapping (pair → tile type), guaranteeing every type appears at least once.
+5. Return a `Tilemap` with type IDs per cell.
+
+**Factories on top of the core:**
+
+- `PresetTilemapFactory` — reads a `TilemapPreset` from `assets/manifest.json` (width, height, blocked-cell mask).
+- `CustomizedTilemapFactory` — arbitrary `width × height`, all-zero grid. No asset dependency → usable in unit tests.
+- `SubsetTilemapFactory` *(decorator)* — wraps either factory and remaps generic type indices to the chosen palette IDs: `raw_type → subset[raw_type]`.
+
+---
+
+## `GameState` API
+
 The sole entry point for the view layer. Stores `Tilemap`, `OpLogs`, and `Seed`.
 
 ```java
-GameState.easy()               // random seed
-GameState.easy(seed)           // deterministic replay
-GameState.hard(seed)
-GameState.extreme(seed)
-GameState.customized(w, h, t)
-GameState.customized(w, h, t, seed)
-GameState.customized(w, h, t, includeSlabs, spread)
-GameState.customized(w, h, t, includeSlabs, spread, seed)
+// preset difficulties
+GameState.easy()   /  GameState.easy(seed)
+GameState.hard()   /  GameState.hard(seed)
+GameState.extreme() / GameState.extreme(seed)
 
-state.getSeed()                // retrieve seed for replay
+// custom
+GameState.customized(w, h, types)
+GameState.customized(w, h, types, seed)
+GameState.customized(w, h, types, includeSlabs, spread)
+GameState.customized(w, h, types, includeSlabs, spread, seed)
+
+state.getSeed()  // retrieve seed for replay
 ```
 
-`customized(w, h, t [, seed])` uses `CustomizedTilemapFactory` directly (no asset loading), so it works in unit tests without `AssetManager`.
+`customized(w, h, t [, seed])` skips asset loading, so it works in unit tests.
 
 ---
 
-## Data Flow: `GameState.hard(seed)`
+## Asset presets (`assets/manifest.json`)
 
-```
-GameState.hard(seed)
-  → MapInitializer.hard(seed)
-      → TileRegistry (from AssetManager: 100 typed tiles)
-      → TileGroupRegistry (from AssetManager: "tile-groups/default")
-      → TileSelectionPolicy.hard().selectFor(registry, groups, 20, rng)
-            [rng = new Xoroshiro128PP(seed)]
-            → picks 20 registry IDs  (int[] palette)
-      → TilemapPreset "tilemap/hard" (12×12, all-zero grid)
-      → PresetTilemapFactory(preset, seed)
-      → SubsetTilemapFactory(inner, palette)
-  → build(factory, seed)
-      → factory.generate()
-            → PresetTilemapFactory.generate()
-                  → TilemapGeneratorCore.generate(grid, 20, rng)
-                        → solvable pair assignment
-                  → raw Tilemap (types 1–20)
-            → SubsetTilemapFactory remaps types → palette IDs
-            → final Tilemap
-      → new GameState(tilemap, seed)
-```
-
----
-
-## Seed & Reproducibility
-
-`Seed` is an immutable 128-bit value (`long s0, s1`). `Xoroshiro128PP` extends `java.util.Random` and is seeded from it.
-
-Both palette selection and layout generation use `new Xoroshiro128PP(seed)` independently — two separate RNG streams from the same seed. Calling `GameState.hard(sameSeed)` twice produces identical tilemaps.
-
-`Seed.deviceRandom()` samples from `SecureRandom` for fresh games; `Seed.fromString(hex)` parses a previously stored seed for replay.
-
----
-
-## Asset Presets (`assets/manifest.json`)
-
-| ID | Type | Notes |
-|---|---|---|
-| `tilemap/easy` | `tilemap-preset` | 9 × 9, 6 types, L-shaped quadrants (sparse) |
-| `tilemap/hard` | `tilemap-preset` | 12 × 12, 20 types, all-zero (dense) |
-| `tilemap/extreme` | `tilemap-preset` | 12 × 12, 20 types, all-zero (dense) + `PREFER_DUPLICATES` palette |
-| `tile-groups/default` | `tile-groups` | Loaded from [assets/tile-groups.json](../assets/tile-groups.json); similarity catalog |
+| ID | Grid | Types | Notes |
+|---|---|---|---|
+| `tilemap/easy` | 9 × 9 | 6 | L-shaped quadrants (sparse) |
+| `tilemap/hard` | 12 × 12 | 20 | all-zero (dense) |
+| `tilemap/extreme` | 12 × 12 | 20 | all-zero (dense), `PREFER_DUPLICATES` palette |
+| `tile-groups/default` | — | — | similarity catalog from [tile-groups.json](../assets/tile-groups.json) |

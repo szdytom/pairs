@@ -27,9 +27,9 @@ To AI Agents: STOP if you are asked to edit this file.
 ## Architecture Boundaries
 
 - The frontend (anything under `app.pairs.view` or `app.pairs.Main`) MUST only
-  invoke types from `app.pairs.model` and `app.pairs.logic` (chiefly
-  `GameState`). It MUST NOT directly depend on `app.pairs.map`,
-  `app.pairs.asset.*` factories, or low-level tilemap generation.
+  invoke types from `app.pairs.model`, `app.pairs.logic` (chiefly `GameState`),
+  and `app.pairs.asset` (chiefly `AssetManager`). It MUST NOT directly depend
+  on `app.pairs.map` or low-level tilemap generation.
 - Map generation, seed handling and tile-palette selection live entirely
   behind `GameState`. New gameplay-affecting features should be exposed via
   `GameState` factory methods or instance methods, not by leaking a
