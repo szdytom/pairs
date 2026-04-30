@@ -24,6 +24,21 @@ To AI Agents: STOP if you are asked to edit this file.
 - No error handling for impossible scenarios.
 - Simplicity is a virtue: If you write 200 lines and it could be 50, rewrite it.
 
+## Architecture Boundaries
+
+- The frontend (anything under `app.pairs.view` or `app.pairs.Main`) MUST only
+  invoke types from `app.pairs.model` and `app.pairs.logic` (chiefly
+  `GameState`). It MUST NOT directly depend on `app.pairs.map`,
+  `app.pairs.asset.*` factories, or low-level tilemap generation.
+- Map generation, seed handling and tile-palette selection live entirely
+  behind `GameState`. New gameplay-affecting features should be exposed via
+  `GameState` factory methods or instance methods, not by leaking a
+  `TilemapFactory` to the view layer.
+- Every map-creating `GameState.*` factory MUST come in two forms: a no-arg
+  form that draws a fresh `Seed` from `Seed.deviceRandom()`, and a
+  `(..., Seed)` form for replay. The seed used MUST be retrievable via
+  `GameState#getSeed()`.
+
 ## Domain-Specific Guidelines Index
 
 For specific domains, READ and only read the relevant documentation:

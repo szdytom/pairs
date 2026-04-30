@@ -1,11 +1,12 @@
 package app.pairs.view;
 
-import static io.github.libsdl4j.api.keycode.SDL_Keycode.*;
+import static io.github.libsdl4j.api.keycode.SDL_Keycode.SDLK_SPACE;
 
 import app.pairs.logic.GameState;
-import app.pairs.map.TilemapFactory;
 
-import io.github.libsdl4j.api.render.*;
+import java.util.function.Supplier;
+
+import io.github.libsdl4j.api.render.SDL_Renderer;
 
 /**
  * Top-level component that owns a {@link GameState} and an
@@ -17,7 +18,7 @@ public class LevelComponent extends Container {
 	private static final int TILE_CONTENT_WIDTH = 16;
 	private static final int TILE_CONTENT_HEIGHT = 16;
 
-	private final TilemapFactory factory;
+	private final Supplier<GameState> source;
 	private GameState gameState;
 	private final IsometricGridView gridView;
 	private final IsometricMapper mapper;
@@ -54,9 +55,9 @@ public class LevelComponent extends Container {
 	private final TextComponent scaleText;
 	private final TextComponent clearedText;
 
-	public LevelComponent(TilemapFactory factory, IsometricMapper mapper) {
-		this.factory = factory;
-		this.gameState = GameState.fromFactory(factory);
+	public LevelComponent(Supplier<GameState> source, IsometricMapper mapper) {
+		this.source = source;
+		this.gameState = source.get();
 		this.mapper = mapper;
 		this.gridWidth = gameState.getWidth();
 		this.gridHeight = gameState.getHeight();
@@ -87,7 +88,7 @@ public class LevelComponent extends Container {
 
 	/** Reset the level with a newly generated map. */
 	public void restart() {
-		gameState = GameState.fromFactory(factory);
+		gameState = source.get();
 		int newW = gameState.getWidth();
 		int newH = gameState.getHeight();
 		if (newW != gridWidth || newH != gridHeight) {

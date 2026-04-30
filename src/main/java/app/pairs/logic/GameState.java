@@ -1,12 +1,12 @@
 package app.pairs.logic;
 
-import app.pairs.asset.AssetManager;
 import app.pairs.map.CustomizedTilemapFactory;
-import app.pairs.map.PresetTilemapFactory;
+import app.pairs.map.MapInitializer;
+import app.pairs.map.TileSelectionPolicy;
 import app.pairs.map.TilemapFactory;
-import app.pairs.map.TilemapPreset;
 import app.pairs.model.OpLogs;
 import app.pairs.model.Tilemap;
+import app.pairs.utils.Seed;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,42 +17,98 @@ import java.util.List;
  * behind one entry point. Callers should treat {@link Operation} entries
  * returned by {@link #getOpLogs()} as opaque history records and only act on
  * them via {@link #undo()}; invoking their methods directly is undefined.
+ *
+ * <p>
+ * Every map-creating factory has two forms: a no-arg form that draws a
+ * fresh {@link Seed} from {@link Seed#deviceRandom()}, and a {@code (...,
+ * Seed)} form for replay. The seed used is always retrievable via {@link
+ * #getSeed()}.
  */
 public final class GameState {
 	private final Tilemap tilemap;
 	private final OpLogs opLogs;
+	private final Seed seed;
 
-	private GameState(Tilemap tilemap) {
+	private GameState(Tilemap tilemap, Seed seed) {
 		this.tilemap = tilemap;
 		this.opLogs = new OpLogs();
+		this.seed = seed;
 	}
 
-	/** Create a game state for the easy mode preset. */
+	/** Seed used for both palette selection and layout generation. */
+	public Seed getSeed() {
+		return seed;
+	}
+
+	// ---- difficulty factories --------------------------------------------
+
 	public static GameState easy() {
-		return fromPreset("tilemap/easy");
+		return easy(Seed.deviceRandom());
 	}
 
-	/** Create a game state for the hard mode preset. */
+	public static GameState easy(Seed seed) {
+		return build(MapInitializer.easy(seed), seed);
+	}
+
 	public static GameState hard() {
-		return fromPreset("tilemap/hard");
+		return hard(Seed.deviceRandom());
 	}
 
-	private static GameState fromPreset(String presetId) {
-		TilemapPreset preset = AssetManager.instance().get(presetId);
-		return fromFactory(new PresetTilemapFactory(preset));
+	public static GameState hard(Seed seed) {
+		return build(MapInitializer.hard(seed), seed);
 	}
 
-	/** Create a game state with custom dimensions and tile-type count. */
+	public static GameState extreme() {
+		return extreme(Seed.deviceRandom());
+	}
+
+	public static GameState extreme(Seed seed) {
+		return build(MapInitializer.extreme(seed), seed);
+	}
+
+	/** Custom dimensions and tile-type count, no group constraints. */
 	public static GameState customized(int width, int height, int types) {
-		CustomizedTilemapFactory factory = new CustomizedTilemapFactory()
+		return customized(width, height, types, Seed.deviceRandom());
+	}
+
+	public static GameState customized(
+		int width, int height, int types, Seed seed
+	) {
+		CustomizedTilemapFactory factory = new CustomizedTilemapFactory(seed)
 											   .setWidth(width)
 											   .setHeight(height)
 											   .setTypes(types);
-		return fromFactory(factory);
+		return build(factory, seed);
 	}
 
-	public static GameState fromFactory(TilemapFactory factory) {
-		return new GameState(factory.generate());
+	/**
+	 * Custom mode with tile-similarity controls. Honours the slab-inclusion
+	 * flag and the {@link TileSelectionPolicy.Spread} strategy when picking
+	 * the tile palette from the global registry.
+	 */
+	public static GameState customized(
+		int width, int height, int types, boolean includeSlabs,
+		TileSelectionPolicy.Spread spread
+	) {
+		return customized(
+			width, height, types, includeSlabs, spread, Seed.deviceRandom()
+		);
+	}
+
+	public static GameState customized(
+		int width, int height, int types, boolean includeSlabs,
+		TileSelectionPolicy.Spread spread, Seed seed
+	) {
+		return build(
+			MapInitializer.custom(
+				width, height, types, includeSlabs, spread, seed
+			),
+			seed
+		);
+	}
+
+	private static GameState build(TilemapFactory factory, Seed seed) {
+		return new GameState(factory.generate(), seed);
 	}
 
 	// ---- read-only map accessors -----------------------------------------
