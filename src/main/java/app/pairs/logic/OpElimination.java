@@ -1,10 +1,14 @@
 package app.pairs.logic;
 
+import app.pairs.model.GameStatus;
 import app.pairs.model.Tilemap;
 
 import java.util.function.Consumer;
 
 public class OpElimination implements Operation {
+	public static final int SCORE_PER_PAIR = 500;
+
+	private final GameStatus gameStatus;
 	private final Tilemap tilemap;
 	private final int row1;
 	private final int col1;
@@ -19,8 +23,8 @@ public class OpElimination implements Operation {
 	private boolean executed;
 
 	public OpElimination(
-		Tilemap tilemap, int row1, int col1, int row2, int col2,
-		Consumer<Operation> pushFn
+		GameStatus gameStatus, Tilemap tilemap, int row1, int col1, int row2,
+		int col2, Consumer<Operation> pushFn
 	) {
 		int t1 = tilemap.getTile(row1, col1);
 		int t2 = tilemap.getTile(row2, col2);
@@ -31,6 +35,7 @@ public class OpElimination implements Operation {
 				+ ")=" + t2
 			);
 		}
+		this.gameStatus = gameStatus;
 		this.tilemap = tilemap;
 		this.row1 = row1;
 		this.col1 = col1;
@@ -52,6 +57,7 @@ public class OpElimination implements Operation {
 		tilemap.setTile(row2, col2, 0);
 		executed = true;
 		pushFn.accept(this);
+		gameStatus.changeScore(SCORE_PER_PAIR);
 	}
 
 	@Override
@@ -64,6 +70,7 @@ public class OpElimination implements Operation {
 		tilemap.setTile(row1, col1, tileId);
 		tilemap.setTile(row2, col2, tileId);
 		executed = false;
+		gameStatus.changeScore(-SCORE_PER_PAIR);
 	}
 
 	public int getRow1() {

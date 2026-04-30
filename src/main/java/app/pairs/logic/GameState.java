@@ -7,6 +7,8 @@ import app.pairs.map.SubsetTilemapFactory;
 import app.pairs.map.TileGroupRegistry;
 import app.pairs.map.TileSelectionPolicy;
 import app.pairs.map.TilemapFactory;
+import app.pairs.map.TilemapPreset;
+import app.pairs.model.GameStatus;
 import app.pairs.model.OpLogs;
 import app.pairs.model.Tilemap;
 import app.pairs.utils.Seed;
@@ -38,11 +40,13 @@ public final class GameState {
 	private final TilemapFactory factory;
 	private Tilemap tilemap;
 	private final OpLogs opLogs;
+	private final GameStatus gameStatus;
 
 	public GameState(TilemapFactory factory) {
 		this.factory = factory;
 		this.tilemap = factory.generate();
 		this.opLogs = new OpLogs();
+		this.gameStatus = new GameStatus();
 	}
 
 	/**
@@ -159,7 +163,9 @@ public final class GameState {
 				+ "," + col2 + ")"
 			);
 		}
-		new OpElimination(tilemap, row1, col1, row2, col2, opLogs::push)
+		new OpElimination(
+			gameStatus, tilemap, row1, col1, row2, col2, opLogs::push
+		)
 			.operate();
 	}
 
@@ -201,5 +207,9 @@ public final class GameState {
 			}
 		}
 		return true;
+	}
+
+	public int getScore() {
+		return gameStatus.getScore();
 	}
 }

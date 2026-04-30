@@ -3,6 +3,7 @@ package app.pairs.logic;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import app.pairs.model.GameStatus;
 import app.pairs.model.Tilemap;
 
 import java.util.function.Consumer;
@@ -18,7 +19,9 @@ class GameStateBehaviorTest {
 	void operateClearsTilesAndUndoRestores() {
 		int[][] map = {{1, 0, 1}};
 		Tilemap tm = new Tilemap(map);
-		OpElimination op = new OpElimination(tm, 0, 0, 0, 2, ignored -> {});
+		OpElimination op = new OpElimination(
+			new GameStatus(), tm, 0, 0, 0, 2, ignored -> {}
+		);
 
 		op.operate();
 		assertThat(tm.getTile(0, 0)).isZero();
@@ -32,7 +35,9 @@ class GameStateBehaviorTest {
 	@Test
 	void doubleOperateThrows() {
 		Tilemap tm = new Tilemap(new int[][] {{1, 0, 1}});
-		OpElimination op = new OpElimination(tm, 0, 0, 0, 2, ignored -> {});
+		OpElimination op = new OpElimination(
+			new GameStatus(), tm, 0, 0, 0, 2, ignored -> {}
+		);
 		op.operate();
 		assertThatThrownBy(op::operate)
 			.isInstanceOf(IllegalStateException.class);
@@ -41,7 +46,9 @@ class GameStateBehaviorTest {
 	@Test
 	void undoBeforeOperateThrows() {
 		Tilemap tm = new Tilemap(new int[][] {{1, 0, 1}});
-		OpElimination op = new OpElimination(tm, 0, 0, 0, 2, ignored -> {});
+		OpElimination op = new OpElimination(
+			new GameStatus(), tm, 0, 0, 0, 2, ignored -> {}
+		);
 		assertThatThrownBy(op::undo).isInstanceOf(IllegalStateException.class);
 	}
 
@@ -49,7 +56,8 @@ class GameStateBehaviorTest {
 	void constructionRejectsMismatchedTiles() {
 		Tilemap tm = new Tilemap(new int[][] {{1, 0, 2}});
 		Consumer<Operation> noop = ignored -> {};
-		assertThatThrownBy(() -> new OpElimination(tm, 0, 0, 0, 2, noop))
+		GameStatus gs = new GameStatus();
+		assertThatThrownBy(() -> new OpElimination(gs, tm, 0, 0, 0, 2, noop))
 			.isInstanceOf(IllegalStateException.class);
 	}
 
@@ -57,7 +65,8 @@ class GameStateBehaviorTest {
 	void constructionRejectsEmptyTiles() {
 		Tilemap tm = new Tilemap(new int[][] {{0, 0, 0}});
 		Consumer<Operation> noop = ignored -> {};
-		assertThatThrownBy(() -> new OpElimination(tm, 0, 0, 0, 2, noop))
+		GameStatus gs = new GameStatus();
+		assertThatThrownBy(() -> new OpElimination(gs, tm, 0, 0, 0, 2, noop))
 			.isInstanceOf(IllegalStateException.class);
 	}
 
@@ -159,5 +168,31 @@ class GameStateBehaviorTest {
 		GameState state = GameState.customized(2, 2, 1);
 		state.operate(0, 0, 0, 1);
 		assertThat(state.isCleared()).isFalse();
+	}
+
+	// ---- scoring tests ---------------------------------------------------
+
+	@Test
+	void freshGameStateHasZeroScore() {
+		GameState state = GameState.customized(2, 2, 1);
+		assertThat(state.getScore()).isZero();
+	}
+
+	@Test
+	void eachEliminationAddsScore() {
+		GameState state = GameState.customized(2, 2, 1);
+		state.operate(0, 0, 0, 1);
+		assertThat(state.getScore()).isEqualTo(OpElimination.SCORE_PER_PAIR);
+		state.operate(1, 0, 1, 1);
+		assertThat(state.getScore())
+			.isEqualTo(2 * OpElimination.SCORE_PER_PAIR);
+	}
+
+	@Test
+	void undoRollsBackScore() {
+		GameState state = GameState.customized(2, 2, 1);
+		state.operate(0, 0, 0, 1);
+		state.undo();
+		assertThat(state.getScore()).isZero();
 	}
 }
