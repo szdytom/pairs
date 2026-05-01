@@ -29,16 +29,10 @@ public final class SubsetTilemapFactory implements TilemapFactory {
 		for (int r = 0; r < raw.getHeight(); r++) {
 			for (int c = 0; c < raw.getWidth(); c++) {
 				int v = raw.getTile(r, c);
-				if (v > 0) {
-					if (v >= subset.length) {
-						throw new IllegalStateException(
-							"Generator produced type " + v
-							+ " outside subset range (size="
-							+ (subset.length - 1) + ")"
-						);
-					}
-					raw.setTile(r, c, subset[v]);
+				if (v <= 0) {
+					continue;
 				}
+				raw.setTile(r, c, subset[v]);
 			}
 		}
 		return raw;

@@ -15,7 +15,7 @@ import java.util.Random;
  *
  * <ul>
  * <li>{@code includeSlabs} — when {@code false}, members of any slab
- * {@link TileGroup} are excluded.</li>
+ * group are excluded.</li>
  * <li>{@link Spread} — controls how the picks relate to non-slab groups:
  * <ul>
  * <li>{@link Spread#NO_DUPLICATES} — at most one tile per group.</li>
@@ -140,8 +140,7 @@ public final class TileSelectionPolicy {
 			if (s == null) {
 				continue;
 			}
-			TileGroup g = groups.findGroup(s).orElse(null);
-			if (g != null && g.slab()) {
+			if (groups.isSlab(s)) {
 				slabs.add(i + 1);
 			}
 		}
@@ -163,10 +162,10 @@ public final class TileSelectionPolicy {
 			if (s == null) {
 				continue;
 			}
-			TileGroup g = groups.findGroup(s).orElse(null);
-			if (g != null && g.slab()) {
+			if (groups.isSlab(s)) {
 				continue;
 			}
+			List<String> g = groups.findGroup(s).orElse(null);
 			pool.add(new Candidate(i + 1, g));
 		}
 		return pool;
@@ -185,13 +184,10 @@ public final class TileSelectionPolicy {
 		return out;
 	}
 
-	private static List<Integer> pickNoDuplicates(
-		List<Candidate> pool, int count, Random rnd
+	private static void partitionByGroup(
+		List<Candidate> pool, Map<List<String>, List<Candidate>> buckets,
+		List<Candidate> ungrouped
 	) {
-		// Bucket candidates by spread group; keep ungrouped as singleton
-		// buckets. Then take one tile from each bucket (random member).
-		Map<TileGroup, List<Candidate>> buckets = new HashMap<>();
-		List<Candidate> ungrouped = new ArrayList<>();
 		for (Candidate c : pool) {
 			if (c.group == null) {
 				ungrouped.add(c);
@@ -199,6 +195,16 @@ public final class TileSelectionPolicy {
 				buckets.computeIfAbsent(c.group, k -> new ArrayList<>()).add(c);
 			}
 		}
+	}
+
+	private static List<Integer> pickNoDuplicates(
+		List<Candidate> pool, int count, Random rnd
+	) {
+		// Bucket candidates by spread group; keep ungrouped as singleton
+		// buckets. Then take one tile from each bucket (random member).
+		Map<List<String>, List<Candidate>> buckets = new HashMap<>();
+		List<Candidate> ungrouped = new ArrayList<>();
+		partitionByGroup(pool, buckets, ungrouped);
 		List<Candidate> reps = new ArrayList<>(ungrouped);
 		for (List<Candidate> b : buckets.values()) {
 			reps.add(b.get(rnd.nextInt(b.size())));
@@ -215,20 +221,12 @@ public final class TileSelectionPolicy {
 	private static List<Integer> pickPreferDuplicates(
 		List<Candidate> pool, int count, Random rnd
 	) {
-		Map<TileGroup, List<Candidate>> buckets = new HashMap<>();
+		Map<List<String>, List<Candidate>> buckets = new HashMap<>();
 		List<Candidate> ungrouped = new ArrayList<>();
-		for (Candidate c : pool) {
-			if (c.group == null) {
-				ungrouped.add(c);
-			} else {
-				buckets.computeIfAbsent(c.group, k -> new ArrayList<>()).add(c);
-			}
-		}
+		partitionByGroup(pool, buckets, ungrouped);
 		List<List<Candidate>> bucketList = new ArrayList<>(buckets.values());
 		// Larger groups first => more visual confusion early.
 		bucketList.sort((a, b) -> Integer.compare(b.size(), a.size()));
-		// Among same-size groups, randomise.
-		shuffleEqualSizeRuns(bucketList, rnd);
 		Collections.shuffle(ungrouped, rnd);
 
 		List<Integer> out = new ArrayList<>(count);
@@ -251,27 +249,12 @@ public final class TileSelectionPolicy {
 		return out;
 	}
 
-	private static <T> void shuffleEqualSizeRuns(
-		List<List<T>> list, Random rnd
-	) {
-		int i = 0;
-		while (i < list.size()) {
-			int j = i + 1;
-			while (j < list.size()
-			       && list.get(j).size() == list.get(i).size()) {
-				j++;
-			}
-			Collections.shuffle(list.subList(i, j), rnd);
-			i = j;
-		}
-	}
-
 	private static final class Candidate {
 		final int numericId;
-		final TileGroup
+		final List<String>
 			group; // null = ungrouped (or slab, treated as ungrouped)
 
-		Candidate(int numericId, TileGroup group) {
+		Candidate(int numericId, List<String> group) {
 			this.numericId = numericId;
 			this.group = group;
 		}

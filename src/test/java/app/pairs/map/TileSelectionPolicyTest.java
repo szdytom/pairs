@@ -17,13 +17,16 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 class TileSelectionPolicyTest {
-	private static final List<TileGroup> GROUPS = List.of(
-		new TileGroup(List.of("a1", "a2", "a3"), false),
-		new TileGroup(List.of("b1", "b2"), false),
-		new TileGroup(List.of("c1", "c2", "c3", "c4"), false),
-		new TileGroup(List.of("s1", "s2", "s3"), true)
+	private static final List<List<String>> NON_SLAB = List.of(
+		List.of("a1", "a2", "a3"), List.of("b1", "b2"),
+		List.of("c1", "c2", "c3", "c4")
 	);
-	private static final TileGroupRegistry REG = new TileGroupRegistry(GROUPS);
+	private static final List<List<String>> SLAB = List.of(
+		List.of("s1", "s2", "s3")
+	);
+	private static final TileGroupRegistry REG = new TileGroupRegistry(
+		NON_SLAB, SLAB
+	);
 
 	// Numeric IDs 1..12. 1-3 = a, 4-5 = b, 6-9 = c, 10-12 = slabs.
 	private static final List<String> IDS = List.of(
@@ -92,7 +95,7 @@ class TileSelectionPolicyTest {
 
 	@Test
 	void emptyGroupsBehavesAsFreePool() {
-		TileGroupRegistry empty = new TileGroupRegistry(List.of());
+		TileGroupRegistry empty = new TileGroupRegistry(List.of(), List.of());
 		List<String> ids = List.of("x", "y", "z");
 		int[] subset = TileSelectionPolicy.easy().select(ids, empty, 3, rng());
 		assertEquals(3, pickedStrings(subset, ids).size());

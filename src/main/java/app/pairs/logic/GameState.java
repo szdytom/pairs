@@ -1,12 +1,17 @@
 package app.pairs.logic;
 
+import app.pairs.asset.AssetManager;
+import app.pairs.asset.TileRegistry;
 import app.pairs.map.CustomizedTilemapFactory;
-import app.pairs.map.MapInitializer;
+import app.pairs.map.SubsetTilemapFactory;
+import app.pairs.map.TileGroupRegistry;
 import app.pairs.map.TileSelectionPolicy;
 import app.pairs.map.TilemapFactory;
+import app.pairs.map.TilemapPreset;
 import app.pairs.model.OpLogs;
 import app.pairs.model.Tilemap;
 import app.pairs.utils.Seed;
+import app.pairs.utils.Xoroshiro128PP;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,6 +30,9 @@ import java.util.List;
  * #getSeed()}.
  */
 public final class GameState {
+	private static final String TILE_REGISTRY = "tiles/typed";
+	private static final String TILE_GROUPS = "tile-groups/default";
+
 	private final Tilemap tilemap;
 	private final OpLogs opLogs;
 	private final Seed seed;
@@ -47,7 +55,7 @@ public final class GameState {
 	}
 
 	public static GameState easy(Seed seed) {
-		return build(MapInitializer.easy(seed), seed);
+		return fromPreset("tilemap/easy", TileSelectionPolicy.easy(), seed);
 	}
 
 	public static GameState hard() {
@@ -55,7 +63,7 @@ public final class GameState {
 	}
 
 	public static GameState hard(Seed seed) {
-		return build(MapInitializer.hard(seed), seed);
+		return fromPreset("tilemap/hard", TileSelectionPolicy.hard(), seed);
 	}
 
 	public static GameState extreme() {
@@ -63,7 +71,9 @@ public final class GameState {
 	}
 
 	public static GameState extreme(Seed seed) {
-		return build(MapInitializer.extreme(seed), seed);
+		return fromPreset(
+			"tilemap/extreme", TileSelectionPolicy.extreme(), seed
+		);
 	}
 
 	/** Custom dimensions and tile-type count, no group constraints. */
@@ -99,11 +109,35 @@ public final class GameState {
 		int width, int height, int types, boolean includeSlabs,
 		TileSelectionPolicy.Spread spread, Seed seed
 	) {
-		return build(
-			MapInitializer.custom(
-				width, height, types, includeSlabs, spread, seed
-			),
-			seed
+		TileSelectionPolicy policy = new TileSelectionPolicy(
+			includeSlabs, spread
+		);
+		int[] subset = pickSubset(policy, types, seed);
+		TilemapFactory inner = new CustomizedTilemapFactory(seed)
+								   .setWidth(width)
+								   .setHeight(height)
+								   .setTypes(types);
+		return build(new SubsetTilemapFactory(inner, subset), seed);
+	}
+
+	private static GameState fromPreset(
+		String presetId, TileSelectionPolicy policy, Seed seed
+	) {
+		TilemapPreset preset = AssetManager.instance().get(presetId);
+		int[] subset = pickSubset(policy, preset.types(), seed);
+		TilemapFactory inner = CustomizedTilemapFactory.fromPreset(
+			preset, seed
+		);
+		return build(new SubsetTilemapFactory(inner, subset), seed);
+	}
+
+	private static int[] pickSubset(
+		TileSelectionPolicy policy, int count, Seed seed
+	) {
+		TileRegistry registry = AssetManager.instance().get(TILE_REGISTRY);
+		TileGroupRegistry groups = AssetManager.instance().get(TILE_GROUPS);
+		return policy.selectFor(
+			registry, groups, count, new Xoroshiro128PP(seed)
 		);
 	}
 

@@ -11,27 +11,25 @@ public class CustomizedTilemapFactory implements TilemapFactory {
 	private static final int DEFAULT_HEIGHT = 10;
 	private static final int DEFAULT_TYPES = 12;
 
-	private Seed seed;
-	private Random random;
+	private final Random random;
+	private TilemapPreset preset;
 
 	private int width = DEFAULT_WIDTH;
 	private int height = DEFAULT_HEIGHT;
 	private int types = DEFAULT_TYPES;
 
-	public CustomizedTilemapFactory() {
-		setSeed(Seed.deviceRandom());
-	}
-
 	public CustomizedTilemapFactory(Seed seed) {
-		setSeed(seed);
+		this.random = new Xoroshiro128PP(seed);
 	}
 
-	public CustomizedTilemapFactory(String seed) {
-		setSeed(seed);
-	}
-
-	public Seed getSeed() {
-		return seed;
+	/** Build a factory whose layout is driven by the given preset. */
+	public static CustomizedTilemapFactory fromPreset(
+		TilemapPreset preset, Seed seed
+	) {
+		CustomizedTilemapFactory f = new CustomizedTilemapFactory(seed);
+		f.preset = preset;
+		f.types = preset.types();
+		return f;
 	}
 
 	public CustomizedTilemapFactory setWidth(int width) {
@@ -49,21 +47,10 @@ public class CustomizedTilemapFactory implements TilemapFactory {
 		return this;
 	}
 
-	/** Use a deterministic Xoroshiro128++ stream derived from the seed. */
-	public CustomizedTilemapFactory setSeed(Seed seed) {
-		this.seed = seed;
-		this.random = new Xoroshiro128PP(seed);
-		return this;
-	}
-
-	/** Use a deterministic stream derived from a string seed. */
-	public CustomizedTilemapFactory setSeed(String seed) {
-		return setSeed(Seed.fromString(seed));
-	}
-
 	@Override
 	public Tilemap generate() {
-		int[][] map = new int[height][width];
+		int[][] map = (preset != null) ? preset.buildInitial()
+									   : new int[height][width];
 		return TilemapGeneratorCore.generate(map, types, random);
 	}
 }

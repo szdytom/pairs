@@ -5,11 +5,10 @@
 A map is generated in two phases: **palette selection** (which tile types appear) and **layout** (where they go). Both phases are driven by a deterministic **seed**, so the same seed always reproduces the same map.
 
 ```
-GameState  ← the only entry point for the frontend
-  └─ MapInitializer  ← wires difficulty policy + factory
-       └─ SubsetTilemapFactory  ← remaps generic type indices → registry IDs
-            └─ PresetTilemapFactory / CustomizedTilemapFactory  ← grid layout
-                 └─ TilemapGeneratorCore  ← core solvable-pair algorithm
+GameState  ← the only entry point for the frontend; inlines difficulty wiring
+  └─ SubsetTilemapFactory  ← remaps generic type indices → registry IDs
+       └─ CustomizedTilemapFactory  ← grid layout (preset or arbitrary size)
+            └─ TilemapGeneratorCore  ← core solvable-pair algorithm
 ```
 
 ---
@@ -20,7 +19,7 @@ Every map starts from a `Seed` — an immutable 128-bit value (`long s0, s1`).
 
 ```java
 Seed.deviceRandom()          // fresh game (OS entropy via SecureRandom)
-Seed.fromString("my-puzzle") // deterministic, hashed with SHA-256
+Seed.fromString("my-puzzle") // deterministic, two parallel FNV-1a hashes
 new Seed(0xDEADBEEFL, 0xCAFEBABEL) // explicit
 ```
 
@@ -77,9 +76,8 @@ Given a grid of fillable cells and a type count, fills the grid with solvable pa
 
 **Factories on top of the core:**
 
-- `PresetTilemapFactory` — reads a `TilemapPreset` from `assets/manifest.json` (width, height, blocked-cell mask).
-- `CustomizedTilemapFactory` — arbitrary `width × height`, all-zero grid. No asset dependency → usable in unit tests.
-- `SubsetTilemapFactory` *(decorator)* — wraps either factory and remaps generic type indices to the chosen palette IDs: `raw_type → subset[raw_type]`.
+- `CustomizedTilemapFactory` — arbitrary `width × height`, all-zero grid; or via `CustomizedTilemapFactory.fromPreset(preset, seed)` to load a `TilemapPreset` (width, height, blocked-cell mask) from `assets/manifest.json`.
+- `SubsetTilemapFactory` *(decorator)* — wraps the factory and remaps generic type indices to the chosen palette IDs: `raw_type → subset[raw_type]`.
 
 ---
 

@@ -1,16 +1,12 @@
 package app.pairs.utils;
 
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 
 /**
  * 128-bit seed used by {@link Xoroshiro128PP}.
  * <p>
- * Both halves must not be simultaneously zero; the constructor enforces this
- * by patching {@code s1 = 1} in that degenerate case.
+ * Both halves must not be simultaneously zero; the constructor patches
+ * {@code s1 = 1} in that degenerate case.
  */
 public final class Seed {
 	private final long s0;
@@ -27,23 +23,27 @@ public final class Seed {
 	public long s0() {
 		return s0;
 	}
+
 	public long s1() {
 		return s1;
 	}
 
-	/** Derive a seed deterministically from a string via SHA-256. */
+	/**
+	 * Derive a seed deterministically from a string. Two parallel FNV-1a
+	 * 64-bit walks with different offset bases give us 128 bits without
+	 * pulling in any crypto machinery — collisions across reasonable user
+	 * labels are extraordinarily unlikely and would not affect gameplay.
+	 */
 	public static Seed fromString(String str) {
-		MessageDigest md;
-		try {
-			md = MessageDigest.getInstance("SHA-256");
-		} catch (NoSuchAlgorithmException e) {
-			throw new IllegalStateException("SHA-256 unavailable", e);
+		long a = 0xCBF29CE484222325L;
+		long b = 0x84222325CBF29CE4L;
+		final long prime = 0x100000001B3L;
+		for (int i = 0; i < str.length(); i++) {
+			char c = str.charAt(i);
+			a = (a ^ c) * prime;
+			b = (b ^ (Integer.reverse(c) & 0xFFFFFFFFL)) * prime;
 		}
-		byte[] digest = md.digest(
-			str.getBytes(java.nio.charset.StandardCharsets.UTF_8)
-		);
-		ByteBuffer buf = ByteBuffer.wrap(digest).order(ByteOrder.LITTLE_ENDIAN);
-		return new Seed(buf.getLong(), buf.getLong());
+		return new Seed(a, b);
 	}
 
 	/** Draw a random seed from the OS entropy source. */

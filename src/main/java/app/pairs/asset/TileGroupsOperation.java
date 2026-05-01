@@ -1,6 +1,5 @@
 package app.pairs.asset;
 
-import app.pairs.map.TileGroup;
 import app.pairs.map.TileGroupRegistry;
 
 import java.io.InputStream;
@@ -43,7 +42,8 @@ public class TileGroupsOperation implements AssetOperation {
 		JsonObject root = new Gson().fromJson(json, JsonObject.class);
 		JsonArray arr = root.getAsJsonArray("groups");
 
-		List<TileGroup> groups = new ArrayList<>(arr.size());
+		List<List<String>> nonSlabGroups = new ArrayList<>(arr.size());
+		List<List<String>> slabGroups = new ArrayList<>();
 		for (JsonElement el : arr) {
 			JsonObject obj = el.getAsJsonObject();
 			boolean slab = obj.has("slab") && obj.get("slab").getAsBoolean();
@@ -52,13 +52,17 @@ public class TileGroupsOperation implements AssetOperation {
 			for (JsonElement m : members) {
 				ids.add(m.getAsString());
 			}
-			groups.add(new TileGroup(ids, slab));
+			if (slab) {
+				slabGroups.add(ids);
+			} else {
+				nonSlabGroups.add(ids);
+			}
 		}
 
+		int total = nonSlabGroups.size() + slabGroups.size();
 		System.out.println(
-			"  Loaded tile groups: " + ctx.id() + " (" + groups.size()
-			+ " groups)"
+			"  Loaded tile groups: " + ctx.id() + " (" + total + " groups)"
 		);
-		ctx.put(ctx.id(), new TileGroupRegistry(groups));
+		ctx.put(ctx.id(), new TileGroupRegistry(nonSlabGroups, slabGroups));
 	}
 }

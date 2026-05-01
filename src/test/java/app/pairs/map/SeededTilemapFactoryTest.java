@@ -11,34 +11,31 @@ import org.junit.jupiter.api.Test;
 class SeededTilemapFactoryTest {
 	@Test
 	void sameSeedProducesSameMap() {
-		Tilemap a = new CustomizedTilemapFactory()
+		Seed seed = Seed.fromString("hello-pairs");
+		Tilemap a = new CustomizedTilemapFactory(seed)
 						.setWidth(8)
 						.setHeight(8)
 						.setTypes(4)
-						.setSeed("hello-pairs")
 						.generate();
-		Tilemap b = new CustomizedTilemapFactory()
+		Tilemap b = new CustomizedTilemapFactory(seed)
 						.setWidth(8)
 						.setHeight(8)
 						.setTypes(4)
-						.setSeed("hello-pairs")
 						.generate();
 		assertThat(flatten(a)).containsExactly(flatten(b));
 	}
 
 	@Test
 	void differentSeedsProduceDifferentMaps() {
-		Tilemap a = new CustomizedTilemapFactory()
+		Tilemap a = new CustomizedTilemapFactory(new Seed(1L, 2L))
 						.setWidth(8)
 						.setHeight(8)
 						.setTypes(4)
-						.setSeed(new Seed(1L, 2L))
 						.generate();
-		Tilemap b = new CustomizedTilemapFactory()
+		Tilemap b = new CustomizedTilemapFactory(new Seed(3L, 4L))
 						.setWidth(8)
 						.setHeight(8)
 						.setTypes(4)
-						.setSeed(new Seed(3L, 4L))
 						.generate();
 		assertThat(flatten(a)).isNotEqualTo(flatten(b));
 	}

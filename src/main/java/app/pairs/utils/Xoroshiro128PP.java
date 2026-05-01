@@ -126,13 +126,4 @@ public final class Xoroshiro128PP extends Random {
 		this.s1 = origS1;
 		return new Xoroshiro128PP(acc0, acc1);
 	}
-
-	private static final class Holder {
-		static final Xoroshiro128PP INSTANCE = new Xoroshiro128PP();
-	}
-
-	/** Process-wide shared instance. Not thread-safe. */
-	public static Xoroshiro128PP globalInstance() {
-		return Holder.INSTANCE;
-	}
 }

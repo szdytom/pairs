@@ -32,7 +32,9 @@
 				"rose_quartz_bricks_slab",
 				"purpur_bricks_slab",
 				"redsand_bricks_slab",
-				"ice_bricks_slab"
+				"ice_bricks_slab",
+				"blue_bricks_slab",
+				"snow"
 			]
 		},
 		{ "members": ["packed_hay", "hay_block"] }
