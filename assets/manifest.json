@@ -77,6 +77,18 @@
 			"description": "Creating texture from highlighted tinyblocks"
 		},
 		{
+			"id": "shadow/raw",
+			"type": "image",
+			"file": "shadow.png",
+			"description": "Loading shadow.png"
+		},
+		{
+			"id": "shadow/texture",
+			"type": "create-texture",
+			"input": "shadow/raw",
+			"description": "Creating texture from shadow"
+		},
+		{
 			"id": "monogram/font",
 			"type": "bitmap-font",
 			"file": "monogram-bitmap.json",

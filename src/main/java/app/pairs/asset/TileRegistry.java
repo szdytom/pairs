@@ -22,6 +22,7 @@ public class TileRegistry implements AutoCloseable {
 	private final int typeCount;
 	private final Map<String, Integer> strToInt;
 	private SDL_Texture[] textures;
+	private SDL_Renderer cachedRenderer;
 
 	public TileRegistry(
 		int tileWidth, int tileHeight, SDL_Surface[] tiles, String[] stringIds
@@ -75,6 +76,8 @@ public class TileRegistry implements AutoCloseable {
 	 * is used.
 	 */
 	public void createTextures(SDL_Renderer renderer) {
+		if (renderer.equals(cachedRenderer))
+			return;
 		disposeTextures();
 		if (typeCount == 0)
 			return;
@@ -86,6 +89,7 @@ public class TileRegistry implements AutoCloseable {
 				);
 			}
 		}
+		cachedRenderer = renderer;
 	}
 
 	/**
