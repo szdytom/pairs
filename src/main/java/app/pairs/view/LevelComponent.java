@@ -2,7 +2,6 @@ package app.pairs.view;
 
 import static io.github.libsdl4j.api.keycode.SDL_Keycode.*;
 
-import app.pairs.asset.TileRegistry;
 import app.pairs.logic.GameState;
 import app.pairs.map.TilemapFactory;
 
@@ -55,10 +54,7 @@ public class LevelComponent extends Container {
 	private final TextComponent scaleText;
 	private final TextComponent clearedText;
 
-	public LevelComponent(
-		TilemapFactory factory, TileRegistry tileRegistry,
-		TileRegistry hlTileRegistry, IsometricMapper mapper
-	) {
+	public LevelComponent(TilemapFactory factory, IsometricMapper mapper) {
 		this.factory = factory;
 		this.gameState = GameState.fromFactory(factory);
 		this.mapper = mapper;
@@ -67,9 +63,7 @@ public class LevelComponent extends Container {
 		this.depthOrder = mapper.getDepthSortedOrder(gridHeight, gridWidth);
 		this.highlighted = new boolean[gridHeight][gridWidth];
 
-		this.gridView = new IsometricGridView(
-			buildGrid(), tileRegistry, hlTileRegistry, mapper
-		);
+		this.gridView = new IsometricGridView(buildGrid(), mapper);
 
 		this.titleText = new TextComponent("Pairs", 1, 200, 200, 255);
 		this.scaleText = new TextComponent("Scale: 6x", 1, 180, 180, 180);

@@ -82,12 +82,6 @@ public class Main {
 			System.exit(1);
 		}
 
-		TileRegistry tiles = AssetManager.instance().get("tiles/typed");
-		TileRegistry hlTiles = AssetManager.instance().get("hl-tiles/typed");
-
-		tiles.createTextures(renderer);
-		hlTiles.createTextures(renderer);
-
 		int scale = 6;
 
 		IsometricMapper mapper = new IsometricMapper(TILE_WIDTH, TILE_HEIGHT);
@@ -96,7 +90,7 @@ public class Main {
 			new PresetTilemapFactory(
 				AssetManager.instance().<TilemapPreset>get("tilemap/hard")
 			),
-			tiles, hlTiles, mapper
+			mapper
 		);
 		relayout(level, scale);
 
@@ -171,7 +165,7 @@ public class Main {
 			lastTime = currentTime;
 
 			SDL_SetRenderDrawColor(
-				renderer, (byte)30, (byte)30, (byte)50, (byte)255
+				renderer, (byte)255, (byte)255, (byte)255, (byte)255
 			);
 			SDL_RenderClear(renderer);
 
