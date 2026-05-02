@@ -29,21 +29,15 @@ public final class Seed {
 	}
 
 	/**
-	 * Derive a seed deterministically from a string. Two parallel FNV-1a
-	 * 64-bit walks with different offset bases give us 128 bits without
-	 * pulling in any crypto machinery — collisions across reasonable user
-	 * labels are extraordinarily unlikely and would not affect gameplay.
+	 * Derive a seed deterministically from a string using a simple polynomial
+	 * hash — no crypto needed for a game seed.
 	 */
 	public static Seed fromString(String str) {
-		long a = 0xCBF29CE484222325L;
-		long b = 0x84222325CBF29CE4L;
-		final long prime = 0x100000001B3L;
+		long s0 = 0;
 		for (int i = 0; i < str.length(); i++) {
-			char c = str.charAt(i);
-			a = (a ^ c) * prime;
-			b = (b ^ (Integer.reverse(c) & 0xFFFFFFFFL)) * prime;
+			s0 = s0 * 31 + str.charAt(i);
 		}
-		return new Seed(a, b);
+		return new Seed(s0, ~s0);
 	}
 
 	/** Draw a random seed from the OS entropy source. */
