@@ -42,7 +42,7 @@ public abstract class Container extends Widget {
 	@Override
 	public void update(long deltaTimeMs) {
 		for (Widget child : children) {
-			if (child.visible) {
+			if (child.isVisible()) {
 				child.update(deltaTimeMs);
 			}
 		}
@@ -55,7 +55,7 @@ public abstract class Container extends Widget {
 		int myGlobalX = parentX + layoutX;
 		int myGlobalY = parentY + layoutY;
 		for (Widget child : children) {
-			if (child.visible) {
+			if (child.isVisible()) {
 				child.render(renderer, myGlobalX, myGlobalY, scale);
 			}
 		}
@@ -98,7 +98,7 @@ public abstract class Container extends Widget {
 			// Hit-test children front-to-back (topmost first).
 			for (int i = children.size() - 1; i >= 0; i--) {
 				Widget child = children.get(i);
-				if (!child.visible) {
+				if (!child.isVisible()) {
 					continue;
 				}
 				int childGlobalX = myGlobalX + child.layoutX;

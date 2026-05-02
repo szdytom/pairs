@@ -1,24 +1,37 @@
 package app.pairs.view;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Abstract base class for all UI components in the widget tree.
- * Adds parent-child tracking, visibility control, layout coordinate storage,
+ * Adds parent-child tracking, dynamic properties, layout coordinate storage,
  * and event dispatch to the {@link ViewComponent} lifecycle.
  */
 public abstract class Widget implements ViewComponent {
 	Widget parent;
-	boolean visible = true;
+	final Map<String, Object> props = new HashMap<>();
 	int layoutX;
 	int layoutY;
 	int layoutW;
 	int layoutH;
 
+	@SuppressWarnings("unchecked")
+	public <T> T getProp(String name) {
+		return (T)props.get(name);
+	}
+
+	public void setProp(String name, Object val) {
+		props.put(name, val);
+	}
+
 	public void setVisible(boolean v) {
-		this.visible = v;
+		setProp("visible", v);
 	}
 
 	public boolean isVisible() {
-		return visible;
+		Boolean v = getProp("visible");
+		return v != null ? v : true;
 	}
 
 	/**
