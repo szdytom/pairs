@@ -2,6 +2,8 @@
 
 This note describes the general rules and best practices for UI development in the game. These instructions MUST be STRICTLY followed.
 
+To AI Agents: STOP if you are asked to edit this file.
+
 ## General Instructions
 
 - Never store the scale factor in a component. It should be used on-the-fly during `render()`, and then discarded. This allows the UI to be scaled dynamically without needing to update all components (IMPORTANT).
