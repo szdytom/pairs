@@ -1,12 +1,10 @@
 package app.pairs.view;
 
-import static io.github.libsdl4j.api.keycode.SDL_Keycode.*;
+import static io.github.libsdl4j.api.keycode.SDL_Keycode.SDLK_SPACE;
 
 import app.pairs.logic.GameState;
 
-import java.util.function.Supplier;
-
-import io.github.libsdl4j.api.render.*;
+import io.github.libsdl4j.api.render.SDL_Renderer;
 
 /**
  * Top-level component that owns a {@link GameState} and an
@@ -18,7 +16,6 @@ public class LevelComponent extends Container {
 	private static final int TILE_CONTENT_WIDTH = 16;
 	private static final int TILE_CONTENT_HEIGHT = 16;
 
-	private final Supplier<GameState> source;
 	private GameState gameState;
 	private final IsometricGridView gridView;
 	private final IsometricMapper mapper;
@@ -55,9 +52,8 @@ public class LevelComponent extends Container {
 	private final TextComponent scaleText;
 	private final TextComponent clearedText;
 
-	public LevelComponent(Supplier<GameState> source, IsometricMapper mapper) {
-		this.source = source;
-		this.gameState = source.get();
+	public LevelComponent(GameState gameState, IsometricMapper mapper) {
+		this.gameState = gameState;
 		this.mapper = mapper;
 		this.gridWidth = gameState.getWidth();
 		this.gridHeight = gameState.getHeight();
@@ -84,30 +80,6 @@ public class LevelComponent extends Container {
 
 	public void setScaleText(int scale) {
 		scaleText.setText("Scale: " + scale + "x");
-	}
-
-	/** Reset the level with a newly generated map. */
-	public void restart() {
-		gameState = source.get();
-		int newW = gameState.getWidth();
-		int newH = gameState.getHeight();
-		if (newW != gridWidth || newH != gridHeight) {
-			gridWidth = newW;
-			gridHeight = newH;
-			depthOrder = mapper.getDepthSortedOrder(gridHeight, gridWidth);
-			highlighted = new boolean[gridHeight][gridWidth];
-		}
-		cleared = false;
-		clearedText.setVisible(false);
-		selectedRow = -1;
-		selectedCol = -1;
-		hoveredRow = -1;
-		hoveredCol = -1;
-		prevHoveredRow = -1;
-		prevHoveredCol = -1;
-		mouseX = -1;
-		mouseY = -1;
-		gridView.setGrid(buildGrid());
 	}
 
 	/** Handle a mouse click at the current cursor position. */
@@ -212,8 +184,7 @@ public class LevelComponent extends Container {
 			}
 		} else if (event instanceof KeyEvent ke) {
 			if (ke.keycode() == SDLK_SPACE) {
-				restart();
-				return true;
+				// reserved
 			}
 		}
 		return false;

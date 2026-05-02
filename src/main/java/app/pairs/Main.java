@@ -1,18 +1,32 @@
 package app.pairs;
 
-import static io.github.libsdl4j.api.Sdl.*;
-import static io.github.libsdl4j.api.SdlSubSystemConst.*;
-import static io.github.libsdl4j.api.error.SdlError.*;
-import static io.github.libsdl4j.api.event.SDL_EventType.*;
-import static io.github.libsdl4j.api.event.SdlEvents.*;
-import static io.github.libsdl4j.api.hints.SdlHintsConst.*;
-import static io.github.libsdl4j.api.keycode.SDL_Keycode.*;
-import static io.github.libsdl4j.api.render.SDL_RendererFlags.*;
-import static io.github.libsdl4j.api.render.SdlRender.*;
-import static io.github.libsdl4j.api.video.SDL_WindowEventID.*;
-import static io.github.libsdl4j.api.video.SDL_WindowFlags.*;
-import static io.github.libsdl4j.api.video.SdlVideo.*;
-import static io.github.libsdl4j.api.video.SdlVideoConst.*;
+import static io.github.libsdl4j.api.Sdl.SDL_Init;
+import static io.github.libsdl4j.api.Sdl.SDL_Quit;
+import static io.github.libsdl4j.api.SdlSubSystemConst.SDL_INIT_EVERYTHING;
+import static io.github.libsdl4j.api.error.SdlError.SDL_GetError;
+import static io.github.libsdl4j.api.event.SDL_EventType.SDL_KEYDOWN;
+import static io.github.libsdl4j.api.event.SDL_EventType.SDL_MOUSEBUTTONDOWN;
+import static io.github.libsdl4j.api.event.SDL_EventType.SDL_MOUSEMOTION;
+import static io.github.libsdl4j.api.event.SDL_EventType.SDL_QUIT;
+import static io.github.libsdl4j.api.event.SDL_EventType.SDL_WINDOWEVENT;
+import static io.github.libsdl4j.api.event.SdlEvents.SDL_PollEvent;
+import static io.github.libsdl4j.api.hints.SdlHintsConst.SDL_HINT_RENDER_SCALE_QUALITY;
+import static io.github.libsdl4j.api.keycode.SDL_Keycode.SDLK_0;
+import static io.github.libsdl4j.api.keycode.SDL_Keycode.SDLK_EQUALS;
+import static io.github.libsdl4j.api.keycode.SDL_Keycode.SDLK_ESCAPE;
+import static io.github.libsdl4j.api.keycode.SDL_Keycode.SDLK_MINUS;
+import static io.github.libsdl4j.api.render.SDL_RendererFlags.SDL_RENDERER_ACCELERATED;
+import static io.github.libsdl4j.api.render.SdlRender.SDL_CreateRenderer;
+import static io.github.libsdl4j.api.render.SdlRender.SDL_DestroyRenderer;
+import static io.github.libsdl4j.api.render.SdlRender.SDL_RenderClear;
+import static io.github.libsdl4j.api.render.SdlRender.SDL_RenderPresent;
+import static io.github.libsdl4j.api.render.SdlRender.SDL_SetRenderDrawColor;
+import static io.github.libsdl4j.api.video.SDL_WindowEventID.SDL_WINDOWEVENT_LEAVE;
+import static io.github.libsdl4j.api.video.SDL_WindowFlags.SDL_WINDOW_RESIZABLE;
+import static io.github.libsdl4j.api.video.SDL_WindowFlags.SDL_WINDOW_SHOWN;
+import static io.github.libsdl4j.api.video.SdlVideo.SDL_CreateWindow;
+import static io.github.libsdl4j.api.video.SdlVideo.SDL_DestroyWindow;
+import static io.github.libsdl4j.api.video.SdlVideoConst.SDL_WINDOWPOS_CENTERED;
 
 import app.pairs.asset.AssetManager;
 import app.pairs.logic.GameState;
@@ -22,10 +36,10 @@ import app.pairs.view.KeyEvent;
 import app.pairs.view.LevelComponent;
 import app.pairs.view.MouseEvent;
 
-import io.github.libsdl4j.api.event.*;
-import io.github.libsdl4j.api.hints.*;
-import io.github.libsdl4j.api.render.*;
-import io.github.libsdl4j.api.video.*;
+import io.github.libsdl4j.api.event.SDL_Event;
+import io.github.libsdl4j.api.hints.SdlHints;
+import io.github.libsdl4j.api.render.SDL_Renderer;
+import io.github.libsdl4j.api.video.SDL_Window;
 
 public class Main {
 	private static final int WINDOW_WIDTH = 1_024;
@@ -84,15 +98,11 @@ public class Main {
 
 		IsometricMapper mapper = new IsometricMapper(TILE_WIDTH, TILE_HEIGHT);
 
-		java.util.function.Supplier<GameState> gameSupplier = pickDifficulty(
-			args
-		);
-			LevelComponent level = new LevelComponent(gameSupplier, mapper);
+		GameState gameState = pickDifficulty(args);
+		LevelComponent level = new LevelComponent(gameState, mapper);
 		relayout(level, scale);
 
-		System.out.println(
-			"Controls: +/- zoom | 0 reset scale | SPACE regenerate | ESC quit"
-		);
+		System.out.println("Controls: +/- zoom | 0 reset scale | ESC quit");
 
 		SDL_Event evt = new SDL_Event();
 		boolean shouldRun = true;
@@ -189,17 +199,15 @@ public class Main {
 	 * can be launched against any difficulty. Defaults to {@code hard} when
 	 * no arg is given.
 	 */
-	private static java.util.function.Supplier<GameState> pickDifficulty(
-		String[] args
-	) {
+	private static GameState pickDifficulty(String[] args) {
 		String mode = args != null && args.length > 0
 			? args[0].toLowerCase()
 			: "hard";
 		System.out.println("[Main] difficulty=" + mode);
 		return switch (mode) {
-			case "easy" -> GameState::easy;
-			case "hard" -> GameState::hard;
-			case "extreme" -> GameState::extreme;
+			case "easy" -> GameState.easy();
+			case "hard" -> GameState.hard();
+			case "extreme" -> GameState.extreme();
 			default ->
 				throw new IllegalArgumentException(
 					"unknown difficulty: " + mode

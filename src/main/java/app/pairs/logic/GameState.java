@@ -26,8 +26,8 @@ import java.util.List;
  * <p>
  * Every map-creating factory has two forms: a no-arg form that draws a
  * fresh {@link Seed} from {@link Seed#deviceRandom()}, and a {@code (...,
- * Seed)} form for replay. The seed used is always retrievable via {@link
- * #getSeed()}.
+ * Seed)} form for replay. Callers wanting to record/replay a map should keep
+ * the {@link Seed} themselves.
  */
 public final class GameState {
 	private static final String TILE_REGISTRY = "tiles/typed";
@@ -35,17 +35,10 @@ public final class GameState {
 
 	private final Tilemap tilemap;
 	private final OpLogs opLogs;
-	private final Seed seed;
 
-	private GameState(Tilemap tilemap, Seed seed) {
+	private GameState(Tilemap tilemap) {
 		this.tilemap = tilemap;
 		this.opLogs = new OpLogs();
-		this.seed = seed;
-	}
-
-	/** Seed used for both palette selection and layout generation. */
-	public Seed getSeed() {
-		return seed;
 	}
 
 	// ---- difficulty factories --------------------------------------------
@@ -88,7 +81,7 @@ public final class GameState {
 											   .setWidth(width)
 											   .setHeight(height)
 											   .setTypes(types);
-		return build(factory, seed);
+		return build(factory);
 	}
 
 	/**
@@ -117,7 +110,7 @@ public final class GameState {
 								   .setWidth(width)
 								   .setHeight(height)
 								   .setTypes(types);
-		return build(new SubsetTilemapFactory(inner, subset), seed);
+		return build(new SubsetTilemapFactory(inner, subset));
 	}
 
 	private static GameState fromPreset(
@@ -128,7 +121,7 @@ public final class GameState {
 		TilemapFactory inner = CustomizedTilemapFactory.fromPreset(
 			preset, seed
 		);
-		return build(new SubsetTilemapFactory(inner, subset), seed);
+		return build(new SubsetTilemapFactory(inner, subset));
 	}
 
 	private static int[] pickSubset(
@@ -141,8 +134,8 @@ public final class GameState {
 		);
 	}
 
-	private static GameState build(TilemapFactory factory, Seed seed) {
-		return new GameState(factory.generate(), seed);
+	private static GameState build(TilemapFactory factory) {
+		return new GameState(factory.generate());
 	}
 
 	// ---- read-only map accessors -----------------------------------------
