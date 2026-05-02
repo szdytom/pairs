@@ -16,6 +16,8 @@ public class IsometricGridView extends Widget {
 	private static final int SHADOW_SIZE = 18;
 	private static final int SHADOW_Y_OFFSET = TILE_CONTENT_HEIGHT;
 	private static final int HOVER_LIFT = TILE_CONTENT_HEIGHT / 3;
+	private static final int HOVER_LIFT_MS = 50;
+
 	private final SDL_Rect srcRect = new SDL_Rect();
 	private final SDL_Rect dstRect = new SDL_Rect();
 	private final SDL_Rect shadowDstRect = new SDL_Rect();
@@ -27,6 +29,7 @@ public class IsometricGridView extends Widget {
 	private final TileRegistry hlTileRegistry;
 	private final IsometricMapper mapper;
 	private boolean[][] highlighted;
+	private float[][] liftProgress;
 	private int[][] depthOrder;
 	private final int[] measuredSize = new int[2];
 
@@ -39,6 +42,7 @@ public class IsometricGridView extends Widget {
 		this.depthOrder = mapper.getDepthSortedOrder(
 			grid.length, grid[0].length
 		);
+		this.liftProgress = new float[grid.length][grid[0].length];
 		srcRect.x = 1;
 		srcRect.y = 1;
 		srcRect.w = TILE_CONTENT_WIDTH;
@@ -54,10 +58,30 @@ public class IsometricGridView extends Widget {
 		this.depthOrder = mapper.getDepthSortedOrder(
 			grid.length, grid[0].length
 		);
+		this.liftProgress = new float[grid.length][grid[0].length];
 	}
 
 	public void setHighlighted(boolean[][] highlighted) {
 		this.highlighted = highlighted;
+	}
+
+	@Override
+	public void update(long deltaTimeMs) {
+		float step = deltaTimeMs / (float)HOVER_LIFT_MS;
+		for (int r = 0; r < liftProgress.length; r++) {
+			for (int c = 0; c < liftProgress[r].length; c++) {
+				boolean target = highlighted != null && highlighted[r][c];
+				if (target) {
+					liftProgress[r][c] = Math.min(
+						1f, liftProgress[r][c] + step
+					);
+				} else {
+					liftProgress[r][c] = Math.max(
+						0f, liftProgress[r][c] - step
+					);
+				}
+			}
+		}
 	}
 
 	@Override
@@ -82,7 +106,6 @@ public class IsometricGridView extends Widget {
 		int dstW = TILE_CONTENT_WIDTH * scale;
 		int dstH = TILE_CONTENT_HEIGHT * scale;
 
-		int hoverOffset = HOVER_LIFT * scale;
 		int gridGlobalX = parentX + layoutX;
 		int gridGlobalY = parentY + layoutY + HOVER_LIFT;
 
@@ -122,8 +145,10 @@ public class IsometricGridView extends Widget {
 				: tileRegistry.getTexture(typeId);
 			if (tex != null) {
 				dstRect.x = screenCenterX - dstW / 2;
-				dstRect.y = screenCenterY - dstH / 2
-					- (isHighlighted ? hoverOffset : 0);
+				int liftPixels = Math.round(
+					HOVER_LIFT * liftProgress[row][col]
+				);
+				dstRect.y = screenCenterY - dstH / 2 - liftPixels * scale;
 				dstRect.w = dstW;
 				dstRect.h = dstH;
 
