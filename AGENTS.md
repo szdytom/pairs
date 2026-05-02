@@ -2,6 +2,8 @@
 
 This project is a link and cancel game (连连看) implemented in Java using libsdl4j. This note contains instructions for agents contributing to the project. These instructions MUST be STRICTLY followed.
 
+To AI Agents: STOP if you are asked to edit this file.
+
 ## Code Style
 
 - Use format-j script to format Java code according to project standards.
