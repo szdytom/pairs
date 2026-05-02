@@ -30,14 +30,15 @@ import io.github.libsdl4j.api.render.*;
 import io.github.libsdl4j.api.video.*;
 
 public class Main {
-	private static final int WINDOW_WIDTH = 1_024;
-	private static final int WINDOW_HEIGHT = 768;
 	private static final int TILE_WIDTH = 16;
 	private static final int TILE_HEIGHT = 16;
 
 	private static final int MIN_SCALE = 1;
 	private static final int MAX_SCALE = 12;
 	private static final int SCALE_STEP = 1;
+
+	private static int windowWidth = 1_024;
+	private static int windowHeight = 768;
 
 	public static void main(String[] args) {
 		int result = SDL_Init(SDL_INIT_EVERYTHING);
@@ -49,7 +50,7 @@ public class Main {
 
 		SDL_Window window = SDL_CreateWindow(
 			"Pairs - Isometric View", SDL_WINDOWPOS_CENTERED,
-			SDL_WINDOWPOS_CENTERED, WINDOW_WIDTH, WINDOW_HEIGHT,
+			SDL_WINDOWPOS_CENTERED, windowWidth, windowHeight,
 			SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE
 		);
 		if (window == null) {
@@ -151,11 +152,16 @@ public class Main {
 					);
 					break;
 				case SDL_WINDOWEVENT:
-					if (evt.window.event == SDL_WINDOWEVENT_LEAVE)
+					if (evt.window.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
+						windowWidth = evt.window.data1;
+						windowHeight = evt.window.data2;
+						relayout(level, scale);
+					} else if (evt.window.event == SDL_WINDOWEVENT_LEAVE) {
 						level.dispatchEvent(
 							new MouseEvent(Event.Type.MOUSE_LEAVE, -1, -1, 0),
 							0, 0
 						);
+					}
 					break;
 				}
 			}
@@ -185,6 +191,6 @@ public class Main {
 	private static void relayout(LevelComponent level, int scale) {
 		level.setScaleText(scale);
 		level.measure();
-		level.layout(0, 0, WINDOW_WIDTH / scale, WINDOW_HEIGHT / scale);
+		level.layout(0, 0, windowWidth / scale, windowHeight / scale);
 	}
 }

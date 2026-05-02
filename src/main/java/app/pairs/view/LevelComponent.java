@@ -39,10 +39,8 @@ public class LevelComponent extends Container {
 	private boolean cleared;
 
 	// Layout state
+	private final AlignLayout alignLayout;
 	private final int[] measuredSize = new int[2];
-	/** Grid origin offset relative to this component in logical pixels. */
-	private int gridOriginX;
-	private int gridOriginY;
 	/**
 	 * Grid origin in global logical space, cached in render() for hit-testing.
 	 */
@@ -65,12 +63,18 @@ public class LevelComponent extends Container {
 
 		this.gridView = new IsometricGridView(buildGrid(), mapper);
 
+		this.alignLayout = new AlignLayout();
+		alignLayout.setProp("h-align", AlignLayout.HAlign.CENTER);
+		alignLayout.setProp("v-align", AlignLayout.VAlign.CENTER);
+		alignLayout.setProp("h-origin", AlignLayout.Origin.CENTER);
+		alignLayout.addChild(gridView);
+
 		this.titleText = new TextComponent("Pairs", 1, 200, 200, 255);
 		this.scaleText = new TextComponent("Scale: 6x", 1, 180, 180, 180);
 		this.clearedText = new TextComponent("CLEARED!", 2, 255, 255, 100);
 		clearedText.setVisible(false);
 
-		addChild(gridView);
+		addChild(alignLayout);
 		addChild(titleText);
 		addChild(scaleText);
 		addChild(clearedText);
@@ -158,14 +162,7 @@ public class LevelComponent extends Container {
 	@Override
 	public void layout(int x, int y, int w, int h) {
 		super.layout(x, y, w, h);
-		int stepX = mapper.getTileWidth() / 2;
-		int leftHalf = (gridHeight - 1) * stepX + TILE_CONTENT_WIDTH / 2;
-		int margin = 5;
-		gridOriginX = leftHalf + margin;
-		gridOriginY = margin + TILE_CONTENT_HEIGHT / 2;
-
-		int[] gridSize = gridView.measure();
-		gridView.layout(gridOriginX, gridOriginY, gridSize[0], gridSize[1]);
+		alignLayout.layout(0, 0, w, h);
 
 		int[] titleSize = titleText.measure();
 		titleText.layout(1, 1, titleSize[0], titleSize[1]);
@@ -184,8 +181,8 @@ public class LevelComponent extends Container {
 		int myGlobalX = parentX + layoutX;
 		int myGlobalY = parentY + layoutY;
 
-		gridGlobalX = myGlobalX + gridOriginX;
-		gridGlobalY = myGlobalY + gridOriginY + TILE_CONTENT_HEIGHT / 3;
+		gridGlobalX = myGlobalX + gridView.layoutX;
+		gridGlobalY = myGlobalY + gridView.layoutY + TILE_CONTENT_HEIGHT / 3;
 
 		resolveHoveredCell();
 		updateHighlighted();
