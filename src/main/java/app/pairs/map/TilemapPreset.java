@@ -1,7 +1,8 @@
 package app.pairs.map;
 
 /**
- * Data-driven tilemap configuration consumed by {@link PresetTilemapFactory}.
+ * Data-driven tilemap configuration consumed by {@link
+ * TilemapFactory#fromPreset}.
  *
  * <p>
  * {@code initial} is the seed grid for the generator: cells with value

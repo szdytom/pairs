@@ -1,10 +1,10 @@
 package app.pairs.view;
 
-import static io.github.libsdl4j.api.keycode.SDL_Keycode.SDLK_SPACE;
+import static io.github.libsdl4j.api.keycode.SDL_Keycode.*;
 
 import app.pairs.logic.GameState;
 
-import io.github.libsdl4j.api.render.SDL_Renderer;
+import io.github.libsdl4j.api.render.*;
 
 /**
  * Top-level component that owns a {@link GameState} and an

@@ -30,6 +30,7 @@ import static io.github.libsdl4j.api.video.SdlVideoConst.SDL_WINDOWPOS_CENTERED;
 
 import app.pairs.asset.AssetManager;
 import app.pairs.logic.GameState;
+import app.pairs.map.TilemapFactory;
 import app.pairs.view.Event;
 import app.pairs.view.IsometricMapper;
 import app.pairs.view.KeyEvent;
@@ -40,7 +41,6 @@ import io.github.libsdl4j.api.event.SDL_Event;
 import io.github.libsdl4j.api.hints.SdlHints;
 import io.github.libsdl4j.api.render.SDL_Renderer;
 import io.github.libsdl4j.api.video.SDL_Window;
-
 public class Main {
 	private static final int WINDOW_WIDTH = 1_024;
 	private static final int WINDOW_HEIGHT = 768;
@@ -204,15 +204,12 @@ public class Main {
 			? args[0].toLowerCase()
 			: "hard";
 		System.out.println("[Main] difficulty=" + mode);
-		return switch (mode) {
-			case "easy" -> GameState.easy();
-			case "hard" -> GameState.hard();
-			case "extreme" -> GameState.extreme();
-			default ->
-				throw new IllegalArgumentException(
-					"unknown difficulty: " + mode
-					+ " (expected easy|hard|extreme)"
-				);
-		};
+		if (!mode.equals("easy") && !mode.equals("hard")
+		    && !mode.equals("extreme")) {
+			throw new IllegalArgumentException(
+				"unknown difficulty: " + mode + " (expected easy|hard|extreme)"
+			);
+		}
+		return new GameState(TilemapFactory.fromPreset("tilemap/" + mode));
 	}
 }

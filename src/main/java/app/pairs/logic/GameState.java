@@ -7,7 +7,6 @@ import app.pairs.map.SubsetTilemapFactory;
 import app.pairs.map.TileGroupRegistry;
 import app.pairs.map.TileSelectionPolicy;
 import app.pairs.map.TilemapFactory;
-import app.pairs.map.TilemapPreset;
 import app.pairs.model.OpLogs;
 import app.pairs.model.Tilemap;
 import app.pairs.utils.Seed;
@@ -24,10 +23,13 @@ import java.util.List;
  * them via {@link #undo()}; invoking their methods directly is undefined.
  *
  * <p>
- * Every map-creating factory has two forms: a no-arg form that draws a
- * fresh {@link Seed} from {@link Seed#deviceRandom()}, and a {@code (...,
- * Seed)} form for replay. Callers wanting to record/replay a map should keep
- * the {@link Seed} themselves.
+ * The canonical way to build a {@code GameState} is to pass a
+ * {@link TilemapFactory} (e.g. {@code new GameState(TilemapFactory.fromPreset(
+ * "tilemap/hard"))}). The static {@code easy()/hard()/
+ * extreme()/customized(...)} helpers are thin shorthands for the common
+ * cases and ultimately funnel through the same constructor. Every helper
+ * has a no-arg form that draws a fresh {@link Seed} from
+ * {@link Seed#deviceRandom()} and a {@code (..., Seed)} form for replay.
  */
 public final class GameState {
 	private static final String TILE_REGISTRY = "tiles/typed";
@@ -36,37 +38,9 @@ public final class GameState {
 	private final Tilemap tilemap;
 	private final OpLogs opLogs;
 
-	private GameState(Tilemap tilemap) {
-		this.tilemap = tilemap;
+	public GameState(TilemapFactory factory) {
+		this.tilemap = factory.generate();
 		this.opLogs = new OpLogs();
-	}
-
-	// ---- difficulty factories --------------------------------------------
-
-	public static GameState easy() {
-		return easy(Seed.deviceRandom());
-	}
-
-	public static GameState easy(Seed seed) {
-		return fromPreset("tilemap/easy", TileSelectionPolicy.easy(), seed);
-	}
-
-	public static GameState hard() {
-		return hard(Seed.deviceRandom());
-	}
-
-	public static GameState hard(Seed seed) {
-		return fromPreset("tilemap/hard", TileSelectionPolicy.hard(), seed);
-	}
-
-	public static GameState extreme() {
-		return extreme(Seed.deviceRandom());
-	}
-
-	public static GameState extreme(Seed seed) {
-		return fromPreset(
-			"tilemap/extreme", TileSelectionPolicy.extreme(), seed
-		);
 	}
 
 	/** Custom dimensions and tile-type count, no group constraints. */
@@ -77,11 +51,10 @@ public final class GameState {
 	public static GameState customized(
 		int width, int height, int types, Seed seed
 	) {
-		CustomizedTilemapFactory factory = new CustomizedTilemapFactory(seed)
-											   .setWidth(width)
-											   .setHeight(height)
-											   .setTypes(types);
-		return build(factory);
+		return new GameState(new CustomizedTilemapFactory(seed)
+		                         .setWidth(width)
+		                         .setHeight(height)
+		                         .setTypes(types));
 	}
 
 	/**
@@ -105,37 +78,16 @@ public final class GameState {
 		TileSelectionPolicy policy = new TileSelectionPolicy(
 			includeSlabs, spread
 		);
-		int[] subset = pickSubset(policy, types, seed);
+		TileRegistry registry = AssetManager.instance().get(TILE_REGISTRY);
+		TileGroupRegistry groups = AssetManager.instance().get(TILE_GROUPS);
+		int[] subset = policy.selectFor(
+			registry, groups, types, new Xoroshiro128PP(seed)
+		);
 		TilemapFactory inner = new CustomizedTilemapFactory(seed)
 								   .setWidth(width)
 								   .setHeight(height)
 								   .setTypes(types);
-		return build(new SubsetTilemapFactory(inner, subset));
-	}
-
-	private static GameState fromPreset(
-		String presetId, TileSelectionPolicy policy, Seed seed
-	) {
-		TilemapPreset preset = AssetManager.instance().get(presetId);
-		int[] subset = pickSubset(policy, preset.types(), seed);
-		TilemapFactory inner = CustomizedTilemapFactory.fromPreset(
-			preset, seed
-		);
-		return build(new SubsetTilemapFactory(inner, subset));
-	}
-
-	private static int[] pickSubset(
-		TileSelectionPolicy policy, int count, Seed seed
-	) {
-		TileRegistry registry = AssetManager.instance().get(TILE_REGISTRY);
-		TileGroupRegistry groups = AssetManager.instance().get(TILE_GROUPS);
-		return policy.selectFor(
-			registry, groups, count, new Xoroshiro128PP(seed)
-		);
-	}
-
-	private static GameState build(TilemapFactory factory) {
-		return new GameState(factory.generate());
+		return new GameState(new SubsetTilemapFactory(inner, subset));
 	}
 
 	// ---- read-only map accessors -----------------------------------------
