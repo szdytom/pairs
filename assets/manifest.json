@@ -21,16 +21,16 @@
 			"id": "tile-mapping",
 			"type": "mapping",
 			"value": [
-				["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"],
-				["10", "11", "12", "13", "14", "15", "16", "17", "18", "19"],
-				["20", "21", "22", "23", "24", "25", "26", "27", "28", "29"],
-				["30", "31", "32", "33", "34", "35", "36", "37", "38", "39"],
-				["40", "41", "42", "43", "44", "45", "46", "47", "48", "49"],
-				["50", "51", "52", "53", "54", "55", "56", "57", "58", "59"],
-				["60", "61", "62", "63", "64", "65", "66", "67", "68", "69"],
-				["70", "71", "72", "73", "74", "75", "76", "77", "78", "79"],
-				["80", "81", "82", "83", "84", "85", "86", "87", "88", "89"],
-				["90", "91", "92", "93", "94", "95", "96", "97", "98", "99"]
+				["grass_block", "deep_grass_block", "deep_grass_block2", "deep_grass_block3", "sand", "sand2", "dirt", "dirt2", "wet_dirt", null],
+				["grass_dirt", "grass_dirt2", "grass_dirt_slab", "snowed_dirt", "snowed_dirt2", "snowed_dirt_slab", "ice", "snow", "packed_hay", "hay_block"],
+				["redsand_dirt", "redsand_dirt2", "redsand_dirt_slab", "blue_pillar", "blue_pillar_slab", "red_pillar", "red_pillar_slab", "green_pillar", "green_pillar_slab", null],
+				["dark_log", "dark_plank", "dark_plank_slab", "log", "plank", "plank_slab", "birch_log", "birch_plank", "birch_plank_slab", null],
+				["leaves", "cherry_leaves", "azalea_leaves", "flowered_leaves", "fruited_leaves", "berry_leaves", "yellow_leaves", "withered_leaves", "red_leaves", null],
+				["smooth_stone", "smooth_stone2", "stone", "stone2", "coal_ore", "gold_ore", "copper_ore", "emerald_ore", "diamond_ore", null],
+				["deepslate_bricks", "deepslate_bricks_slab", "bricks", "bricks_slab", "diorite_bricks", "diorite_bricks_slab", "rose_quartz_bircks", "rose_quartz_bricks_slab", null, null],
+				["purpur_bricks", "purpur_bricks_slab", "redsand_bricks", "redsand_bricks_slab", "ice_bricks", "ice_bricks_slab", "blue_bricks", "blue_bricks_slab", null, "orange_missing"],
+				["mossy_prismarine", "mossy_prismarine_brick", "mossy_dark_prismarine", "mossy_redsand_bricks", "mossy_blue_bricks", "smooth_stone_stairs_l", "smooth_stone_stairs_r", null, "gray_missing", "black_missing"],
+				["gold_block", "emerald_block", "diamond_block", "redstone_bricks", "emerald_bircks", "emerald_bircks2", "gold_bricks", null, "blue_missing", "green_missing"]
 			],
 			"description": "Defining tile type mapping"
 		},
@@ -95,6 +95,12 @@
 			"description": "Loading monogram bitmap font"
 		},
 		{
+			"id": "tile-groups/default",
+			"type": "tile-groups",
+			"file": "tile-groups.json",
+			"description": "Loading tile similarity groups"
+		},
+		{
 			"id": "tilemap/easy",
 			"type": "tilemap-preset",
 			"width": 9,
@@ -120,6 +126,14 @@
 			"height": 12,
 			"types": 20,
 			"description": "Defining hard mode tilemap preset"
+		},
+		{
+			"id": "tilemap/extreme",
+			"type": "tilemap-preset",
+			"width": 12,
+			"height": 12,
+			"types": 20,
+			"description": "Defining extreme mode tilemap preset"
 		}
 	]
 }

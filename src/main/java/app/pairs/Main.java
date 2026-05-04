@@ -15,9 +15,8 @@ import static io.github.libsdl4j.api.video.SdlVideo.*;
 import static io.github.libsdl4j.api.video.SdlVideoConst.*;
 
 import app.pairs.asset.AssetManager;
-import app.pairs.asset.TileRegistry;
-import app.pairs.map.PresetTilemapFactory;
-import app.pairs.map.TilemapPreset;
+import app.pairs.logic.GameState;
+import app.pairs.map.TilemapFactory;
 import app.pairs.view.Event;
 import app.pairs.view.IsometricMapper;
 import app.pairs.view.KeyEvent;
@@ -28,7 +27,6 @@ import io.github.libsdl4j.api.event.*;
 import io.github.libsdl4j.api.hints.*;
 import io.github.libsdl4j.api.render.*;
 import io.github.libsdl4j.api.video.*;
-
 public class Main {
 	private static final int WINDOW_WIDTH = 1_024;
 	private static final int WINDOW_HEIGHT = 768;
@@ -86,17 +84,11 @@ public class Main {
 
 		IsometricMapper mapper = new IsometricMapper(TILE_WIDTH, TILE_HEIGHT);
 
-		LevelComponent level = new LevelComponent(
-			new PresetTilemapFactory(
-				AssetManager.instance().<TilemapPreset>get("tilemap/hard")
-			),
-			mapper
-		);
+		GameState gameState = pickDifficulty(args);
+		LevelComponent level = new LevelComponent(gameState, mapper);
 		relayout(level, scale);
 
-		System.out.println(
-			"Controls: +/- zoom | 0 reset scale | SPACE regenerate | ESC quit"
-		);
+		System.out.println("Controls: +/- zoom | 0 reset scale | ESC quit");
 
 		SDL_Event evt = new SDL_Event();
 		boolean shouldRun = true;
@@ -186,5 +178,24 @@ public class Main {
 		level.setScaleText(scale);
 		level.measure();
 		level.layout(0, 0, WINDOW_WIDTH / scale, WINDOW_HEIGHT / scale);
+	}
+
+	/**
+	 * Pick a {@link GameState} supplier from {@code args[0]} so the renderer
+	 * can be launched against any difficulty. Defaults to {@code hard} when
+	 * no arg is given.
+	 */
+	private static GameState pickDifficulty(String[] args) {
+		String mode = args != null && args.length > 0
+			? args[0].toLowerCase()
+			: "hard";
+		System.out.println("[Main] difficulty=" + mode);
+		if (!mode.equals("easy") && !mode.equals("hard")
+		    && !mode.equals("extreme")) {
+			throw new IllegalArgumentException(
+				"unknown difficulty: " + mode + " (expected easy|hard|extreme)"
+			);
+		}
+		return new GameState(TilemapFactory.fromPreset("tilemap/" + mode));
 	}
 }

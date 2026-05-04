@@ -10,7 +10,9 @@ class TilemapGeneratorCoreTest {
 		assertThatIllegalArgumentException()
 			.isThrownBy(
 				()
-					-> new CustomizedTilemapFactory()
+					-> new CustomizedTilemapFactory(
+						   app.pairs.utils.Seed.deviceRandom()
+					)
 						   .setWidth(4)
 						   .setHeight(4)
 						   .setTypes(0)
@@ -24,7 +26,9 @@ class TilemapGeneratorCoreTest {
 		assertThatIllegalArgumentException()
 			.isThrownBy(
 				()
-					-> new CustomizedTilemapFactory()
+					-> new CustomizedTilemapFactory(
+						   app.pairs.utils.Seed.deviceRandom()
+					)
 						   .setWidth(4)
 						   .setHeight(4)
 						   .setTypes(-3)
@@ -39,7 +43,9 @@ class TilemapGeneratorCoreTest {
 		assertThatIllegalArgumentException()
 			.isThrownBy(
 				()
-					-> new CustomizedTilemapFactory()
+					-> new CustomizedTilemapFactory(
+						   app.pairs.utils.Seed.deviceRandom()
+					)
 						   .setWidth(3)
 						   .setHeight(3)
 						   .setTypes(1)
@@ -54,7 +60,9 @@ class TilemapGeneratorCoreTest {
 		assertThatIllegalArgumentException()
 			.isThrownBy(
 				()
-					-> new CustomizedTilemapFactory()
+					-> new CustomizedTilemapFactory(
+						   app.pairs.utils.Seed.deviceRandom()
+					)
 						   .setWidth(2)
 						   .setHeight(2)
 						   .setTypes(3)

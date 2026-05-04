@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.Test;
 
-import io.github.libsdl4j.api.render.SDL_Renderer;
+import io.github.libsdl4j.api.render.*;
 
 /**
  * Tests for {@link Container}: auto-traversal of update/render/destroy,
@@ -223,7 +223,7 @@ class ContainerTest {
 		c.layout(0, 0, 100, 100);
 
 		// Two overlapping children: front child does NOT handle events,
-		// back child DOES.  Click hits both bounds.
+		// back child DOES. Click hits both bounds.
 		SpyWidget front = new SpyWidget(false);
 		front.layout(10, 10, 50, 50);
 		SpyWidget back = new SpyWidget(true);

@@ -3,7 +3,6 @@ package app.pairs.view;
 import static io.github.libsdl4j.api.keycode.SDL_Keycode.*;
 
 import app.pairs.logic.GameState;
-import app.pairs.map.TilemapFactory;
 
 import io.github.libsdl4j.api.render.*;
 
@@ -17,7 +16,6 @@ public class LevelComponent extends Container {
 	private static final int TILE_CONTENT_WIDTH = 16;
 	private static final int TILE_CONTENT_HEIGHT = 16;
 
-	private final TilemapFactory factory;
 	private GameState gameState;
 	private final IsometricGridView gridView;
 	private final IsometricMapper mapper;
@@ -54,9 +52,8 @@ public class LevelComponent extends Container {
 	private final TextComponent scaleText;
 	private final TextComponent clearedText;
 
-	public LevelComponent(TilemapFactory factory, IsometricMapper mapper) {
-		this.factory = factory;
-		this.gameState = GameState.fromFactory(factory);
+	public LevelComponent(GameState gameState, IsometricMapper mapper) {
+		this.gameState = gameState;
 		this.mapper = mapper;
 		this.gridWidth = gameState.getWidth();
 		this.gridHeight = gameState.getHeight();
@@ -85,9 +82,9 @@ public class LevelComponent extends Container {
 		scaleText.setText("Scale: " + scale + "x");
 	}
 
-	/** Reset the level with a newly generated map. */
+	/** Reset the level with the map generated. */
 	public void restart() {
-		gameState = GameState.fromFactory(factory);
+		gameState.restart();
 		int newW = gameState.getWidth();
 		int newH = gameState.getHeight();
 		if (newW != gridWidth || newH != gridHeight) {
@@ -108,7 +105,6 @@ public class LevelComponent extends Container {
 		mouseY = -1;
 		gridView.setGrid(buildGrid());
 	}
-
 	/** Handle a mouse click at the current cursor position. */
 	public void handleClick() {
 		resolveHoveredCell();

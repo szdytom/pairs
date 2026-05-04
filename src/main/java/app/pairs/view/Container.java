@@ -3,17 +3,19 @@ package app.pairs.view;
 import java.util.ArrayList;
 import java.util.List;
 
-import io.github.libsdl4j.api.render.SDL_Renderer;
+import io.github.libsdl4j.api.render.*;
 
 /**
  * Abstract container that manages a list of child {@link Widget}s.
  *
- * <p>Automatically propagates {@link #update(long)},
+ * <p>
+ * Automatically propagates {@link #update(long)},
  * {@link #render(SDL_Renderer, int, int, int)}, and
- * {@link #destroy()} to all children.  Dispatches mouse events with
+ * {@link #destroy()} to all children. Dispatches mouse events with
  * hit-testing and bubbling semantics.
  *
- * <p>Subclasses must provide their own {@link #measure()} and
+ * <p>
+ * Subclasses must provide their own {@link #measure()} and
  * {@link #layout(int, int, int, int)} — this class does not define a
  * default layout strategy.
  */
@@ -74,17 +76,20 @@ public abstract class Container extends Widget {
 	/**
 	 * Dispatches an event to this container's subtree.
 	 *
-	 * <p>For mouse events, hit-tests children front-to-back (reverse
-	 * insertion order).  The first visible child whose bounds contain the
-	 * cursor receives the event.  If the child handles it (returns true),
-	 * dispatch stops.  If the child does not handle it, the event bubbles
+	 * <p>
+	 * For mouse events, hit-tests children front-to-back (reverse
+	 * insertion order). The first visible child whose bounds contain the
+	 * cursor receives the event. If the child handles it (returns true),
+	 * dispatch stops. If the child does not handle it, the event bubbles
 	 * to this container's {@link #onEvent(Event)} immediately — siblings
 	 * further back are not tried.
 	 *
-	 * <p>If no child is hit, the event also reaches this container's
+	 * <p>
+	 * If no child is hit, the event also reaches this container's
 	 * {@link #onEvent(Event)}.
 	 *
-	 * <p>For non-mouse events (e.g. keyboard), dispatches directly to
+	 * <p>
+	 * For non-mouse events (e.g. keyboard), dispatches directly to
 	 * {@link #onEvent(Event)} without hit-testing.
 	 */
 	@Override

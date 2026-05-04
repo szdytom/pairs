@@ -1,12 +1,16 @@
 package app.pairs.logic;
 
 import app.pairs.asset.AssetManager;
+import app.pairs.asset.TileRegistry;
 import app.pairs.map.CustomizedTilemapFactory;
-import app.pairs.map.PresetTilemapFactory;
+import app.pairs.map.SubsetTilemapFactory;
+import app.pairs.map.TileGroupRegistry;
+import app.pairs.map.TileSelectionPolicy;
 import app.pairs.map.TilemapFactory;
-import app.pairs.map.TilemapPreset;
 import app.pairs.model.OpLogs;
 import app.pairs.model.Tilemap;
+import app.pairs.utils.Seed;
+import app.pairs.utils.Xoroshiro128PP;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,42 +21,83 @@ import java.util.List;
  * behind one entry point. Callers should treat {@link Operation} entries
  * returned by {@link #getOpLogs()} as opaque history records and only act on
  * them via {@link #undo()}; invoking their methods directly is undefined.
+ *
+ * <p>
+ * The canonical way to build a {@code GameState} is to pass a
+ * {@link TilemapFactory} (e.g. {@code new GameState(TilemapFactory.fromPreset(
+ * "tilemap/hard"))}). The static {@code easy()/hard()/
+ * extreme()/customized(...)} helpers are thin shorthands for the common
+ * cases and ultimately funnel through the same constructor. Every helper
+ * has a no-arg form that draws a fresh {@link Seed} from
+ * {@link Seed#deviceRandom()} and a {@code (..., Seed)} form for replay.
  */
 public final class GameState {
-	private final Tilemap tilemap;
+	private static final String TILE_REGISTRY = "tiles/typed";
+	private static final String TILE_GROUPS = "tile-groups/default";
+
+	private final TilemapFactory factory;
+	private Tilemap tilemap;
 	private final OpLogs opLogs;
 
-	private GameState(Tilemap tilemap) {
-		this.tilemap = tilemap;
+	public GameState(TilemapFactory factory) {
+		this.factory = factory;
+		this.tilemap = factory.generate();
 		this.opLogs = new OpLogs();
 	}
 
-	/** Create a game state for the easy mode preset. */
-	public static GameState easy() {
-		return fromPreset("tilemap/easy");
+	/**
+	 * Regenerate the map from the same factory (same seed) and reset history.
+	 */
+	public void restart() {
+		this.tilemap = factory.generate();
+		this.opLogs.clear();
 	}
 
-	/** Create a game state for the hard mode preset. */
-	public static GameState hard() {
-		return fromPreset("tilemap/hard");
-	}
-
-	private static GameState fromPreset(String presetId) {
-		TilemapPreset preset = AssetManager.instance().get(presetId);
-		return fromFactory(new PresetTilemapFactory(preset));
-	}
-
-	/** Create a game state with custom dimensions and tile-type count. */
+	/** Custom dimensions and tile-type count, no group constraints. */
 	public static GameState customized(int width, int height, int types) {
-		CustomizedTilemapFactory factory = new CustomizedTilemapFactory()
-											   .setWidth(width)
-											   .setHeight(height)
-											   .setTypes(types);
-		return fromFactory(factory);
+		return customized(width, height, types, Seed.deviceRandom());
 	}
 
-	public static GameState fromFactory(TilemapFactory factory) {
-		return new GameState(factory.generate());
+	public static GameState customized(
+		int width, int height, int types, Seed seed
+	) {
+		return new GameState(new CustomizedTilemapFactory(seed)
+		                         .setWidth(width)
+		                         .setHeight(height)
+		                         .setTypes(types));
+	}
+
+	/**
+	 * Custom mode with tile-similarity controls. Honours the slab-inclusion
+	 * flag and the {@link TileSelectionPolicy.Spread} strategy when picking
+	 * the tile palette from the global registry.
+	 */
+	public static GameState customized(
+		int width, int height, int types, boolean includeSlabs,
+		TileSelectionPolicy.Spread spread
+	) {
+		return customized(
+			width, height, types, includeSlabs, spread, Seed.deviceRandom()
+		);
+	}
+
+	public static GameState customized(
+		int width, int height, int types, boolean includeSlabs,
+		TileSelectionPolicy.Spread spread, Seed seed
+	) {
+		TileSelectionPolicy policy = new TileSelectionPolicy(
+			includeSlabs, spread
+		);
+		TileRegistry registry = AssetManager.instance().get(TILE_REGISTRY);
+		TileGroupRegistry groups = AssetManager.instance().get(TILE_GROUPS);
+		int[] subset = policy.selectFor(
+			registry, groups, types, new Xoroshiro128PP(seed)
+		);
+		TilemapFactory inner = new CustomizedTilemapFactory(seed)
+								   .setWidth(width)
+								   .setHeight(height)
+								   .setTypes(types);
+		return new GameState(new SubsetTilemapFactory(inner, subset));
 	}
 
 	// ---- read-only map accessors -----------------------------------------

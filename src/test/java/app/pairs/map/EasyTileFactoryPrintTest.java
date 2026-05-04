@@ -3,6 +3,7 @@ package app.pairs.map;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import app.pairs.model.Tilemap;
+import app.pairs.utils.Seed;
 
 import java.util.Arrays;
 
@@ -26,7 +27,9 @@ class EasyTileFactoryPrintTest {
 			}
 		}
 		TilemapPreset preset = new TilemapPreset(9, 9, 6, initial);
-		Tilemap tilemap = new PresetTilemapFactory(preset).generate();
+		Tilemap tilemap = CustomizedTilemapFactory
+							  .fromPreset(preset, Seed.deviceRandom())
+							  .generate();
 
 		System.out.println("===== EASY ID (tile type) =====");
 		MapTestHelper.printTilemap(tilemap);
