@@ -35,12 +35,22 @@ public final class GameState {
 	private static final String TILE_REGISTRY = "tiles/typed";
 	private static final String TILE_GROUPS = "tile-groups/default";
 
-	private final Tilemap tilemap;
+	private final TilemapFactory factory;
+	private Tilemap tilemap;
 	private final OpLogs opLogs;
 
 	public GameState(TilemapFactory factory) {
+		this.factory = factory;
 		this.tilemap = factory.generate();
 		this.opLogs = new OpLogs();
+	}
+
+	/**
+	 * Regenerate the map from the same factory (same seed) and reset history.
+	 */
+	public void restart() {
+		this.tilemap = factory.generate();
+		this.opLogs.clear();
 	}
 
 	/** Custom dimensions and tile-type count, no group constraints. */

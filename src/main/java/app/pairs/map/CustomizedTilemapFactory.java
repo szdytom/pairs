@@ -4,14 +4,12 @@ import app.pairs.model.Tilemap;
 import app.pairs.utils.Seed;
 import app.pairs.utils.Xoroshiro128PP;
 
-import java.util.Random;
-
 public class CustomizedTilemapFactory implements TilemapFactory {
 	private static final int DEFAULT_WIDTH = 10;
 	private static final int DEFAULT_HEIGHT = 10;
 	private static final int DEFAULT_TYPES = 12;
 
-	private final Random random;
+	private final Seed seed;
 	private TilemapPreset preset;
 
 	private int width = DEFAULT_WIDTH;
@@ -19,7 +17,7 @@ public class CustomizedTilemapFactory implements TilemapFactory {
 	private int types = DEFAULT_TYPES;
 
 	public CustomizedTilemapFactory(Seed seed) {
-		this.random = new Xoroshiro128PP(seed);
+		this.seed = seed;
 	}
 
 	/** Build a factory whose layout is driven by the given preset. */
@@ -51,6 +49,8 @@ public class CustomizedTilemapFactory implements TilemapFactory {
 	public Tilemap generate() {
 		int[][] map = (preset != null) ? preset.buildInitial()
 									   : new int[height][width];
-		return TilemapGeneratorCore.generate(map, types, random);
+		return TilemapGeneratorCore.generate(
+			map, types, new Xoroshiro128PP(seed)
+		);
 	}
 }

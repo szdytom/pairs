@@ -82,6 +82,29 @@ public class LevelComponent extends Container {
 		scaleText.setText("Scale: " + scale + "x");
 	}
 
+	/** Reset the level with the map generated. */
+	public void restart() {
+		gameState.restart();
+		int newW = gameState.getWidth();
+		int newH = gameState.getHeight();
+		if (newW != gridWidth || newH != gridHeight) {
+			gridWidth = newW;
+			gridHeight = newH;
+			depthOrder = mapper.getDepthSortedOrder(gridHeight, gridWidth);
+			highlighted = new boolean[gridHeight][gridWidth];
+		}
+		cleared = false;
+		clearedText.setVisible(false);
+		selectedRow = -1;
+		selectedCol = -1;
+		hoveredRow = -1;
+		hoveredCol = -1;
+		prevHoveredRow = -1;
+		prevHoveredCol = -1;
+		mouseX = -1;
+		mouseY = -1;
+		gridView.setGrid(buildGrid());
+	}
 	/** Handle a mouse click at the current cursor position. */
 	public void handleClick() {
 		resolveHoveredCell();
@@ -184,7 +207,8 @@ public class LevelComponent extends Container {
 			}
 		} else if (event instanceof KeyEvent ke) {
 			if (ke.keycode() == SDLK_SPACE) {
-				// reserved
+				restart();
+				return true;
 			}
 		}
 		return false;

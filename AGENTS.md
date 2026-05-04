@@ -53,4 +53,5 @@ Application entry point: `app.pairs.Main` (configured in `build.gradle`)
 - `./scripts/format-j.ps1`: PowerShell version of the above script for Windows users
 
 ### git
+
 - Keep the commit history linear. 
