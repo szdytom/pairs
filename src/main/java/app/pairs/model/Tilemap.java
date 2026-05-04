@@ -7,9 +7,12 @@ import java.util.List;
 import java.util.Map;
 
 public class Tilemap {
+	public enum Difficulty { EASY, HARD, EXTREME, NORMAL }
+
 	private final int width;
 	private final int height;
 	private final int[][] id;
+	private Difficulty difficulty = Difficulty.NORMAL;
 
 	public Tilemap(int[][] id) {
 		this.id = id;
@@ -31,6 +34,14 @@ public class Tilemap {
 
 	public int getHeight() {
 		return height;
+	}
+
+	public Difficulty getDifficulty() {
+		return difficulty;
+	}
+
+	public void setDifficulty(Difficulty difficulty) {
+		this.difficulty = difficulty;
 	}
 
 	/** A tile position on the map. */

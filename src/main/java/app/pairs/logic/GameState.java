@@ -7,7 +7,6 @@ import app.pairs.map.SubsetTilemapFactory;
 import app.pairs.map.TileGroupRegistry;
 import app.pairs.map.TileSelectionPolicy;
 import app.pairs.map.TilemapFactory;
-import app.pairs.map.TilemapPreset;
 import app.pairs.model.GameStatus;
 import app.pairs.model.OpLogs;
 import app.pairs.model.Tilemap;

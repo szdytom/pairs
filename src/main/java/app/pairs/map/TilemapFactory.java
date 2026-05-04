@@ -25,6 +25,7 @@ public interface TilemapFactory {
 	static TilemapFactory fromPreset(
 		String presetId, TileSelectionPolicy policy, Seed seed
 	) {
+		Tilemap.Difficulty difficulty = difficultyFor(presetId);
 		return () -> {
 			TilemapPreset preset = AssetManager.instance().get(presetId);
 			TileRegistry registry = AssetManager.instance().get("tiles/typed");
@@ -37,7 +38,20 @@ public interface TilemapFactory {
 			TilemapFactory inner = CustomizedTilemapFactory.fromPreset(
 				preset, seed
 			);
-			return new SubsetTilemapFactory(inner, subset).generate();
+			Tilemap tilemap = new SubsetTilemapFactory(inner, subset)
+								  .generate();
+			tilemap.setDifficulty(difficulty);
+			return tilemap;
+		};
+	}
+
+	private static Tilemap.Difficulty difficultyFor(String presetId) {
+		String suffix = presetId.substring(presetId.lastIndexOf('/') + 1);
+		return switch (suffix) {
+			case "easy" -> Tilemap.Difficulty.EASY;
+			case "hard" -> Tilemap.Difficulty.HARD;
+			case "extreme" -> Tilemap.Difficulty.EXTREME;
+			default -> Tilemap.Difficulty.NORMAL;
 		};
 	}
 

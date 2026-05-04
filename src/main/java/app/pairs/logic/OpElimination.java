@@ -57,7 +57,12 @@ public class OpElimination implements Operation {
 		tilemap.setTile(row2, col2, 0);
 		executed = true;
 		pushFn.accept(this);
-		gameStatus.changeScore(SCORE_PER_PAIR);
+		switch (tilemap.getDifficulty()) {
+		case EASY -> gameStatus.changeScore(SCORE_PER_PAIR);
+		case HARD -> gameStatus.changeScore(SCORE_PER_PAIR * 2);
+		case EXTREME -> gameStatus.changeScore(SCORE_PER_PAIR * 3);
+		default -> gameStatus.changeScore(SCORE_PER_PAIR);
+		}
 	}
 
 	@Override
@@ -70,7 +75,12 @@ public class OpElimination implements Operation {
 		tilemap.setTile(row1, col1, tileId);
 		tilemap.setTile(row2, col2, tileId);
 		executed = false;
-		gameStatus.changeScore(-SCORE_PER_PAIR);
+		switch (tilemap.getDifficulty()) {
+		case EASY -> gameStatus.changeScore(-SCORE_PER_PAIR);
+		case HARD -> gameStatus.changeScore(-SCORE_PER_PAIR * 2);
+		case EXTREME -> gameStatus.changeScore(-SCORE_PER_PAIR * 3);
+		default -> gameStatus.changeScore(-SCORE_PER_PAIR);
+		}
 	}
 
 	public int getRow1() {
