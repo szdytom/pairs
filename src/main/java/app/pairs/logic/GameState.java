@@ -39,7 +39,9 @@ public final class GameState {
 	private final TilemapFactory factory;
 	private Tilemap tilemap;
 	private final OpLogs opLogs;
-	private final GameStatus gameStatus;
+	public final GameStatus
+		gameStatus; // change score by directly mutating this object, not by
+	                // pushing operations
 
 	public GameState(TilemapFactory factory) {
 		this.factory = factory;
@@ -155,7 +157,7 @@ public final class GameState {
 	 * onto the history stack. Throws {@link IllegalStateException} if the
 	 * move is illegal — callers should gate on {@link #canEliminate} first.
 	 */
-	public void operate(int row1, int col1, int row2, int col2) {
+	public void operate(int row1, int col1, int row2, int col2, int time) {
 		if (!canEliminate(row1, col1, row2, col2)) {
 			throw new IllegalStateException(
 				"illegal elimination: (" + row1 + "," + col1 + ") -> (" + row2
@@ -163,7 +165,7 @@ public final class GameState {
 			);
 		}
 		new OpElimination(
-			gameStatus, tilemap, row1, col1, row2, col2, opLogs::push
+			gameStatus, tilemap, row1, col1, row2, col2, time, opLogs::push
 		)
 			.operate();
 	}
@@ -206,9 +208,5 @@ public final class GameState {
 			}
 		}
 		return true;
-	}
-
-	public int getScore() {
-		return gameStatus.getScore();
 	}
 }

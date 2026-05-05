@@ -20,7 +20,7 @@ class GameStateBehaviorTest {
 		int[][] map = {{1, 0, 1}};
 		Tilemap tm = new Tilemap(map);
 		OpElimination op = new OpElimination(
-			new GameStatus(), tm, 0, 0, 0, 2, ignored -> {}
+			new GameStatus(), tm, 0, 0, 0, 2, 5_000, ignored -> {}
 		);
 
 		op.operate();
@@ -36,7 +36,7 @@ class GameStateBehaviorTest {
 	void doubleOperateThrows() {
 		Tilemap tm = new Tilemap(new int[][] {{1, 0, 1}});
 		OpElimination op = new OpElimination(
-			new GameStatus(), tm, 0, 0, 0, 2, ignored -> {}
+			new GameStatus(), tm, 0, 0, 0, 2, 5_000, ignored -> {}
 		);
 		op.operate();
 		assertThatThrownBy(op::operate)
@@ -47,7 +47,7 @@ class GameStateBehaviorTest {
 	void undoBeforeOperateThrows() {
 		Tilemap tm = new Tilemap(new int[][] {{1, 0, 1}});
 		OpElimination op = new OpElimination(
-			new GameStatus(), tm, 0, 0, 0, 2, ignored -> {}
+			new GameStatus(), tm, 0, 0, 0, 2, 5_000, ignored -> {}
 		);
 		assertThatThrownBy(op::undo).isInstanceOf(IllegalStateException.class);
 	}
@@ -57,7 +57,9 @@ class GameStateBehaviorTest {
 		Tilemap tm = new Tilemap(new int[][] {{1, 0, 2}});
 		Consumer<Operation> noop = ignored -> {};
 		GameStatus gs = new GameStatus();
-		assertThatThrownBy(() -> new OpElimination(gs, tm, 0, 0, 0, 2, noop))
+		assertThatThrownBy(
+			() -> new OpElimination(gs, tm, 0, 0, 0, 2, 5_000, noop)
+		)
 			.isInstanceOf(IllegalStateException.class);
 	}
 
@@ -66,7 +68,9 @@ class GameStateBehaviorTest {
 		Tilemap tm = new Tilemap(new int[][] {{0, 0, 0}});
 		Consumer<Operation> noop = ignored -> {};
 		GameStatus gs = new GameStatus();
-		assertThatThrownBy(() -> new OpElimination(gs, tm, 0, 0, 0, 2, noop))
+		assertThatThrownBy(
+			() -> new OpElimination(gs, tm, 0, 0, 0, 2, 5_000, noop)
+		)
 			.isInstanceOf(IllegalStateException.class);
 	}
 
@@ -86,7 +90,7 @@ class GameStateBehaviorTest {
 		GameState state = GameState.customized(2, 2, 1);
 		assertThat(state.getOpLogs()).isEmpty();
 
-		state.operate(0, 0, 0, 1);
+		state.operate(0, 0, 0, 1, 5_000);
 		assertThat(state.getTile(0, 0)).isZero();
 		assertThat(state.getTile(0, 1)).isZero();
 		assertThat(state.getOpLogs()).hasSize(1);
@@ -95,7 +99,7 @@ class GameStateBehaviorTest {
 	@Test
 	void gameStateUndoRestoresAndPops() {
 		GameState state = GameState.customized(2, 2, 1);
-		state.operate(0, 0, 0, 1);
+		state.operate(0, 0, 0, 1, 5_000);
 
 		state.undo();
 		assertThat(state.getTile(0, 0)).isEqualTo(1);
@@ -113,8 +117,8 @@ class GameStateBehaviorTest {
 	@Test
 	void gameStateOpLogsAreChronological() {
 		GameState state = GameState.customized(2, 2, 1);
-		state.operate(0, 0, 0, 1);
-		state.operate(1, 0, 1, 1);
+		state.operate(0, 0, 0, 1, 5_000);
+		state.operate(1, 0, 1, 1, 5_000);
 
 		var logs = state.getOpLogs();
 		assertThat(logs).hasSize(2);
@@ -129,12 +133,12 @@ class GameStateBehaviorTest {
 		GameState state = GameState.customized(2, 2, 1);
 		// Same cell.
 		assertThat(state.canEliminate(0, 0, 0, 0)).isFalse();
-		assertThatThrownBy(() -> state.operate(0, 0, 0, 0))
+		assertThatThrownBy(() -> state.operate(0, 0, 0, 0, 5_000))
 			.isInstanceOf(IllegalStateException.class);
 		assertThat(state.getOpLogs()).isEmpty();
 
 		// Empty cell after a successful elimination.
-		state.operate(0, 0, 0, 1);
+		state.operate(0, 0, 0, 1, 5_000);
 		assertThat(state.canEliminate(0, 0, 1, 0)).isFalse();
 	}
 
@@ -152,8 +156,8 @@ class GameStateBehaviorTest {
 	@Test
 	void clearedEmptyBoardReturnsTrue() {
 		GameState state = GameState.customized(2, 2, 1);
-		state.operate(0, 0, 0, 1);
-		state.operate(1, 0, 1, 1);
+		state.operate(0, 0, 0, 1, 5_000);
+		state.operate(1, 0, 1, 1, 5_000);
 		assertThat(state.isCleared()).isTrue();
 	}
 
@@ -166,7 +170,7 @@ class GameStateBehaviorTest {
 	@Test
 	void partialEliminationNotCleared() {
 		GameState state = GameState.customized(2, 2, 1);
-		state.operate(0, 0, 0, 1);
+		state.operate(0, 0, 0, 1, 5_000);
 		assertThat(state.isCleared()).isFalse();
 	}
 
@@ -175,24 +179,25 @@ class GameStateBehaviorTest {
 	@Test
 	void freshGameStateHasZeroScore() {
 		GameState state = GameState.customized(2, 2, 1);
-		assertThat(state.getScore()).isZero();
+		assertThat(state.gameStatus.score).isZero();
 	}
 
 	@Test
 	void eachEliminationAddsScore() {
 		GameState state = GameState.customized(2, 2, 1);
-		state.operate(0, 0, 0, 1);
-		assertThat(state.getScore()).isEqualTo(OpElimination.SCORE_PER_PAIR);
-		state.operate(1, 0, 1, 1);
-		assertThat(state.getScore())
+		state.operate(0, 0, 0, 1, 5_000);
+		assertThat(state.gameStatus.score)
+			.isEqualTo(OpElimination.SCORE_PER_PAIR);
+		state.operate(1, 0, 1, 1, 5_000);
+		assertThat(state.gameStatus.score)
 			.isEqualTo(2 * OpElimination.SCORE_PER_PAIR);
 	}
 
 	@Test
 	void undoRollsBackScore() {
 		GameState state = GameState.customized(2, 2, 1);
-		state.operate(0, 0, 0, 1);
+		state.operate(0, 0, 0, 1, 5_000);
 		state.undo();
-		assertThat(state.getScore()).isZero();
+		assertThat(state.gameStatus.score).isZero();
 	}
 }
