@@ -3,7 +3,10 @@ package app.pairs.solver;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import app.pairs.logic.TileTransition;
+import app.pairs.map.CustomizedTilemapFactory;
+import app.pairs.map.TilemapPreset;
 import app.pairs.model.Tilemap;
+import app.pairs.utils.Seed;
 
 import org.junit.jupiter.api.Test;
 
@@ -81,6 +84,41 @@ class SolverTest {
 			replay.setTile(m.r1(), m.c1(), 0);
 			replay.setTile(m.r2(), m.c2(), 0);
 		}
+	}
+
+	@Test
+	void hardLikeMapSolveTimeBatch() {
+		TilemapPreset hardLike = new TilemapPreset(12, 12, 20, null);
+		int runs = 5;
+		long totalNanos = 0L;
+
+		for (int i = 0; i < runs; i++) {
+			Seed seed = Seed.fromString("solver-hard-batch-" + i);
+			Tilemap map = CustomizedTilemapFactory.fromPreset(hardLike, seed)
+							  .generate();
+
+			long started = System.nanoTime();
+			SolverResult result = Solver.solve(map);
+			long elapsed = System.nanoTime() - started;
+
+			totalNanos += elapsed;
+			System.out.printf(
+				"[Solver hard-like] run=%d elapsed=%.3f ms complete=%s "
+					+ "remainingPairs=%d%n",
+				i + 1, elapsed / 1_000_000.0, result.isComplete(),
+				result.remainingPairs()
+			);
+			assertThat(result.isComplete())
+				.as("hard-like generated map should be fully solvable")
+				.isTrue();
+		}
+
+		double avgMs = totalNanos / 1_000_000.0 / runs;
+		double totalMs = totalNanos / 1_000_000.0;
+		System.out.printf(
+			"[Solver hard-like] runs=%d total=%.3f ms avg=%.3f ms%n", runs,
+			totalMs, avgMs
+		);
 	}
 
 	private static Tilemap copy(Tilemap src) {
