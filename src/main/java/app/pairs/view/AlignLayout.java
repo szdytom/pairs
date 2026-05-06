@@ -12,25 +12,14 @@ package app.pairs.view;
  * }</pre>
  * Defaults are {@link HAlign#LEFT} and {@link VAlign#TOP}.
  *
- * <p>By default the child's {@code layoutX/Y} is the top-left corner of its
- * bounding box ({@link Origin#TOP_LEFT}), which is the standard convention
- * for rectangular widgets.  For widgets whose layout origin is at the visual
- * center of their measured bounding box (e.g. isometric grids), set
- * {@code "h-origin"} and/or {@code "v-origin"} to {@link Origin#CENTER}:
- * <pre>{@code
- * layout.setProp("h-origin", AlignLayout.Origin.CENTER);
- * layout.setProp("v-origin", AlignLayout.Origin.TOP_LEFT);
- * }</pre>
- * Setting {@code "origin"} sets both axes at once.
- *
  * <p>The child is placed but NOT resized — the child keeps its measured
  * natural size and is positioned according to the alignment rules within
- * the allocated rectangle.
+ * the allocated rectangle.  The child's {@code layoutX/Y} is always the
+ * top-left corner of its measured bounding box (standard convention).
  */
 public class AlignLayout extends Container {
 	public enum HAlign { LEFT, CENTER, RIGHT }
 	public enum VAlign { TOP, CENTER, BOTTOM }
-	public enum Origin { TOP_LEFT, CENTER }
 
 	@Override
 	public void addChild(Widget child) {
@@ -69,45 +58,15 @@ public class AlignLayout extends Container {
 		if (va == null)
 			va = VAlign.TOP;
 
-		Origin sharedOrigin = getProp("origin");
-		Origin hOrigin = getProp("h-origin");
-		if (hOrigin == null)
-			hOrigin = sharedOrigin;
-		if (hOrigin == null)
-			hOrigin = Origin.TOP_LEFT;
-		Origin vOrigin = getProp("v-origin");
-		if (vOrigin == null)
-			vOrigin = sharedOrigin;
-		if (vOrigin == null)
-			vOrigin = Origin.TOP_LEFT;
-
-		int cx = switch (hOrigin) {
-			case TOP_LEFT ->
-				switch (ha) {
-				case LEFT -> 0;
-				case CENTER -> (w - cw) / 2;
-				case RIGHT -> w - cw;
-				};
-			case CENTER ->
-				switch (ha) {
-				case LEFT -> cw / 2;
-				case CENTER -> w / 2;
-				case RIGHT -> w - cw / 2;
-				};
+		int cx = switch (ha) {
+			case LEFT -> 0;
+			case CENTER -> (w - cw) / 2;
+			case RIGHT -> w - cw;
 		};
-		int cy = switch (vOrigin) {
-			case TOP_LEFT ->
-				switch (va) {
-				case TOP -> 0;
-				case CENTER -> (h - ch) / 2;
-				case BOTTOM -> h - ch;
-				};
-			case CENTER ->
-				switch (va) {
-				case TOP -> ch / 2;
-				case CENTER -> h / 2;
-				case BOTTOM -> h - ch / 2;
-				};
+		int cy = switch (va) {
+			case TOP -> 0;
+			case CENTER -> (h - ch) / 2;
+			case BOTTOM -> h - ch;
 		};
 
 		child.layout(cx, cy, cw, ch);

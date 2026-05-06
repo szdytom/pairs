@@ -32,6 +32,8 @@ public class IsometricGridView extends Widget {
 	private float[][] liftProgress;
 	private int[][] depthOrder;
 	private final int[] measuredSize = new int[2];
+	int originOffsetX;
+	int originOffsetY;
 
 	public IsometricGridView(int[][] grid, IsometricMapper mapper) {
 		this.grid = grid;
@@ -94,6 +96,8 @@ public class IsometricGridView extends Widget {
 		measuredSize[1] = (rows - 1 + cols - 1) * stepY
 			+ TILE_CONTENT_HEIGHT / 2 + HOVER_LIFT + SHADOW_SIZE / 2
 			+ SHADOW_Y_OFFSET;
+		originOffsetX = (rows - 1) * stepX + TILE_CONTENT_WIDTH / 2;
+		originOffsetY = TILE_CONTENT_HEIGHT / 2;
 		return measuredSize;
 	}
 
@@ -106,8 +110,8 @@ public class IsometricGridView extends Widget {
 		int dstW = TILE_CONTENT_WIDTH * scale;
 		int dstH = TILE_CONTENT_HEIGHT * scale;
 
-		int gridGlobalX = parentX + layoutX;
-		int gridGlobalY = parentY + layoutY + HOVER_LIFT;
+		int gridGlobalX = parentX + layoutX + originOffsetX;
+		int gridGlobalY = parentY + layoutY + originOffsetY + HOVER_LIFT;
 
 		for (int[] pos : depthOrder) {
 			int row = pos[0];
