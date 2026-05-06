@@ -7,8 +7,8 @@ import org.junit.jupiter.api.Test;
 import io.github.libsdl4j.api.render.SDL_Renderer;
 
 /**
- * Tests for {@link AlignLayout}: single-child enforcement, measure,
- * and alignment in layout.
+ * Tests for {@link AlignLayout}: measure, alignment in layout, and
+ * multiple-child support.
  */
 class AlignLayoutTest {
 	private static final int W = 100;
@@ -52,6 +52,16 @@ class AlignLayoutTest {
 	}
 
 	@Test
+	void measureReturnsMaxOfMultipleChildren() {
+		AlignLayout layout = new AlignLayout();
+		layout.addChild(new FixedWidget(30, 20));
+		layout.addChild(new FixedWidget(50, 10));
+
+		int[] size = layout.measure();
+		assertArrayEquals(new int[] {50, 20}, size);
+	}
+
+	@Test
 	void measureReturnsZeroWhenEmpty() {
 		AlignLayout layout = new AlignLayout();
 		int[] size = layout.measure();
@@ -59,13 +69,20 @@ class AlignLayoutTest {
 	}
 
 	@Test
-	void addChildRejectsSecondChild() {
+	void multipleChildrenAllAlignedCenter() {
 		AlignLayout layout = new AlignLayout();
-		layout.addChild(new FixedWidget(10, 10));
-		assertThrows(
-			IllegalStateException.class,
-			() -> layout.addChild(new FixedWidget(10, 10))
-		);
+		layout.setProp("h-align", AlignLayout.HAlign.CENTER);
+		layout.setProp("v-align", AlignLayout.VAlign.CENTER);
+		FixedWidget a = new FixedWidget(30, 20);
+		FixedWidget b = new FixedWidget(50, 10);
+		layout.addChild(a);
+		layout.addChild(b);
+		layout.layout(0, 0, W, H);
+
+		assertEquals((W - 30) / 2, a.layoutX);
+		assertEquals((H - 20) / 2, a.layoutY);
+		assertEquals((W - 50) / 2, b.layoutX);
+		assertEquals((H - 10) / 2, b.layoutY);
 	}
 
 	@Test
