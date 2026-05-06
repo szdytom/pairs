@@ -12,6 +12,7 @@ public class Event {
 		MOUSE_LEAVE,
 		KEY_PRESSED,
 		KEY_RELEASED,
+		GAME_STATE_UPDATED,
 	}
 
 	protected final Type type;

@@ -52,10 +52,13 @@ public class GridLayout extends Container {
 	@Override
 	public void layout(int x, int y, int w, int h) {
 		super.layout(x, y, w, h);
+		if (children.isEmpty()) {
+			return;
+		}
 		int cellW, cellH;
 		if (w > 0 && h > 0) {
 			cellW = (w - (fixedColumns - 1) * gapX) / fixedColumns;
-			cellH = cellW;
+			cellH = (h - (rows() - 1) * gapY) / rows();
 		} else {
 			cellW = cellSize[0];
 			cellH = cellSize[1];
@@ -69,5 +72,9 @@ public class GridLayout extends Container {
 			);
 			index++;
 		}
+	}
+
+	private int rows() {
+		return (children.size() + fixedColumns - 1) / fixedColumns;
 	}
 }
