@@ -51,7 +51,8 @@ public class OpLogList extends GridLayout {
 			Operation op = ops.get(i);
 			if (op instanceof OpElimination e) {
 				addChild(new OpLogEntry(
-					e.getRow1(), e.getCol1(), e.getRow2(), e.getCol2()
+					e.getTileId(), e.getRow1(), e.getCol1(), e.getRow2(),
+					e.getCol2()
 				));
 			}
 		}
