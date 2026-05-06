@@ -58,7 +58,11 @@ public class LevelComponent extends Container {
 		this.depthOrder = mapper.getDepthSortedOrder(gridHeight, gridWidth);
 		this.highlighted = new boolean[gridHeight][gridWidth];
 
-		this.gridView = new IsometricGridView(buildGrid(), mapper);
+		Blackboard bb = new Blackboard();
+		bb.put(GameState.class, gameState);
+		setBlackboard(bb);
+
+		this.gridView = new IsometricGridView(mapper, gridWidth, gridHeight);
 
 		this.alignLayout = new AlignLayout();
 		alignLayout.setProp("h-align", AlignLayout.HAlign.CENTER);
@@ -106,7 +110,7 @@ public class LevelComponent extends Container {
 		prevHoveredCol = -1;
 		mouseX = -1;
 		mouseY = -1;
-		gridView.setGrid(buildGrid());
+		gridView.reset();
 	}
 	/** Handle a mouse click at the current cursor position. */
 	public void handleClick() {
@@ -132,7 +136,7 @@ public class LevelComponent extends Container {
 				gameState.operate(
 					selectedRow, selectedCol, hoveredRow, hoveredCol, 0
 				);
-				gridView.setGrid(buildGrid());
+				gridView.reset();
 				if (gameState.isCleared()) {
 					cleared = true;
 					clearedText.setVisible(true);
@@ -280,15 +284,5 @@ public class LevelComponent extends Container {
 		}
 
 		gridView.setHighlighted(highlighted);
-	}
-
-	private int[][] buildGrid() {
-		int[][] grid = new int[gridHeight][gridWidth];
-		for (int r = 0; r < gridHeight; r++) {
-			for (int c = 0; c < gridWidth; c++) {
-				grid[r][c] = gameState.getTile(r, c);
-			}
-		}
-		return grid;
 	}
 }

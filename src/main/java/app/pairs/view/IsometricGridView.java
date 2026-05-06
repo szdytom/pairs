@@ -2,13 +2,15 @@ package app.pairs.view;
 
 import app.pairs.asset.AssetManager;
 import app.pairs.asset.TileRegistry;
+import app.pairs.logic.GameState;
 
 import io.github.libsdl4j.api.rect.*;
 import io.github.libsdl4j.api.render.*;
 
 /**
  * Renders a 2D grid of tile types using isometric projection.
- * The grid uses int tile IDs; values {@code <= 0} represent an empty cell.
+ * Tile IDs are read from {@link GameState} via the widget hierarchy's
+ * {@link Blackboard}. Values {@code <= 0} represent an empty cell.
  */
 public class IsometricGridView extends Widget {
 	private static final int TILE_CONTENT_WIDTH = 16;
@@ -24,27 +26,29 @@ public class IsometricGridView extends Widget {
 	private final SDL_Texture shadowTex;
 	private final SDL_Rect shadowSrcRect = new SDL_Rect();
 
-	private int[][] grid;
+	private final int gridWidth;
+	private final int gridHeight;
 	private final TileRegistry tileRegistry;
 	private final TileRegistry hlTileRegistry;
 	private final IsometricMapper mapper;
 	private boolean[][] highlighted;
 	private float[][] liftProgress;
-	private int[][] depthOrder;
+	private final int[][] depthOrder;
 	private final int[] measuredSize = new int[2];
 	int originOffsetX;
 	int originOffsetY;
 
-	public IsometricGridView(int[][] grid, IsometricMapper mapper) {
-		this.grid = grid;
+	public IsometricGridView(
+		IsometricMapper mapper, int gridWidth, int gridHeight
+	) {
+		this.gridWidth = gridWidth;
+		this.gridHeight = gridHeight;
 		this.mapper = mapper;
 		this.tileRegistry = AssetManager.instance().get("tiles/typed");
 		this.hlTileRegistry = AssetManager.instance().get("hl-tiles/typed");
 		this.shadowTex = AssetManager.instance().get("shadow/texture");
-		this.depthOrder = mapper.getDepthSortedOrder(
-			grid.length, grid[0].length
-		);
-		this.liftProgress = new float[grid.length][grid[0].length];
+		this.depthOrder = mapper.getDepthSortedOrder(gridHeight, gridWidth);
+		this.liftProgress = new float[gridHeight][gridWidth];
 		srcRect.x = 1;
 		srcRect.y = 1;
 		srcRect.w = TILE_CONTENT_WIDTH;
@@ -55,12 +59,11 @@ public class IsometricGridView extends Widget {
 		shadowSrcRect.h = SHADOW_SIZE;
 	}
 
-	public void setGrid(int[][] grid) {
-		this.grid = grid;
-		this.depthOrder = mapper.getDepthSortedOrder(
-			grid.length, grid[0].length
-		);
-		this.liftProgress = new float[grid.length][grid[0].length];
+	/**
+	 * Re-initialize per-cell animation state for a new game round.
+	 */
+	public void reset() {
+		this.liftProgress = new float[gridHeight][gridWidth];
 	}
 
 	public void setHighlighted(boolean[][] highlighted) {
@@ -88,15 +91,14 @@ public class IsometricGridView extends Widget {
 
 	@Override
 	public int[] measure() {
-		int rows = grid.length;
-		int cols = grid[0].length;
 		int stepX = mapper.getTileWidth() / 2;
 		int stepY = mapper.getTileWidth() / 4;
-		measuredSize[0] = (cols - 1 + rows - 1) * stepX + TILE_CONTENT_WIDTH;
-		measuredSize[1] = (rows - 1 + cols - 1) * stepY
+		measuredSize[0] = (gridWidth - 1 + gridHeight - 1) * stepX
+			+ TILE_CONTENT_WIDTH;
+		measuredSize[1] = (gridHeight - 1 + gridWidth - 1) * stepY
 			+ TILE_CONTENT_HEIGHT / 2 + HOVER_LIFT + SHADOW_SIZE / 2
 			+ SHADOW_Y_OFFSET;
-		originOffsetX = (rows - 1) * stepX + TILE_CONTENT_WIDTH / 2;
+		originOffsetX = (gridHeight - 1) * stepX + TILE_CONTENT_WIDTH / 2;
 		originOffsetY = TILE_CONTENT_HEIGHT / 2;
 		return measuredSize;
 	}
@@ -105,6 +107,7 @@ public class IsometricGridView extends Widget {
 	public void render(
 		SDL_Renderer renderer, int parentX, int parentY, int scale
 	) {
+		GameState gameState = blackboard().get(GameState.class);
 		tileRegistry.createTextures(renderer);
 		hlTileRegistry.createTextures(renderer);
 		int dstW = TILE_CONTENT_WIDTH * scale;
@@ -116,7 +119,7 @@ public class IsometricGridView extends Widget {
 		for (int[] pos : depthOrder) {
 			int row = pos[0];
 			int col = pos[1];
-			int typeId = grid[row][col];
+			int typeId = gameState.getTile(row, col);
 
 			if (typeId <= 0)
 				continue;

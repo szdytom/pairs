@@ -11,10 +11,30 @@ import java.util.Map;
 public abstract class Widget implements ViewComponent {
 	Widget parent;
 	final Map<String, Object> props = new HashMap<>();
+	Blackboard blackboard;
 	int layoutX;
 	int layoutY;
 	int layoutW;
 	int layoutH;
+
+	void setBlackboard(Blackboard bb) {
+		this.blackboard = bb;
+	}
+
+	/**
+	 * Returns the nearest Blackboard in this widget's parent chain, or
+	 * {@code null} if no ancestor has one.
+	 */
+	public Blackboard blackboard() {
+		Widget current = this;
+		while (current != null) {
+			if (current.blackboard != null) {
+				return current.blackboard;
+			}
+			current = current.parent;
+		}
+		return null;
+	}
 
 	@SuppressWarnings("unchecked")
 	public <T> T getProp(String name) {
