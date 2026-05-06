@@ -11,3 +11,13 @@ bin/
 *.sw?
 
 CLAUDE.local.md
+CLAUDE.md
+
+# Local persistence files
+db/
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
