@@ -15,6 +15,7 @@ import io.github.libsdl4j.api.render.*;
 public class IsometricGridView extends Widget {
 	private static final int TILE_CONTENT_WIDTH = 16;
 	private static final int TILE_CONTENT_HEIGHT = 16;
+	private static final int TILE_SPRITE_HEIGHT = 18;
 	private static final int SHADOW_SIZE = 18;
 	private static final int SHADOW_Y_OFFSET = TILE_CONTENT_HEIGHT;
 	private static final int HOVER_LIFT = TILE_CONTENT_HEIGHT / 3;
@@ -50,9 +51,9 @@ public class IsometricGridView extends Widget {
 		this.depthOrder = mapper.getDepthSortedOrder(gridHeight, gridWidth);
 		this.liftProgress = new float[gridHeight][gridWidth];
 		srcRect.x = 1;
-		srcRect.y = 1;
+		srcRect.y = 0;
 		srcRect.w = TILE_CONTENT_WIDTH;
-		srcRect.h = TILE_CONTENT_HEIGHT;
+		srcRect.h = TILE_SPRITE_HEIGHT;
 		shadowSrcRect.x = 0;
 		shadowSrcRect.y = 0;
 		shadowSrcRect.w = SHADOW_SIZE;
@@ -111,7 +112,7 @@ public class IsometricGridView extends Widget {
 		tileRegistry.createTextures(renderer);
 		hlTileRegistry.createTextures(renderer);
 		int dstW = TILE_CONTENT_WIDTH * scale;
-		int dstH = TILE_CONTENT_HEIGHT * scale;
+		int dstH = TILE_SPRITE_HEIGHT * scale;
 
 		int gridGlobalX = parentX + layoutX + originOffsetX;
 		int gridGlobalY = parentY + layoutY + originOffsetY + HOVER_LIFT;
