@@ -168,6 +168,11 @@ public class Main {
 			SDL_RenderClear(renderer);
 
 			level.update(deltaTime);
+
+			if (level.blackboard().layoutDirty) {
+				relayout(level, scale);
+				level.blackboard().layoutDirty = false;
+			}
 			level.render(renderer, 0, 0, scale);
 
 			SDL_RenderPresent(renderer);

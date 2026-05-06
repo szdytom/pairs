@@ -15,6 +15,7 @@ import io.github.libsdl4j.api.render.*;
 public class LevelComponent extends Container {
 	private static final int TILE_CONTENT_WIDTH = 16;
 	private static final int TILE_CONTENT_HEIGHT = 16;
+	private static final int SIDEBAR_WIDTH = 100;
 
 	private GameState gameState;
 	private final IsometricGridView gridView;
@@ -38,6 +39,7 @@ public class LevelComponent extends Container {
 
 	// Layout state
 	private final AlignLayout alignLayout;
+	private final LevelSidebar sidebar;
 	private final int[] measuredSize = new int[2];
 	/**
 	 * Grid origin in global logical space, cached in render() for hit-testing.
@@ -71,7 +73,10 @@ public class LevelComponent extends Container {
 		clearedText.setVisible(false);
 		alignLayout.addChild(clearedText);
 
+		this.sidebar = new LevelSidebar();
+
 		addChild(alignLayout);
+		addChild(sidebar);
 	}
 
 	public void setMousePosition(int x, int y) {
@@ -101,7 +106,9 @@ public class LevelComponent extends Container {
 		mouseX = -1;
 		mouseY = -1;
 		gridView.reset();
+		sidebar.notifyStateUpdated();
 	}
+
 	/** Handle a mouse click at the current cursor position. */
 	public void handleClick() {
 		resolveHoveredCell();
@@ -133,6 +140,7 @@ public class LevelComponent extends Container {
 				}
 				selectedRow = -1;
 				selectedCol = -1;
+				sidebar.notifyStateUpdated();
 			} else {
 				selectedRow = hoveredRow;
 				selectedCol = hoveredCol;
@@ -143,7 +151,7 @@ public class LevelComponent extends Container {
 	@Override
 	public int[] measure() {
 		int[] gridSize = gridView.measure();
-		measuredSize[0] = gridSize[0];
+		measuredSize[0] = gridSize[0] + SIDEBAR_WIDTH;
 		measuredSize[1] = gridSize[1] + 40;
 		return measuredSize;
 	}
@@ -151,7 +159,10 @@ public class LevelComponent extends Container {
 	@Override
 	public void layout(int x, int y, int w, int h) {
 		super.layout(x, y, w, h);
-		alignLayout.layout(0, 0, w, h);
+		// alignLayout fills the left area up to the sidebar.
+		alignLayout.layout(0, 0, w - SIDEBAR_WIDTH, h);
+		// sidebar is pinned to the right edge at its natural height.
+		sidebar.layout(w - SIDEBAR_WIDTH, 0, SIDEBAR_WIDTH, h);
 	}
 
 	@Override
