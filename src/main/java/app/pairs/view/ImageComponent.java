@@ -2,27 +2,31 @@ package app.pairs.view;
 
 import static io.github.libsdl4j.api.render.SdlRender.SDL_RenderCopy;
 
-import io.github.libsdl4j.api.rect.SDL_Rect;
-import io.github.libsdl4j.api.render.SDL_Renderer;
-import io.github.libsdl4j.api.render.SDL_Texture;
+import io.github.libsdl4j.api.rect.*;
+import io.github.libsdl4j.api.render.*;
 
 /**
- * Renders a fixed-size {@link SDL_Texture} cropped to the tile content area
- * (1 px inset to skip the shadow border).
+ * Renders an {@link SDL_Texture} cropped to the specified content area
+ * (1 px left inset to skip the shadow border).
  */
 public class ImageComponent extends Widget {
-	private static final int SIZE = 16;
-
 	private final SDL_Texture texture;
 	private final SDL_Rect srcRect = new SDL_Rect();
-	private final int[] measuredSize = new int[] {SIZE, SIZE};
+	private final int contentW;
+	private final int contentH;
+	private final int[] measuredSize = new int[2];
+	private final SDL_Rect dstRect = new SDL_Rect();
 
-	public ImageComponent(SDL_Texture texture) {
+	public ImageComponent(SDL_Texture texture, int contentW, int contentH) {
 		this.texture = texture;
+		this.contentW = contentW;
+		this.contentH = contentH;
 		srcRect.x = 1;
-		srcRect.y = 1;
-		srcRect.w = SIZE;
-		srcRect.h = SIZE;
+		srcRect.y = 0;
+		srcRect.w = contentW;
+		srcRect.h = contentH;
+		measuredSize[0] = contentW;
+		measuredSize[1] = contentH;
 	}
 
 	@Override
@@ -37,11 +41,10 @@ public class ImageComponent extends Widget {
 		if (texture == null) {
 			return;
 		}
-		SDL_Rect dst = new SDL_Rect();
-		dst.x = (parentX + layoutX) * scale;
-		dst.y = (parentY + layoutY) * scale;
-		dst.w = SIZE * scale;
-		dst.h = SIZE * scale;
-		SDL_RenderCopy(renderer, texture, srcRect, dst);
+		dstRect.x = (parentX + layoutX) * scale;
+		dstRect.y = (parentY + layoutY) * scale;
+		dstRect.w = contentW * scale;
+		dstRect.h = contentH * scale;
+		SDL_RenderCopy(renderer, texture, srcRect, dstRect);
 	}
 }
