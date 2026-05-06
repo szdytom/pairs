@@ -181,7 +181,6 @@ public class Main {
 	}
 
 	private static void relayout(LevelComponent level, int scale) {
-		level.setScaleText(scale);
 		level.measure();
 		level.layout(0, 0, windowWidth / scale, windowHeight / scale);
 	}
