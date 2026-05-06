@@ -41,24 +41,26 @@ public class OpLogList extends GridLayout {
 	private void sync() {
 		GameState gameState = blackboard().get(GameState.class);
 		List<Operation> ops = gameState.getOpLogs();
+
 		if (ops.size() == lastOpCount) {
 			return;
 		}
-		lastOpCount = ops.size();
+		if (ops.size() < lastOpCount || lastOpCount < 0) {
+			removeAllChildren();
+			lastOpCount = 0;
+		}
 
-		children.clear();
-		for (int i = 0; i < ops.size(); i++) {
+		for (int i = lastOpCount; i < ops.size(); i++) {
 			Operation op = ops.get(i);
 			if (op instanceof OpElimination e) {
 				addChild(new OpLogEntry(
-					e.getTileId(), e.getRow1(), e.getCol1(), e.getRow2(),
-					e.getCol2()
+					e.getTileId(), e.getPath(), gameState.getHeight(),
+					gameState.getWidth()
 				));
 			}
 		}
-		Blackboard bb = blackboard();
-		if (bb != null) {
-			bb.layoutDirty = true;
-		}
+
+		lastOpCount = ops.size();
+		blackboard().layoutDirty = true;
 	}
 }
