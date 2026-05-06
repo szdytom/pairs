@@ -63,7 +63,6 @@ public class LevelComponent extends Container {
 		this.alignLayout = new AlignLayout();
 		alignLayout.setProp("h-align", AlignLayout.HAlign.CENTER);
 		alignLayout.setProp("v-align", AlignLayout.VAlign.CENTER);
-		alignLayout.setProp("h-origin", AlignLayout.Origin.CENTER);
 		alignLayout.addChild(gridView);
 
 		this.titleText = new TextComponent("Pairs", 1, 200, 200, 255);
@@ -177,8 +176,9 @@ public class LevelComponent extends Container {
 		int myGlobalX = parentX + layoutX;
 		int myGlobalY = parentY + layoutY;
 
-		gridGlobalX = myGlobalX + gridView.layoutX;
-		gridGlobalY = myGlobalY + gridView.layoutY + TILE_CONTENT_HEIGHT / 3;
+		gridGlobalX = myGlobalX + gridView.layoutX + gridView.originOffsetX;
+		gridGlobalY = myGlobalY + gridView.layoutY + gridView.originOffsetY
+			+ TILE_CONTENT_HEIGHT / 3;
 
 		resolveHoveredCell();
 		updateHighlighted();
