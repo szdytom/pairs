@@ -42,6 +42,13 @@ public abstract class Container extends Widget {
 		}
 	}
 
+	public void removeAllChildren() {
+		for (Widget child : children) {
+			child.destroy();
+		}
+		children.clear();
+	}
+
 	// ---- auto-traversal ----------------------------------------------------
 
 	@Override
@@ -68,10 +75,7 @@ public abstract class Container extends Widget {
 
 	@Override
 	public void destroy() {
-		for (Widget child : children) {
-			child.destroy();
-		}
-		children.clear();
+		removeAllChildren();
 	}
 
 	// ---- event dispatch ----------------------------------------------------

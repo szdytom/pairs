@@ -3,6 +3,9 @@ package app.pairs.logic;
 import app.pairs.model.GameStatus;
 import app.pairs.model.Tilemap;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.function.Consumer;
 
 public class OpElimination implements Operation {
@@ -16,6 +19,7 @@ public class OpElimination implements Operation {
 	private final int col2;
 	private final int tileId;
 	private final int time;
+	private final ArrayList<Integer> path;
 	private final Consumer<Operation> pushFn;
 	private int deltaScore;
 	// `executed` is true after `operate()` and false after `undo()`. Calling
@@ -45,6 +49,7 @@ public class OpElimination implements Operation {
 		this.col2 = col2;
 		this.tileId = t1;
 		this.time = time;
+		this.path = Path.path(tilemap, row1, col1, row2, col2);
 		this.pushFn = pushFn;
 	}
 
@@ -106,5 +111,9 @@ public class OpElimination implements Operation {
 
 	public int getTileId() {
 		return tileId;
+	}
+
+	public List<Integer> getPath() {
+		return Collections.unmodifiableList(path);
 	}
 }
