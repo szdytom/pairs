@@ -31,6 +31,9 @@ public abstract class Container extends Widget {
 		}
 		children.add(child);
 		child.parent = this;
+		if (this.blackboard != null) {
+			child.setBlackboard(this.blackboard);
+		}
 	}
 
 	public void removeChild(Widget child) {
