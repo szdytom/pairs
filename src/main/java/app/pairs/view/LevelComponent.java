@@ -46,8 +46,6 @@ public class LevelComponent extends Container {
 	private int gridGlobalY;
 
 	// Child text components
-	private final TextComponent titleText;
-	private final TextComponent scaleText;
 	private final TextComponent clearedText;
 
 	public LevelComponent(GameState gameState, IsometricMapper mapper) {
@@ -69,24 +67,16 @@ public class LevelComponent extends Container {
 		alignLayout.setProp("v-align", AlignLayout.VAlign.CENTER);
 		alignLayout.addChild(gridView);
 
-		this.titleText = new TextComponent("Pairs", 1, 200, 200, 255);
-		this.scaleText = new TextComponent("Scale: 6x", 1, 180, 180, 180);
 		this.clearedText = new TextComponent("CLEARED!", 2, 255, 255, 100);
 		clearedText.setVisible(false);
 
 		addChild(alignLayout);
-		addChild(titleText);
-		addChild(scaleText);
 		addChild(clearedText);
 	}
 
 	public void setMousePosition(int x, int y) {
 		this.mouseX = x;
 		this.mouseY = y;
-	}
-
-	public void setScaleText(int scale) {
-		scaleText.setText("Scale: " + scale + "x");
 	}
 
 	/** Reset the level with the map generated. */
@@ -162,12 +152,6 @@ public class LevelComponent extends Container {
 	public void layout(int x, int y, int w, int h) {
 		super.layout(x, y, w, h);
 		alignLayout.layout(0, 0, w, h);
-
-		int[] titleSize = titleText.measure();
-		titleText.layout(1, 1, titleSize[0], titleSize[1]);
-
-		int[] scaleSize = scaleText.measure();
-		scaleText.layout(1, 14, scaleSize[0], scaleSize[1]);
 
 		int[] clearedSize = clearedText.measure();
 		clearedText.layout(4, 12, clearedSize[0], clearedSize[1]);
