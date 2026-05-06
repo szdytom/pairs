@@ -1,7 +1,9 @@
 package app.pairs.view;
 
 /**
- * Container that aligns its single child within the available space.
+ * Container that aligns each child independently within the available space.
+ * Children may overlap freely. Later children are rendered later (higher
+ * z-index).
  *
  * <p>Alignment is controlled via the {@code "h-align"} and
  * {@code "v-align"} properties, which accept {@link HAlign} and
@@ -12,44 +14,39 @@ package app.pairs.view;
  * }</pre>
  * Defaults are {@link HAlign#LEFT} and {@link VAlign#TOP}.
  *
- * <p>The child is placed but NOT resized — the child keeps its measured
- * natural size and is positioned according to the alignment rules within
- * the allocated rectangle.  The child's {@code layoutX/Y} is always the
- * top-left corner of its measured bounding box (standard convention).
+ * <p>Each child keeps its measured natural size and is positioned according
+ * to the alignment rules within the allocated rectangle.  The child's
+ * {@code layoutX/Y} is always the top-left corner of its measured bounding
+ * box (standard convention).
  */
 public class AlignLayout extends Container {
 	public enum HAlign { LEFT, CENTER, RIGHT }
 	public enum VAlign { TOP, CENTER, BOTTOM }
 
-	@Override
-	public void addChild(Widget child) {
-		if (!children.isEmpty()) {
-			throw new IllegalStateException(
-				"AlignLayout supports only one child"
-			);
-		}
-		super.addChild(child);
-	}
+	private final int[] measuredSize = new int[2];
 
 	@Override
 	public int[] measure() {
 		if (children.isEmpty()) {
 			return Widget.ZERO_SIZE;
 		}
-		return children.getFirst().measure();
+		int maxW = 0;
+		int maxH = 0;
+		for (Widget child : children) {
+			int[] s = child.measure();
+			if (s[0] > maxW)
+				maxW = s[0];
+			if (s[1] > maxH)
+				maxH = s[1];
+		}
+		measuredSize[0] = maxW;
+		measuredSize[1] = maxH;
+		return measuredSize;
 	}
 
 	@Override
 	public void layout(int x, int y, int w, int h) {
 		super.layout(x, y, w, h);
-		if (children.isEmpty()) {
-			return;
-		}
-
-		Widget child = children.getFirst();
-		int[] childSize = child.measure();
-		int cw = childSize[0];
-		int ch = childSize[1];
 
 		HAlign ha = getProp("h-align");
 		if (ha == null)
@@ -58,17 +55,23 @@ public class AlignLayout extends Container {
 		if (va == null)
 			va = VAlign.TOP;
 
-		int cx = switch (ha) {
-			case LEFT -> 0;
-			case CENTER -> (w - cw) / 2;
-			case RIGHT -> w - cw;
-		};
-		int cy = switch (va) {
-			case TOP -> 0;
-			case CENTER -> (h - ch) / 2;
-			case BOTTOM -> h - ch;
-		};
+		for (Widget child : children) {
+			int[] childSize = child.measure();
+			int cw = childSize[0];
+			int ch = childSize[1];
 
-		child.layout(cx, cy, cw, ch);
+			int cx = switch (ha) {
+				case LEFT -> 0;
+				case CENTER -> (w - cw) / 2;
+				case RIGHT -> w - cw;
+			};
+			int cy = switch (va) {
+				case TOP -> 0;
+				case CENTER -> (h - ch) / 2;
+				case BOTTOM -> h - ch;
+			};
+
+			child.layout(cx, cy, cw, ch);
+		}
 	}
 }

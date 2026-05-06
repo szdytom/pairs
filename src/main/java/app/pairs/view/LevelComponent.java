@@ -69,9 +69,9 @@ public class LevelComponent extends Container {
 
 		this.clearedText = new TextComponent("CLEARED!", 2, 255, 255, 100);
 		clearedText.setVisible(false);
+		alignLayout.addChild(clearedText);
 
 		addChild(alignLayout);
-		addChild(clearedText);
 	}
 
 	public void setMousePosition(int x, int y) {
@@ -152,9 +152,6 @@ public class LevelComponent extends Container {
 	public void layout(int x, int y, int w, int h) {
 		super.layout(x, y, w, h);
 		alignLayout.layout(0, 0, w, h);
-
-		int[] clearedSize = clearedText.measure();
-		clearedText.layout(4, 12, clearedSize[0], clearedSize[1]);
 	}
 
 	@Override
