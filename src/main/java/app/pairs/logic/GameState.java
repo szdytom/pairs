@@ -157,7 +157,7 @@ public final class GameState {
 	 * onto the history stack. Throws {@link IllegalStateException} if the
 	 * move is illegal — callers should gate on {@link #canEliminate} first.
 	 */
-	public void operate(int row1, int col1, int row2, int col2, int time) {
+	public void eliminate(int row1, int col1, int row2, int col2, int time) {
 		if (!canEliminate(row1, col1, row2, col2)) {
 			throw new IllegalStateException(
 				"illegal elimination: (" + row1 + "," + col1 + ") -> (" + row2
@@ -166,6 +166,18 @@ public final class GameState {
 		}
 		new OpElimination(
 			gameStatus, tilemap, row1, col1, row2, col2, time, opLogs::push
+		)
+			.operate();
+	}
+
+	public void repermute() {
+		repermute(Seed.deviceRandom());
+	}
+
+	public void repermute(Seed seed) {
+		new OpRepermute(
+			tilemap, factory.buildLegalPlacementShape(),
+			new Xoroshiro128PP(seed), opLogs::push
 		)
 			.operate();
 	}

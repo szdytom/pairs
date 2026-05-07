@@ -37,4 +37,9 @@ public final class SubsetTilemapFactory implements TilemapFactory {
 		}
 		return raw;
 	}
+
+	@Override
+	public int[][] buildLegalPlacementShape() {
+		return inner.buildLegalPlacementShape();
+	}
 }

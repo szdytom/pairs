@@ -9,27 +9,43 @@ import app.pairs.utils.Xoroshiro128PP;
 public interface TilemapFactory {
 	Tilemap generate();
 
+	default int[][] buildLegalPlacementShape() {
+		throw new UnsupportedOperationException(
+			"factory does not expose a legal placement shape"
+		);
+	}
+
 	static TilemapFactory fromPreset(String presetId) {
 		return fromPreset(presetId, Seed.deviceRandom());
 	}
 
 	static TilemapFactory fromPreset(String presetId, Seed seed) {
 		PresetConfig config = AssetManager.instance().get(presetId);
-		return () -> {
-			TileRegistry registry = AssetManager.instance().get("tiles/typed");
-			TileGroupRegistry groups = AssetManager.instance().get(
-				"tile-groups/default"
-			);
-			int[] subset = config.policy().selectFor(
-				registry, groups, config.types(), new Xoroshiro128PP(seed)
-			);
-			TilemapFactory inner = CustomizedTilemapFactory.fromPreset(
-				config.preset(), seed
-			);
-			Tilemap tilemap = new SubsetTilemapFactory(inner, subset)
-								  .generate();
-			tilemap.setDifficulty(config.difficulty());
-			return tilemap;
+		return new TilemapFactory() {
+			@Override
+			public Tilemap generate() {
+				TileRegistry registry = AssetManager.instance().get(
+					"tiles/typed"
+				);
+				TileGroupRegistry groups = AssetManager.instance().get(
+					"tile-groups/default"
+				);
+				int[] subset = config.policy().selectFor(
+					registry, groups, config.types(), new Xoroshiro128PP(seed)
+				);
+				TilemapFactory inner = CustomizedTilemapFactory.fromPreset(
+					config.preset(), seed
+				);
+				Tilemap tilemap = new SubsetTilemapFactory(inner, subset)
+									  .generate();
+				tilemap.setDifficulty(config.difficulty());
+				return tilemap;
+			}
+
+			@Override
+			public int[][] buildLegalPlacementShape() {
+				return config.preset().buildInitial();
+			}
 		};
 	}
 }

@@ -47,12 +47,17 @@ public class CustomizedTilemapFactory implements TilemapFactory {
 
 	@Override
 	public Tilemap generate() {
-		int[][] map = (preset != null) ? preset.buildInitial()
-									   : new int[height][width];
+		int[][] map = buildLegalPlacementShape();
 		var strategy = preset != null ? preset.pairingStrategy()
 									  : new BasePairingStrategy();
 		return TilemapGeneratorCore.generate(
 			map, types, new Xoroshiro128PP(seed), strategy
 		);
+	}
+
+	@Override
+	public int[][] buildLegalPlacementShape() {
+		return (preset != null) ? preset.buildInitial()
+								: new int[height][width];
 	}
 }
