@@ -1,17 +1,23 @@
 package app.pairs.logic;
 
+import app.pairs.model.GameStatus;
 import app.pairs.model.Tilemap;
 
 import java.util.function.Consumer;
 
 public class OpElimination implements Operation {
+	public static final int SCORE_PER_PAIR = 500;
+
+	private final GameStatus gameStatus;
 	private final Tilemap tilemap;
 	private final int row1;
 	private final int col1;
 	private final int row2;
 	private final int col2;
 	private final int tileId;
+	private final int time;
 	private final Consumer<Operation> pushFn;
+	private int deltaScore;
 	// `executed` is true after `operate()` and false after `undo()`. Calling
 	// `operate()` twice in a row or `undo()` before `operate()` is illegal and
 	// indicates a caller bug (e.g. replaying a history entry). Re-executing
@@ -19,8 +25,8 @@ public class OpElimination implements Operation {
 	private boolean executed;
 
 	public OpElimination(
-		Tilemap tilemap, int row1, int col1, int row2, int col2,
-		Consumer<Operation> pushFn
+		GameStatus gameStatus, Tilemap tilemap, int row1, int col1, int row2,
+		int col2, int time, Consumer<Operation> pushFn
 	) {
 		int t1 = tilemap.getTile(row1, col1);
 		int t2 = tilemap.getTile(row2, col2);
@@ -31,12 +37,14 @@ public class OpElimination implements Operation {
 				+ ")=" + t2
 			);
 		}
+		this.gameStatus = gameStatus;
 		this.tilemap = tilemap;
 		this.row1 = row1;
 		this.col1 = col1;
 		this.row2 = row2;
 		this.col2 = col2;
 		this.tileId = t1;
+		this.time = time;
 		this.pushFn = pushFn;
 	}
 
@@ -52,6 +60,19 @@ public class OpElimination implements Operation {
 		tilemap.setTile(row2, col2, 0);
 		executed = true;
 		pushFn.accept(this);
+		switch (tilemap.getDifficulty()) {
+		case EASY -> deltaScore = SCORE_PER_PAIR;
+		case HARD -> deltaScore = SCORE_PER_PAIR * 2;
+		case EXTREME -> deltaScore = SCORE_PER_PAIR * 3;
+		default -> deltaScore = SCORE_PER_PAIR;
+		}
+		switch (time / 1_000) {
+		case 1 -> deltaScore *= 4;
+		case 2 -> deltaScore *= 3;
+		case 3 -> deltaScore *= 2;
+		default -> deltaScore *= 1;
+		}
+		gameStatus.changeScore(deltaScore);
 	}
 
 	@Override
@@ -64,6 +85,7 @@ public class OpElimination implements Operation {
 		tilemap.setTile(row1, col1, tileId);
 		tilemap.setTile(row2, col2, tileId);
 		executed = false;
+		gameStatus.changeScore(-deltaScore);
 	}
 
 	public int getRow1() {

@@ -7,6 +7,7 @@ import app.pairs.map.SubsetTilemapFactory;
 import app.pairs.map.TileGroupRegistry;
 import app.pairs.map.TileSelectionPolicy;
 import app.pairs.map.TilemapFactory;
+import app.pairs.model.GameStatus;
 import app.pairs.model.OpLogs;
 import app.pairs.model.Tilemap;
 import app.pairs.utils.Seed;
@@ -38,11 +39,15 @@ public final class GameState {
 	private final TilemapFactory factory;
 	private Tilemap tilemap;
 	private final OpLogs opLogs;
+	public final GameStatus
+		gameStatus; // change score by directly mutating this object, not by
+	                // pushing operations
 
 	public GameState(TilemapFactory factory) {
 		this.factory = factory;
 		this.tilemap = factory.generate();
 		this.opLogs = new OpLogs();
+		this.gameStatus = new GameStatus();
 	}
 
 	/**
@@ -152,14 +157,16 @@ public final class GameState {
 	 * onto the history stack. Throws {@link IllegalStateException} if the
 	 * move is illegal — callers should gate on {@link #canEliminate} first.
 	 */
-	public void operate(int row1, int col1, int row2, int col2) {
+	public void operate(int row1, int col1, int row2, int col2, int time) {
 		if (!canEliminate(row1, col1, row2, col2)) {
 			throw new IllegalStateException(
 				"illegal elimination: (" + row1 + "," + col1 + ") -> (" + row2
 				+ "," + col2 + ")"
 			);
 		}
-		new OpElimination(tilemap, row1, col1, row2, col2, opLogs::push)
+		new OpElimination(
+			gameStatus, tilemap, row1, col1, row2, col2, time, opLogs::push
+		)
 			.operate();
 	}
 

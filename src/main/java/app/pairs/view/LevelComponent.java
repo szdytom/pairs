@@ -130,7 +130,7 @@ public class LevelComponent extends Container {
 					selectedRow, selectedCol, hoveredRow, hoveredCol
 				)) {
 				gameState.operate(
-					selectedRow, selectedCol, hoveredRow, hoveredCol
+					selectedRow, selectedCol, hoveredRow, hoveredCol, 0
 				);
 				gridView.setGrid(buildGrid());
 				if (gameState.isCleared()) {

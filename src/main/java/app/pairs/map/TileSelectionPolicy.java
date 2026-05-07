@@ -10,6 +10,9 @@ import java.util.Map;
 import java.util.Random;
 
 /**
+ * Difficuty of the game depends on the tile selction policy in customized
+ * tilemap factory.
+ *
  * Picks {@code count} tile types from a {@link TileRegistry} subject to
  * difficulty-style constraints. Two orthogonal knobs:
  *
