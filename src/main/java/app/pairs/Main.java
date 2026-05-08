@@ -87,7 +87,7 @@ public class Main {
 		IsometricMapper mapper = new IsometricMapper(TILE_WIDTH, TILE_HEIGHT);
 
 		GameState gameState = pickDifficulty(args);
-		LevelComponent level = new LevelComponent(gameState, mapper);
+		LevelComponent level = new LevelComponent(gameState, mapper, 180_000L);
 		relayout(level, scale);
 
 		System.out.println("Controls: +/- zoom | 0 reset scale | ESC quit");

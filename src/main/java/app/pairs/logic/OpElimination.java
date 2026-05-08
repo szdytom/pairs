@@ -116,4 +116,8 @@ public class OpElimination implements Operation {
 	public List<Integer> getPath() {
 		return Collections.unmodifiableList(path);
 	}
+
+	public int getTime() {
+		return time;
+	}
 }

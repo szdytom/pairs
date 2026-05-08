@@ -59,7 +59,7 @@ public class OpLogList extends ScrollListLayout {
 			if (op instanceof OpElimination e) {
 				addChild(new OpLogEntry(
 					i + 1, e.getTileId(), e.getPath(), gameState.getHeight(),
-					gameState.getWidth()
+					gameState.getWidth(), e.getTime()
 				));
 			}
 		}
