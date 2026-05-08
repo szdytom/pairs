@@ -64,15 +64,15 @@ public class OpLogEntry extends FlexLayout {
 		AlignLayout timeWrap = new AlignLayout();
 		timeWrap.setProp("v-align", AlignLayout.VAlign.CENTER);
 		timeWrap.setProp("h-align", AlignLayout.HAlign.RIGHT);
-		timeWrap.addChild(new TextComponent(
-			formatTime(timeMs), 1, 60, 60, 255
-		));
+		timeWrap.addChild(
+			new TextComponent(formatTime(timeMs), 1, 60, 60, 255)
+		);
 		addChild(timeWrap);
 	}
 
 	private static String formatTime(int timeMs) {
-		int sec = timeMs / 1000;
-		int cs = (timeMs % 1000) / 10;
+		int sec = timeMs / 1_000;
+		int cs = (timeMs % 1_000) / 10;
 		return String.format("+%02d.%02ds", sec, cs);
 	}
 
