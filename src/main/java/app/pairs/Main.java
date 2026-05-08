@@ -17,9 +17,10 @@ import static io.github.libsdl4j.api.video.SdlVideoConst.*;
 import app.pairs.asset.AssetManager;
 import app.pairs.logic.GameState;
 import app.pairs.map.TilemapFactory;
+import app.pairs.router.LevelPage;
+import app.pairs.router.Router;
 import app.pairs.view.Event;
 import app.pairs.view.KeyEvent;
-import app.pairs.view.LevelComponent;
 import app.pairs.view.MouseEvent;
 import app.pairs.view.ScrollEvent;
 
@@ -29,13 +30,6 @@ import io.github.libsdl4j.api.render.*;
 import io.github.libsdl4j.api.video.*;
 
 public class Main {
-	private static final int MIN_SCALE = 1;
-	private static final int MAX_SCALE = 12;
-	private static final int SCALE_STEP = 1;
-
-	private static int windowWidth = 1_024;
-	private static int windowHeight = 768;
-
 	public static void main(String[] args) {
 		int result = SDL_Init(SDL_INIT_EVERYTHING);
 		if (result != 0) {
@@ -46,7 +40,7 @@ public class Main {
 
 		SDL_Window window = SDL_CreateWindow(
 			"Pairs - Isometric View", SDL_WINDOWPOS_CENTERED,
-			SDL_WINDOWPOS_CENTERED, windowWidth, windowHeight,
+			SDL_WINDOWPOS_CENTERED, 1_024, 768,
 			SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE
 		);
 		if (window == null) {
@@ -79,11 +73,10 @@ public class Main {
 			System.exit(1);
 		}
 
-		int scale = 6;
+		Router router = Router.instance();
 
 		GameState gameState = pickDifficulty(args);
-		LevelComponent level = new LevelComponent(gameState, 180_000L);
-		relayout(level, scale);
+		router.navigateTo(new LevelPage(gameState, 180_000L));
 
 		System.out.println("Controls: +/- zoom | 0 reset scale | ESC quit");
 
@@ -100,63 +93,41 @@ public class Main {
 				case SDL_KEYDOWN:
 					if (evt.key.keysym.sym == SDLK_ESCAPE) {
 						shouldRun = false;
-					} else if (evt.key.keysym.sym == SDLK_EQUALS) {
-						scale = Math.min(MAX_SCALE, scale + SCALE_STEP);
-						System.out.println("Scale: " + scale);
-						relayout(level, scale);
-					} else if (evt.key.keysym.sym == SDLK_MINUS) {
-						scale = Math.max(MIN_SCALE, scale - SCALE_STEP);
-						System.out.println("Scale: " + scale);
-						relayout(level, scale);
-					} else if (evt.key.keysym.sym == SDLK_0) {
-						scale = 6;
-						System.out.println("Scale reset to " + scale);
-						relayout(level, scale);
 					} else {
-						level.dispatchEvent(
-							new KeyEvent(
-								Event.Type.KEY_PRESSED, evt.key.keysym.sym
-							),
-							0, 0
-						);
+						router.onEvent(new KeyEvent(
+							Event.Type.KEY_PRESSED, evt.key.keysym.sym
+						));
 					}
 					break;
 				case SDL_MOUSEMOTION:
-					level.dispatchEvent(
-						new MouseEvent(
-							Event.Type.MOUSE_MOVED, evt.motion.x / scale,
-							evt.motion.y / scale, 0
-						),
-						0, 0
-					);
+					router.onEvent(new MouseEvent(
+						Event.Type.MOUSE_MOVED,
+						evt.motion.x / router.getScale(),
+						evt.motion.y / router.getScale(), 0
+					));
 					break;
 				case SDL_MOUSEBUTTONDOWN:
-					level.dispatchEvent(
-						new MouseEvent(
-							Event.Type.MOUSE_PRESSED, evt.button.x / scale,
-							evt.button.y / scale, evt.button.button
-						),
-						0, 0
-					);
+					router.onEvent(new MouseEvent(
+						Event.Type.MOUSE_PRESSED,
+						evt.button.x / router.getScale(),
+						evt.button.y / router.getScale(), evt.button.button
+					));
 					break;
 				case SDL_MOUSEWHEEL:
-					level.dispatchEvent(
-						new ScrollEvent(
-							Event.Type.MOUSE_WHEEL, evt.wheel.mouseX / scale,
-							evt.wheel.mouseY / scale, evt.wheel.y
-						),
-						0, 0
-					);
+					router.onEvent(new ScrollEvent(
+						Event.Type.MOUSE_WHEEL,
+						evt.wheel.mouseX / router.getScale(),
+						evt.wheel.mouseY / router.getScale(), evt.wheel.y
+					));
 					break;
 				case SDL_WINDOWEVENT:
 					if (evt.window.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
-						windowWidth = evt.window.data1;
-						windowHeight = evt.window.data2;
-						relayout(level, scale);
+						router.windowResized(
+							evt.window.data1, evt.window.data2
+						);
 					} else if (evt.window.event == SDL_WINDOWEVENT_LEAVE) {
-						level.dispatchEvent(
-							new MouseEvent(Event.Type.MOUSE_LEAVE, -1, -1, 0),
-							0, 0
+						router.onEvent(
+							new MouseEvent(Event.Type.MOUSE_LEAVE, -1, -1, 0)
 						);
 					}
 					break;
@@ -167,32 +138,17 @@ public class Main {
 			long deltaTime = currentTime - lastTime;
 			lastTime = currentTime;
 
-			SDL_SetRenderDrawColor(
-				renderer, (byte)255, (byte)255, (byte)255, (byte)255
-			);
-			SDL_RenderClear(renderer);
-
-			level.update(deltaTime);
-
-			if (level.blackboard().layoutDirty) {
-				relayout(level, scale);
-				level.blackboard().layoutDirty = false;
-			}
-			level.render(renderer, 0, 0, scale);
+			router.update(deltaTime);
+			router.render(renderer);
 
 			SDL_RenderPresent(renderer);
 		}
 
-		level.destroy();
+		router.shutdown();
 		AssetManager.instance().dispose();
 		SDL_DestroyRenderer(renderer);
 		SDL_DestroyWindow(window);
 		SDL_Quit();
-	}
-
-	private static void relayout(LevelComponent level, int scale) {
-		level.measure();
-		level.layout(0, 0, windowWidth / scale, windowHeight / scale);
 	}
 
 	/**
