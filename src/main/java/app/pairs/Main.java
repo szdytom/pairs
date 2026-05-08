@@ -18,7 +18,6 @@ import app.pairs.asset.AssetManager;
 import app.pairs.logic.GameState;
 import app.pairs.map.TilemapFactory;
 import app.pairs.view.Event;
-import app.pairs.view.IsometricMapper;
 import app.pairs.view.KeyEvent;
 import app.pairs.view.LevelComponent;
 import app.pairs.view.MouseEvent;
@@ -28,10 +27,8 @@ import io.github.libsdl4j.api.event.*;
 import io.github.libsdl4j.api.hints.*;
 import io.github.libsdl4j.api.render.*;
 import io.github.libsdl4j.api.video.*;
-public class Main {
-	private static final int TILE_WIDTH = 16;
-	private static final int TILE_HEIGHT = 16;
 
+public class Main {
 	private static final int MIN_SCALE = 1;
 	private static final int MAX_SCALE = 12;
 	private static final int SCALE_STEP = 1;
@@ -84,10 +81,8 @@ public class Main {
 
 		int scale = 6;
 
-		IsometricMapper mapper = new IsometricMapper(TILE_WIDTH, TILE_HEIGHT);
-
 		GameState gameState = pickDifficulty(args);
-		LevelComponent level = new LevelComponent(gameState, mapper, 180_000L);
+		LevelComponent level = new LevelComponent(gameState, 180_000L);
 		relayout(level, scale);
 
 		System.out.println("Controls: +/- zoom | 0 reset scale | ESC quit");
