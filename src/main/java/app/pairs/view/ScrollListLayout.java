@@ -1,5 +1,9 @@
 package app.pairs.view;
 
+import static io.github.libsdl4j.api.blendmode.SDL_BlendMode.*;
+import static io.github.libsdl4j.api.render.SdlRender.*;
+
+import io.github.libsdl4j.api.rect.SDL_Rect;
 import io.github.libsdl4j.api.render.*;
 
 public class ScrollListLayout extends Container {
@@ -7,6 +11,8 @@ public class ScrollListLayout extends Container {
 	private final int padding;
 	private int scrollIndex;
 	private final int[] measuredSize = new int[2];
+	private final SDL_Rect trackRect = new SDL_Rect();
+	private final SDL_Rect thumbRect = new SDL_Rect();
 
 	public ScrollListLayout(int gap, int padding) {
 		this.gap = gap;
@@ -116,6 +122,46 @@ public class ScrollListLayout extends Container {
 				break;
 			child.render(renderer, myGlobalX, myGlobalY, scale);
 		}
+
+		// Overlay scrollbar when content overflows.
+		// All calculations in logical pixels; multiply by scale at the end.
+		int totalH = 0;
+		for (Widget child : children) {
+			totalH += child.measure()[1];
+		}
+		totalH += gap * Math.max(0, children.size() - 1) + 2 * padding;
+		if (totalH <= layoutH)
+			return;
+
+		int sw = 2;
+		int sx = myGlobalX + layoutW - sw;
+		int sy = myGlobalY;
+		int sh = layoutH;
+
+		SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+
+		trackRect.x = sx * scale;
+		trackRect.y = sy * scale;
+		trackRect.w = sw * scale;
+		trackRect.h = sh * scale;
+		SDL_SetRenderDrawColor(
+			renderer, (byte)40, (byte)40, (byte)40, (byte)80
+		);
+		SDL_RenderFillRect(renderer, trackRect);
+
+		int ms = maxScrollIndex();
+		int thumbH = Math.max(sh * sh / Math.max(totalH, 1), 1);
+		int thumbY = ms > 0 ? sy + (sh - thumbH) * scrollIndex / ms : sy;
+		thumbRect.x = sx * scale;
+		thumbRect.y = thumbY * scale;
+		thumbRect.w = sw * scale;
+		thumbRect.h = thumbH * scale;
+		SDL_SetRenderDrawColor(
+			renderer, (byte)160, (byte)160, (byte)160, (byte)160
+		);
+		SDL_RenderFillRect(renderer, thumbRect);
+
+		SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
 	}
 
 	@Override
