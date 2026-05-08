@@ -16,10 +16,10 @@ public class OpSwap implements Operation {
 	) {
 		int t1 = tilemap.getTile(row1, col1);
 		int t2 = tilemap.getTile(row2, col2);
-		if (t1 <= 0 || t1 != t2) {
+		if (t1 <= 0 || t1 == t2) {
 			throw new IllegalStateException(
-				"OpElimination requires two equal non-empty tiles, got: ("
-				+ row1 + "," + col1 + ")=" + t1 + ", (" + row2 + "," + col2
+				"OpSwap requires two different non-empty tiles, got: (" + row1
+				+ "," + col1 + ")=" + t1 + ", (" + row2 + "," + col2
 				+ ")=" + t2
 			);
 		}
@@ -41,6 +41,9 @@ public class OpSwap implements Operation {
 
 	@Override
 	public void undo() {
-		operate();
+		int t1 = tilemap.getTile(row1, col1);
+		int t2 = tilemap.getTile(row2, col2);
+		tilemap.setTile(row1, col1, t2);
+		tilemap.setTile(row2, col2, t1);
 	}
 }

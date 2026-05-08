@@ -8,6 +8,8 @@ import app.pairs.map.TileGroupRegistry;
 import app.pairs.map.TileSelectionPolicy;
 import app.pairs.map.TilemapFactory;
 import app.pairs.model.GameStatus;
+import app.pairs.model.Item;
+import app.pairs.model.ItemType;
 import app.pairs.model.OpLogs;
 import app.pairs.model.Tilemap;
 import app.pairs.utils.Seed;
@@ -220,5 +222,8 @@ public final class GameState {
 			}
 		}
 		return true;
+	}
+	public ItemType canRevive(Item item) {
+		return item.canRevive();
 	}
 }

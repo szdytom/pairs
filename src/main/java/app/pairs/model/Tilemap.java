@@ -29,6 +29,9 @@ public class Tilemap {
 	}
 
 	public void setMap(int[][] newId) {
+		if (newId.length != height || newId[0].length != width) {
+			throw new IllegalStateException("not same size map");
+		}
 		id = newId;
 	}
 
