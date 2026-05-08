@@ -22,6 +22,7 @@ import app.pairs.view.IsometricMapper;
 import app.pairs.view.KeyEvent;
 import app.pairs.view.LevelComponent;
 import app.pairs.view.MouseEvent;
+import app.pairs.view.ScrollEvent;
 
 import io.github.libsdl4j.api.event.*;
 import io.github.libsdl4j.api.hints.*;
@@ -139,6 +140,15 @@ public class Main {
 						new MouseEvent(
 							Event.Type.MOUSE_PRESSED, evt.button.x / scale,
 							evt.button.y / scale, evt.button.button
+						),
+						0, 0
+					);
+					break;
+				case SDL_MOUSEWHEEL:
+					level.dispatchEvent(
+						new ScrollEvent(
+							Event.Type.MOUSE_WHEEL, evt.wheel.mouseX / scale,
+							evt.wheel.mouseY / scale, evt.wheel.y
 						),
 						0, 0
 					);
