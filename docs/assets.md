@@ -30,16 +30,12 @@ Each entry in `sequence` has:
 |-------|------|----------|------------|-------------|
 | `id` | string | yes | all | Unique identifier for the result. Other operations reference it via `input`. |
 | `type` | string | yes | all | Operation type name (see registered types below). |
-| `input` | string | conditional | non-`image`, non-`bitmap-font`, non-`mapping` | ID of a previous operation's result to use as input. |
-| `file` | string | conditional | `image`, `bitmap-font` | File path relative to the asset root. |
+| `input` | string | conditional | non-`image`, non-`bitmap-font`, non-`mapping`, non-`tile-groups`, non-`tilemap-preset` | ID of a previous operation's result to use as input. |
+| `file` | string | conditional | `image`, `bitmap-font`, `mapping`, `tile-groups`, `tilemap-preset` | File path relative to the asset root. |
 | `description` | string | no | all | Human-readable label printed to stdout during loading. |
 | `tileWidth`, `tileHeight` | int | conditional | `crop-tiles` | Pixel dimensions of each tile. |
 | `columns`, `rows` | int | conditional | `crop-tiles` | Grid dimensions in the sprite sheet. |
-| `mapping` | string[][] | conditional | `tile-type-mapping` *(deprecated)* | 2D array mapping each grid cell to a string type ID (or `null` for empty). Dimensions must match `columns` × `rows`. |
-| `mapping-id` | string | conditional | `tile-type-mapping` | ID of a `mapping` operation result to use instead of inline `mapping`. |
-| `value` | string[][] | conditional | `mapping` | 2D string array to store as a reusable mapping. |
-| `width`, `height`, `types` | int | conditional | `tilemap-preset` | Tilemap dimensions and number of distinct tile types to generate. |
-| `initial` | int[][] | optional | `tilemap-preset` | Seed grid: `0` = fillable cell, `-1` = blocked cell. Dimensions must match `height` × `width`. Omit for an all-fillable grid. |
+| `mapping-id` | string | conditional | `tile-type-mapping` | ID of a `mapping` operation result to use as the type map. |
 
 ### Registered Operation Types
 
@@ -47,28 +43,33 @@ Each entry in `sequence` has:
 |-------------|-------|-------|--------|---------|
 | `image` | `ImageOperation` | — (uses `file`) | `SDL_Surface` | Load a PNG and produce an ABGR8888 surface. |
 | `crop-tiles` | `CropTilesOperation` | `SDL_Surface` | `TileRegistry` | Split a spritesheet surface into individual tile surfaces stored in a registry. |
-| `mapping` | `MappingOperation` | — (uses `value`) | `String[][]` | Store a 2D string array as a named mapping for later reuse. |
-| `tile-type-mapping` | `TileTypeMappingOperation` | `TileRegistry` | `TileRegistry` | Overlay a 2D string-ID mapping on a registry (same object, new ID). Accepts `mapping-id` to reference a `mapping` operation. |
-| `tilemap-preset` | `TilemapPresetOperation` | — (uses `width`/`height`/`types`/`initial`) | `TilemapPreset` | Define a tilemap configuration consumed by `CustomizedTilemapFactory.fromPreset`. |
+| `mapping` | `MappingOperation` | — (uses `file`) | `String[][]` | Load an external JSON file containing a `mapping` 2D string array and store it as a named mapping for later reuse. |
+| `tile-type-mapping` | `TileTypeMappingOperation` | `TileRegistry` | `TileRegistry` | Overlay a 2D string-ID mapping on a registry (same object, new ID). Uses `mapping-id` to reference a `mapping` operation result. |
+| `tilemap-preset` | `TilemapPresetOperation` | — (uses `file`) | `PresetConfig` | Load an external JSON file containing `width`, `height`, `types`, `difficulty`, `includeSlabs`, `spread`, and optional `initial`. Stores a `PresetConfig` consumed by `TilemapFactory.fromPreset`. |
+| `tile-groups` | `TileGroupsOperation` | — (uses `file`) | `TileGroupRegistry` | Load an external JSON file defining tile similarity groups for `TileSelectionPolicy`. |
 | `create-texture` | `CreateTextureOperation` | `SDL_Surface` | `SDL_Texture` | Upload a surface as an SDL texture for GPU rendering. |
 | `bitmap-font` | `BitmapFontOperation` | — (uses `file`) | `BitmapFont` | Load a JSON bitmap font definition and pre-build glyph textures. |
 
 ### Example (current manifest)
 
-The project's `assets/manifest.json` defines a 10-step pipeline:
+The project's `assets/manifest.json` defines a 14-step pipeline:
 
 1. **image** → loads `tinyblocks.png` (180×180 px), stores as `tinyblocks/raw`
 2. **crop-tiles** → crops `tinyblocks/raw` into 10×10 = 100 tiles, each 18×18 px, stored in a `TileRegistry` at `tiles/raw`
-3. **mapping** → stores the 10×10 string ID grid as a reusable mapping at `tile-mapping`
+3. **mapping** → loads `tile-mapping.json` (10×10 string ID grid), stores as `tile-mapping`
 4. **tile-type-mapping** → applies `tile-mapping` to `tiles/raw`, stored at `tiles/typed`
 5. **create-texture** → uploads `tinyblocks/raw` surface to an SDL texture, stored at `tinyblocks/texture`
 6. **image** → loads `tinyblocks-hl.png` (highlighted variant), stored as `hl-tinyblocks/raw`
 7. **crop-tiles** → crops `hl-tinyblocks/raw` into tiles, stored at `hl-tiles/raw`
 8. **tile-type-mapping** → reuses `tile-mapping` on highlighted tiles, stored at `hl-tiles/typed`
 9. **create-texture** → uploads `hl-tinyblocks/raw` surface to a texture, stored at `hl-tinyblocks/texture`
-10. **bitmap-font** → loads `monogram-bitmap.json`, pre-builds glyph textures, stored at `monogram/font`
+10. **image** → loads `shadow.png`, stored as `shadow/raw`
+11. **create-texture** → uploads `shadow/raw` surface to a texture, stored at `shadow/texture`
+12. **bitmap-font** → loads `monogram-bitmap.json`, pre-builds glyph textures, stored at `monogram/font`
+13. **tile-groups** → loads `tile-groups.json`, stores a `TileGroupRegistry` at `tile-groups/default`
+14. **tilemap-preset** × 3 → loads `preset-easy.json`, `preset-hard.json`, `preset-extreme.json`, each stored as a `PresetConfig` at `tilemap/easy`, `tilemap/hard`, `tilemap/extreme`
 
-The key improvement: step 3 extracts the mapping into its own operation, so steps 4 and 8 can reference the same `tile-mapping` by ID instead of duplicating it inline.
+All data-heavy content (mapping arrays, tilemap parameters with initial grids, tile group definitions, bitmap font glyph data) lives in separate JSON files referenced by `file` — the manifest itself is a lightweight sequence of references.
 
 Consumers retrieve assets by ID, e.g.:
 
@@ -106,7 +107,7 @@ public interface AssetOperation {
 
 ### Lifecycle
 
-1. **`configure(JsonObject)`** — called once before processing; extracts parameters from the manifest entry (type-specific fields like `file`, `tileWidth`, `mapping`, etc.)
+1. **`configure(JsonObject)`** — called once before processing; extracts parameters from the manifest entry (type-specific fields like `file`, `tileWidth`, `columns`, etc.)
 2. **`process(Context)`** — performs the actual work: reads input via `ctx.getInput()`, uses `ctx.loader()` for file I/O, stores result via `ctx.put()`
 
 The `Context` also provides access to the `Registry`, enabling operations to introspect available types.
@@ -133,10 +134,22 @@ The `Context` also provides access to the `Registry`, enabling operations to int
 - Using `mapping-id` is preferred: it avoids duplicating large mapping arrays and allows reuse across multiple registries (e.g., normal and highlighted tile variants)
 
 #### MappingOperation
-- No input; reads a `value` 2D string array directly from the manifest entry
+- No input; reads a `file` field pointing to an external JSON file
+- Loads the file via `AssetLoader`, parses the top-level `mapping` 2D string array
 - Stores the `String[][]` array in the asset map under the configured `id`
 - Used as a data source for `tile-type-mapping` via the `mapping-id` field
 - Enables reuse: the same mapping can be shared across multiple `tile-type-mapping` operations without duplication
+
+  External JSON format (`tile-mapping.json`):
+
+  ```json
+  {
+      "mapping": [
+          ["grass_block", "sand", null],
+          ["stone", "dirt", "gravel"]
+      ]
+  }
+  ```
 
 #### BitmapFontOperation
 - Reads a JSON font definition file via `AssetLoader`
@@ -152,10 +165,46 @@ The `Context` also provides access to the `Registry`, enabling operations to int
 - Stores the texture under the configured `id`
 
 #### TilemapPresetOperation
-- No input; reads `width`, `height`, `types`, and an optional `initial` 2D int array directly from the manifest entry
-- Stores a `TilemapPreset` (record of `width`, `height`, `types`, `initial`) under the configured `id`
-- Used by `CustomizedTilemapFactory.fromPreset` to generate `Tilemap`s for built-in difficulty levels (`tilemap/easy`, `tilemap/hard`)
-- Decouples gameplay parameters and the easy-mode initial blocked-cell pattern from Java source — tweak the manifest to retune difficulty without recompiling
+- No input; reads a `file` field pointing to an external JSON file
+- Loads the file via `AssetLoader`, parses `width`, `height`, `types`, `difficulty`, `includeSlabs`, `spread`, and an optional `initial` 2D int array
+- Constructs a `TileSelectionPolicy` from `includeSlabs` and `spread`
+- Stores a `PresetConfig` (bundling a `TilemapPreset`, `Difficulty`, and `TileSelectionPolicy`) under the configured `id`
+- Used by `TilemapFactory.fromPreset` to generate `Tilemap`s for built-in difficulty levels (`tilemap/easy`, `tilemap/hard`, `tilemap/extreme`)
+- Decouples all gameplay parameters and policy from Java source — tweak JSON files to retune difficulty without recompiling
+
+  External JSON format (`preset-easy.json`):
+
+  ```json
+  {
+      "width": 9,
+      "height": 9,
+      "types": 6,
+      "difficulty": "EASY",
+      "includeSlabs": false,
+      "spread": "NO_DUPLICATES",
+      "initial": [
+          [0, 0, 0, 0, -1, -1, -1, -1, -1],
+          [0, 0, 0, 0, -1, -1, -1, -1, -1],
+          [0, 0, 0, 0, -1, -1, -1, -1, -1],
+          [0, 0, 0, 0, -1, -1, -1, -1, -1],
+          [-1, -1, -1, -1, -1, -1, -1, -1, -1],
+          [-1, -1, -1, -1, -1, 0, 0, 0, 0],
+          [-1, -1, -1, -1, -1, 0, 0, 0, 0],
+          [-1, -1, -1, -1, -1, 0, 0, 0, 0],
+          [-1, -1, -1, -1, -1, 0, 0, 0, 0]
+      ]
+  }
+  ```
+
+  | Field | Type | Description |
+  |-------|------|-------------|
+  | `width` | int | Tilemap width in tiles. |
+  | `height` | int | Tilemap height in tiles. |
+  | `types` | int | Number of distinct tile types to generate. |
+  | `difficulty` | string | One of `EASY`, `HARD`, `EXTREME`. |
+  | `includeSlabs` | bool | Whether slab-group tiles are eligible for palette selection. |
+  | `spread` | string | One of `NO_DUPLICATES`, `FREE`, `PREFER_DUPLICATES`. Controls how tile types are distributed across similarity groups. |
+  | `initial` | int[][] | Optional. Seed grid: `0` = fillable cell, `-1` = blocked cell. Dimensions must match `height` × `width`. Omit for an all-fillable grid. |
 
 ---
 

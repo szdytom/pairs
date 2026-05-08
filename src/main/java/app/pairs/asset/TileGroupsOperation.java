@@ -34,9 +34,10 @@ public class TileGroupsOperation implements AssetOperation {
 	@Override
 	public void process(Context ctx) throws Exception {
 		System.out.println("  Loading tile groups: " + file);
-		InputStream is = ctx.loader().load(file);
-		byte[] bytes = is.readAllBytes();
-		is.close();
+		byte[] bytes;
+		try (InputStream is = ctx.loader().load(file)) {
+			bytes = is.readAllBytes();
+		}
 
 		String json = new String(bytes, StandardCharsets.UTF_8);
 		JsonObject root = new Gson().fromJson(json, JsonObject.class);

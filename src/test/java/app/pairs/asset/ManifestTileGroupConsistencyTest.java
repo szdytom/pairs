@@ -8,6 +8,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -54,12 +55,24 @@ class ManifestTileGroupConsistencyTest {
 			for (JsonElement e : seq) {
 				JsonObject item = e.getAsJsonObject();
 				if ("tile-mapping".equals(item.get("id").getAsString())) {
-					return flattenMapping(item.getAsJsonArray("value"));
+					String mappingFile = item.get("file").getAsString();
+					return loadMappingFromFile(mappingFile);
 				}
 			}
 			throw new IllegalStateException(
 				"manifest.json has no 'tile-mapping' entry"
 			);
+		}
+	}
+
+	private Set<String> loadMappingFromFile(String path) throws Exception {
+		AssetLoader loader = new ClspAssetLoader(getClass().getClassLoader());
+		try (InputStream is = loader.load(path)) {
+			byte[] bytes = is.readAllBytes();
+			String json = new String(bytes, StandardCharsets.UTF_8);
+			JsonObject root = new Gson().fromJson(json, JsonObject.class);
+			JsonArray rows = root.getAsJsonArray("mapping");
+			return flattenMapping(rows);
 		}
 	}
 

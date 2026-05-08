@@ -1,21 +1,26 @@
 package app.pairs.asset;
 
+import app.pairs.map.PresetConfig;
+import app.pairs.map.TileSelectionPolicy;
 import app.pairs.map.TilemapPreset;
+import app.pairs.model.Tilemap;
 
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+
+import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
 /**
- * Builds a {@link TilemapPreset} from a manifest entry. Required fields:
- * {@code width}, {@code height}, {@code types}. Optional {@code initial}
- * is a 2D int array seed grid (0 = fillable, -1 = blocked); when omitted
- * an all-fillable grid of the given size is used.
+ * Builds a {@link PresetConfig} from an external JSON file. Required fields
+ * in the file: {@code width}, {@code height}, {@code types},
+ * {@code difficulty}, {@code includeSlabs}, {@code spread}. Optional
+ * {@code initial} is a 2D int array seed grid (0 = fillable, -1 = blocked);
+ * when omitted an all-fillable grid of the given size is used.
  */
 public class TilemapPresetOperation implements AssetOperation {
-	private int width;
-	private int height;
-	private int types;
-	private int[][] initial;
+	private String file;
 
 	@Override
 	public String type() {
@@ -24,13 +29,47 @@ public class TilemapPresetOperation implements AssetOperation {
 
 	@Override
 	public void configure(JsonObject item) {
-		width = item.get("width").getAsInt();
-		height = item.get("height").getAsInt();
-		types = item.get("types").getAsInt();
-		if (item.has("initial")) {
-			initial = parseGrid(item.getAsJsonArray("initial"));
+		file = item.get("file").getAsString();
+	}
+
+	@Override
+	public void process(Context ctx) throws Exception {
+		System.out.println("  Loading tilemap preset: " + file);
+		byte[] bytes;
+		try (InputStream is = ctx.loader().load(file)) {
+			bytes = is.readAllBytes();
+		}
+
+		String json = new String(bytes, StandardCharsets.UTF_8);
+		JsonObject root = new Gson().fromJson(json, JsonObject.class);
+
+		int width = root.get("width").getAsInt();
+		int height = root.get("height").getAsInt();
+		int types = root.get("types").getAsInt();
+		Tilemap.Difficulty difficulty = Tilemap.Difficulty.valueOf(
+			root.get("difficulty").getAsString()
+		);
+		boolean includeSlabs = root.get("includeSlabs").getAsBoolean();
+		TileSelectionPolicy.Spread spread = TileSelectionPolicy.Spread.valueOf(
+			root.get("spread").getAsString()
+		);
+
+		int[][] initial = null;
+		if (root.has("initial")) {
+			initial = parseGrid(root.getAsJsonArray("initial"));
 			validateGrid(initial, width, height);
 		}
+
+		System.out.println(
+			"  Building tilemap preset: " + ctx.id() + " (" + width + "x"
+			+ height + ", types=" + types + ", " + difficulty + ")"
+		);
+
+		TilemapPreset preset = new TilemapPreset(width, height, types, initial);
+		TileSelectionPolicy policy = new TileSelectionPolicy(
+			includeSlabs, spread
+		);
+		ctx.put(ctx.id(), new PresetConfig(preset, difficulty, policy));
 	}
 
 	private static void validateGrid(int[][] grid, int width, int height) {
@@ -49,15 +88,6 @@ public class TilemapPresetOperation implements AssetOperation {
 				);
 			}
 		}
-	}
-
-	@Override
-	public void process(Context ctx) {
-		System.out.println(
-			"  Building tilemap preset: " + ctx.id() + " (" + width + "x"
-			+ height + ", types=" + types + ")"
-		);
-		ctx.put(ctx.id(), new TilemapPreset(width, height, types, initial));
 	}
 
 	private static int[][] parseGrid(JsonArray rows) {

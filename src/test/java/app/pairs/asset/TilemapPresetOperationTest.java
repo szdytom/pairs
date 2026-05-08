@@ -1,81 +1,122 @@
 package app.pairs.asset;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import app.pairs.map.TilemapPreset;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 
-import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
 import org.junit.jupiter.api.Test;
 
 class TilemapPresetOperationTest {
-	private static JsonObject buildItem(
-		int width, int height, int types, int[][] initial
-	) {
+	private static final String ALL_FILLABLE_JSON = ""
+		+ "{\n"
+		+ "	\"width\": 4,\n"
+		+ "	\"height\": 3,\n"
+		+ "	\"types\": 5,\n"
+		+ "	\"difficulty\": \"EASY\",\n"
+		+ "	\"includeSlabs\": false,\n"
+		+ "	\"spread\": \"NO_DUPLICATES\"\n"
+		+ "}";
+
+	private static final String VALID_INITIAL_JSON = ""
+		+ "{\n"
+		+ "	\"width\": 3,\n"
+		+ "	\"height\": 2,\n"
+		+ "	\"types\": 4,\n"
+		+ "	\"difficulty\": \"HARD\",\n"
+		+ "	\"includeSlabs\": false,\n"
+		+ "	\"spread\": \"FREE\",\n"
+		+ "	\"initial\": [[0, -1, 0], [-1, 0, -1]]\n"
+		+ "}";
+
+	private static final String ROW_MISMATCH_JSON = ""
+		+ "{\n"
+		+ "	\"width\": 3,\n"
+		+ "	\"height\": 2,\n"
+		+ "	\"types\": 4,\n"
+		+ "	\"difficulty\": \"EASY\",\n"
+		+ "	\"includeSlabs\": false,\n"
+		+ "	\"spread\": \"NO_DUPLICATES\",\n"
+		+ "	\"initial\": [[0, -1, 0]]\n"
+		+ "}";
+
+	private static final String JAGGED_ROW_JSON = ""
+		+ "{\n"
+		+ "	\"width\": 3,\n"
+		+ "	\"height\": 2,\n"
+		+ "	\"types\": 4,\n"
+		+ "	\"difficulty\": \"EASY\",\n"
+		+ "	\"includeSlabs\": false,\n"
+		+ "	\"spread\": \"NO_DUPLICATES\",\n"
+		+ "	\"initial\": [[0, 0, 0], [0, 0]]\n"
+		+ "}";
+
+	private static JsonObject buildItem(String file) {
 		JsonObject item = new JsonObject();
 		item.addProperty("id", "test/preset");
 		item.addProperty("type", "tilemap-preset");
-		item.addProperty("width", width);
-		item.addProperty("height", height);
-		item.addProperty("types", types);
-		if (initial != null) {
-			JsonArray rows = new JsonArray();
-			for (int[] row : initial) {
-				JsonArray rowArr = new JsonArray();
-				for (int v : row) {
-					rowArr.add(v);
-				}
-				rows.add(rowArr);
-			}
-			item.add("initial", rows);
-		}
+		item.addProperty("file", file);
 		return item;
 	}
 
-	@Test
-	void noInitialProducesAllFillableGrid() {
-		TilemapPresetOperation op = new TilemapPresetOperation();
-		op.configure(buildItem(4, 3, 5, null));
-
-		TilemapPreset preset = new TilemapPreset(4, 3, 5, null);
-		int[][] grid = preset.buildInitial();
-		assertThat(grid).hasDimensions(3, 4);
-		for (int[] row : grid) {
-			for (int cell : row) {
-				assertThat(cell).isEqualTo(0);
+	private static AssetOperation.Context mockContext(String presetJson) {
+		AssetLoader loader = path
+			-> new ByteArrayInputStream(
+				presetJson.getBytes(StandardCharsets.UTF_8)
+			);
+		return new AssetOperation.Context() {
+			@Override
+			public String id() {
+				return "test/preset";
 			}
-		}
+			@Override
+			public AssetLoader loader() {
+				return loader;
+			}
+			@Override
+			public AssetOperation.Registry registry() {
+				return null;
+			}
+			@Override
+			public void put(String id, Object asset) {}
+			@Override
+			public <T> T getInput(String ref) {
+				return null;
+			}
+		};
 	}
 
 	@Test
-	void validInitialGridIsAccepted() {
-		int[][] initial = {
-			{0, -1, 0},
-			{-1, 0, -1},
-		};
+	void noInitialProducesAllFillableGrid() throws Exception {
 		TilemapPresetOperation op = new TilemapPresetOperation();
-		op.configure(buildItem(3, 2, 4, initial));
-		// No exception means configure accepted the grid
+		op.configure(buildItem("no-init.json"));
+		op.process(mockContext(ALL_FILLABLE_JSON));
+	}
+
+	@Test
+	void validInitialGridIsAccepted() throws Exception {
+		TilemapPresetOperation op = new TilemapPresetOperation();
+		op.configure(buildItem("valid.json"));
+		op.process(mockContext(VALID_INITIAL_JSON));
 	}
 
 	@Test
 	void initialRowCountMismatchThrows() {
-		// Provide 1 row but height=2
-		int[][] initial = {{0, -1, 0}};
 		TilemapPresetOperation op = new TilemapPresetOperation();
-		assertThatThrownBy(() -> op.configure(buildItem(3, 2, 4, initial)))
+		op.configure(buildItem("bad-rows.json"));
+		assertThatThrownBy(() -> op.process(mockContext(ROW_MISMATCH_JSON)))
 			.isInstanceOf(IllegalArgumentException.class)
 			.hasMessageContaining("row count");
 	}
 
 	@Test
 	void jaggedInitialRowThrows() {
-		// Row 0 has 3 cols, row 1 has 2 — width=3 so row 1 mismatches
-		JsonObject item = buildItem(3, 2, 4, new int[][] {{0, 0, 0}, {0, 0}});
 		TilemapPresetOperation op = new TilemapPresetOperation();
-		assertThatThrownBy(() -> op.configure(item))
+		op.configure(buildItem("jagged.json"));
+		assertThatThrownBy(() -> op.process(mockContext(JAGGED_ROW_JSON)))
 			.isInstanceOf(IllegalArgumentException.class)
 			.hasMessageContaining("column count");
 	}
