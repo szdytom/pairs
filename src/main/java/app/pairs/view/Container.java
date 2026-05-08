@@ -106,8 +106,16 @@ public abstract class Container extends Widget {
 		int myGlobalX = parentGlobalX + layoutX;
 		int myGlobalY = parentGlobalY + layoutY;
 
+		// Hit-test events with position data front-to-back (topmost first).
+		int ex = Integer.MIN_VALUE, ey = Integer.MIN_VALUE;
 		if (event instanceof MouseEvent me) {
-			// Hit-test children front-to-back (topmost first).
+			ex = me.x();
+			ey = me.y();
+		} else if (event instanceof ScrollEvent se) {
+			ex = se.x();
+			ey = se.y();
+		}
+		if (ex != Integer.MIN_VALUE) {
 			for (int i = children.size() - 1; i >= 0; i--) {
 				Widget child = children.get(i);
 				if (!child.isVisible()) {
@@ -115,10 +123,9 @@ public abstract class Container extends Widget {
 				}
 				int childGlobalX = myGlobalX + child.layoutX;
 				int childGlobalY = myGlobalY + child.layoutY;
-				if (me.x() >= childGlobalX
-				    && me.x() < childGlobalX + child.layoutW
-				    && me.y() >= childGlobalY
-				    && me.y() < childGlobalY + child.layoutH) {
+				if (ex >= childGlobalX && ex < childGlobalX + child.layoutW
+				    && ey >= childGlobalY
+				    && ey < childGlobalY + child.layoutH) {
 					// First hit — dispatch to this child.
 					if (child.dispatchEvent(event, myGlobalX, myGlobalY)
 					    || event.isConsumed()) {

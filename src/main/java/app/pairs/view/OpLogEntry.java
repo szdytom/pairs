@@ -32,9 +32,16 @@ public class OpLogEntry extends FlexLayout {
 	private SDL_Texture thumbnail;
 
 	public OpLogEntry(
-		int tileId, List<Integer> path, int mapRows, int mapCols
+		int index, int tileId, List<Integer> path, int mapRows, int mapCols
 	) {
 		super(Direction.ROW, GAP, PADDING);
+
+		AlignLayout numWrap = new AlignLayout();
+		numWrap.setProp("v-align", AlignLayout.VAlign.CENTER);
+		numWrap.addChild(
+			new TextComponent(String.format("%3d", index), 1, 160, 160, 160)
+		);
+		addChild(numWrap);
 
 		TileRegistry reg = AssetManager.instance().get("tiles/typed");
 		SDL_Texture tex = reg.getTexture(tileId);

@@ -11,14 +11,14 @@ import java.util.List;
  * directly from {@link GameState} via the widget hierarchy's {@link
  * Blackboard}.
  *
- * <p>Arranges entries in a single-column {@link GridLayout}. Syncs when
- * a {@link Event.Type#GAME_STATE_UPDATED} event is received.
+ * <p>Arranges entries in a vertically scrolling list. Syncs when a
+ * {@link Event.Type#GAME_STATE_UPDATED} event is received.
  */
-public class OpLogList extends GridLayout {
+public class OpLogList extends ScrollListLayout {
 	private int lastOpCount = -1;
 
 	public OpLogList() {
-		super(1, 0, 0);
+		super(0, 0);
 	}
 
 	@Override
@@ -45,22 +45,30 @@ public class OpLogList extends GridLayout {
 		if (ops.size() == lastOpCount) {
 			return;
 		}
+
+		boolean atBottom = isAtBottom();
+
 		if (ops.size() < lastOpCount || lastOpCount < 0) {
 			removeAllChildren();
 			lastOpCount = 0;
+			atBottom = true;
 		}
 
 		for (int i = lastOpCount; i < ops.size(); i++) {
 			Operation op = ops.get(i);
 			if (op instanceof OpElimination e) {
 				addChild(new OpLogEntry(
-					e.getTileId(), e.getPath(), gameState.getHeight(),
+					i + 1, e.getTileId(), e.getPath(), gameState.getHeight(),
 					gameState.getWidth()
 				));
 			}
 		}
 
 		lastOpCount = ops.size();
+
+		if (atBottom) {
+			scrollToBottom();
+		}
 		blackboard().layoutDirty = true;
 	}
 }

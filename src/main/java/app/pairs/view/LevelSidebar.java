@@ -36,11 +36,7 @@ public class LevelSidebar extends Container {
 	@Override
 	public void layout(int x, int y, int w, int h) {
 		super.layout(x, y, w, h);
-		// Pass the list's natural content height so GridLayout computes
-		// cell heights from natural sizes instead of distributing the full
-		// window height.
-		int listH = opLogList.measure()[1];
-		opLogList.layout(BORDER_WIDTH, 0, w - BORDER_WIDTH, listH);
+		opLogList.layout(BORDER_WIDTH, 0, w - BORDER_WIDTH, h);
 	}
 
 	@Override
