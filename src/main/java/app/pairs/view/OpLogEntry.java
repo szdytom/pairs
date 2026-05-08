@@ -32,7 +32,8 @@ public class OpLogEntry extends FlexLayout {
 	private SDL_Texture thumbnail;
 
 	public OpLogEntry(
-		int index, int tileId, List<Integer> path, int mapRows, int mapCols
+		int index, int tileId, List<Integer> path, int mapRows, int mapCols,
+		int timeMs
 	) {
 		super(Direction.ROW, GAP, PADDING);
 
@@ -59,6 +60,20 @@ public class OpLogEntry extends FlexLayout {
 			thumbnail, (mapCols + s - 1) / s + 2, (mapRows + s - 1) / s + 2
 		));
 		addChild(align);
+
+		AlignLayout timeWrap = new AlignLayout();
+		timeWrap.setProp("v-align", AlignLayout.VAlign.CENTER);
+		timeWrap.setProp("h-align", AlignLayout.HAlign.RIGHT);
+		timeWrap.addChild(new TextComponent(
+			formatTime(timeMs), 1, 60, 60, 255
+		));
+		addChild(timeWrap);
+	}
+
+	private static String formatTime(int timeMs) {
+		int sec = timeMs / 1000;
+		int cs = (timeMs % 1000) / 10;
+		return String.format("+%02d.%02ds", sec, cs);
 	}
 
 	private SDL_Texture createThumbnail(

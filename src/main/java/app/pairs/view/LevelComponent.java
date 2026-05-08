@@ -3,6 +3,7 @@ package app.pairs.view;
 import static io.github.libsdl4j.api.keycode.SDL_Keycode.*;
 
 import app.pairs.logic.GameState;
+import app.pairs.model.CountdownState;
 
 import io.github.libsdl4j.api.render.*;
 
@@ -36,6 +37,11 @@ public class LevelComponent extends Container {
 	private int selectedCol = -1;
 
 	private boolean cleared;
+	private boolean timedOut;
+
+	private long totalCountdownMs;
+	private final CountdownState countdownState;
+	private long lastEliminationTimeMs;
 
 	// Layout state
 	private final AlignLayout alignLayout;
@@ -48,9 +54,11 @@ public class LevelComponent extends Container {
 	private int gridGlobalY;
 
 	// Child text components
-	private final TextComponent clearedText;
+	private final TextComponent overlayText;
 
-	public LevelComponent(GameState gameState, IsometricMapper mapper) {
+	public LevelComponent(
+		GameState gameState, IsometricMapper mapper, long totalCountdownMs
+	) {
 		this.gameState = gameState;
 		this.mapper = mapper;
 		this.gridWidth = gameState.getWidth();
@@ -58,8 +66,14 @@ public class LevelComponent extends Container {
 		this.depthOrder = mapper.getDepthSortedOrder(gridHeight, gridWidth);
 		this.highlighted = new boolean[gridHeight][gridWidth];
 
+		this.totalCountdownMs = totalCountdownMs;
+		this.countdownState = new CountdownState();
+		countdownState.remainingMs = totalCountdownMs;
+		this.lastEliminationTimeMs = System.currentTimeMillis();
+
 		Blackboard bb = new Blackboard();
 		bb.put(GameState.class, gameState);
+		bb.put(CountdownState.class, countdownState);
 		setBlackboard(bb);
 
 		this.gridView = new IsometricGridView(mapper, gridWidth, gridHeight);
@@ -69,14 +83,28 @@ public class LevelComponent extends Container {
 		alignLayout.setProp("v-align", AlignLayout.VAlign.CENTER);
 		alignLayout.addChild(gridView);
 
-		this.clearedText = new TextComponent("CLEARED!", 2, 255, 255, 100);
-		clearedText.setVisible(false);
-		alignLayout.addChild(clearedText);
+		this.overlayText = new TextComponent("CLEARED!", 2, 40, 40, 40);
+		overlayText.setVisible(false);
+		alignLayout.addChild(overlayText);
 
 		this.sidebar = new LevelSidebar();
 
 		addChild(alignLayout);
 		addChild(sidebar);
+	}
+
+	@Override
+	public void update(long deltaTimeMs) {
+		if (!cleared && !timedOut) {
+			countdownState.remainingMs = Math.max(
+				0, countdownState.remainingMs - deltaTimeMs
+			);
+			if (countdownState.remainingMs == 0) {
+				timedOut = true;
+				gridView.setVisible(false);
+			}
+		}
+		super.update(deltaTimeMs);
 	}
 
 	public void setMousePosition(int x, int y) {
@@ -86,6 +114,8 @@ public class LevelComponent extends Container {
 
 	/** Reset the level with the map generated. */
 	public void restart() {
+		countdownState.remainingMs = totalCountdownMs;
+		lastEliminationTimeMs = System.currentTimeMillis();
 		gameState.restart();
 		int newW = gameState.getWidth();
 		int newH = gameState.getHeight();
@@ -96,7 +126,9 @@ public class LevelComponent extends Container {
 			highlighted = new boolean[gridHeight][gridWidth];
 		}
 		cleared = false;
-		clearedText.setVisible(false);
+		timedOut = false;
+		gridView.setVisible(true);
+		overlayText.setVisible(false);
 		selectedRow = -1;
 		selectedCol = -1;
 		hoveredRow = -1;
@@ -111,6 +143,10 @@ public class LevelComponent extends Container {
 
 	/** Handle a mouse click at the current cursor position. */
 	public void handleClick() {
+		if (timedOut || cleared) {
+			return;
+		}
+
 		resolveHoveredCell();
 
 		if (hoveredRow < 0 || hoveredCol < 0) {
@@ -130,13 +166,16 @@ public class LevelComponent extends Container {
 			if (gameState.canEliminate(
 					selectedRow, selectedCol, hoveredRow, hoveredCol
 				)) {
+				long now = System.currentTimeMillis();
+				int elapsed = (int)(now - lastEliminationTimeMs);
 				gameState.operate(
-					selectedRow, selectedCol, hoveredRow, hoveredCol, 0
+					selectedRow, selectedCol, hoveredRow, hoveredCol, elapsed
 				);
+				lastEliminationTimeMs = now;
 				gridView.reset();
 				if (gameState.isCleared()) {
 					cleared = true;
-					clearedText.setVisible(true);
+					overlayText.setVisible(true);
 				}
 				selectedRow = -1;
 				selectedCol = -1;
@@ -179,7 +218,12 @@ public class LevelComponent extends Container {
 		resolveHoveredCell();
 		updateHighlighted();
 
-		clearedText.setVisible(cleared);
+		if (timedOut) {
+			overlayText.setText("Time Out!");
+		} else if (cleared) {
+			overlayText.setText("CLEARED!");
+		}
+		overlayText.setVisible(timedOut || cleared);
 		super.render(renderer, parentX, parentY, scale);
 	}
 
