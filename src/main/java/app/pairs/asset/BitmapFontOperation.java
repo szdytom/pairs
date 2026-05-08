@@ -28,9 +28,10 @@ public class BitmapFontOperation implements AssetOperation {
 	@Override
 	public void process(Context ctx) throws Exception {
 		System.out.println("  Loading bitmap font: " + file);
-		InputStream is = ctx.loader().load(file);
-		byte[] jsonBytes = is.readAllBytes();
-		is.close();
+		byte[] jsonBytes;
+		try (InputStream is = ctx.loader().load(file)) {
+			jsonBytes = is.readAllBytes();
+		}
 
 		String json = new String(jsonBytes, StandardCharsets.UTF_8);
 		Gson gson = new Gson();

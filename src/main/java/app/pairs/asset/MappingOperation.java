@@ -1,5 +1,9 @@
 package app.pairs.asset;
 
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+
+import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -10,7 +14,7 @@ import com.google.gson.JsonObject;
  */
 public class MappingOperation implements AssetOperation {
 	private String id;
-	private String[][] value;
+	private String file;
 
 	@Override
 	public String type() {
@@ -19,13 +23,26 @@ public class MappingOperation implements AssetOperation {
 
 	@Override
 	public void configure(JsonObject item) {
-		id(item.get("id").getAsString());
+		id = item.get("id").getAsString();
+		file = item.get("file").getAsString();
+	}
 
-		JsonArray valueArray = item.getAsJsonArray("value");
-		int rows = valueArray.size();
+	@Override
+	public void process(Context ctx) throws Exception {
+		System.out.println("  Loading mapping: " + file);
+		byte[] bytes;
+		try (InputStream is = ctx.loader().load(file)) {
+			bytes = is.readAllBytes();
+		}
+
+		String json = new String(bytes, StandardCharsets.UTF_8);
+		JsonObject root = new Gson().fromJson(json, JsonObject.class);
+		JsonArray mappingArray = root.getAsJsonArray("mapping");
+
+		int rows = mappingArray.size();
 		String[][] value = new String[rows][];
 		for (int r = 0; r < rows; r++) {
-			JsonArray rowArray = valueArray.get(r).getAsJsonArray();
+			JsonArray rowArray = mappingArray.get(r).getAsJsonArray();
 			int cols = rowArray.size();
 			value[r] = new String[cols];
 			for (int c = 0; c < cols; c++) {
@@ -33,22 +50,8 @@ public class MappingOperation implements AssetOperation {
 				value[r][c] = elem.isJsonNull() ? null : elem.getAsString();
 			}
 		}
-		value(value);
-	}
 
-	@Override
-	public void process(Context ctx) throws Exception {
 		System.out.println("  Storing mapping: " + id);
 		ctx.put(id, value);
-	}
-
-	public MappingOperation id(String id) {
-		this.id = id;
-		return this;
-	}
-
-	public MappingOperation value(String[][] value) {
-		this.value = value;
-		return this;
 	}
 }
