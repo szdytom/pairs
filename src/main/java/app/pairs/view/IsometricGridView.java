@@ -7,18 +7,13 @@ import app.pairs.logic.GameState;
 import io.github.libsdl4j.api.rect.*;
 import io.github.libsdl4j.api.render.*;
 
-/**
- * Renders a 2D grid of tile types using isometric projection.
- * Tile IDs are read from {@link GameState} via the widget hierarchy's
- * {@link Blackboard}. Values {@code <= 0} represent an empty cell.
- */
 public class IsometricGridView extends Widget {
-	private static final int TILE_CONTENT_WIDTH = 16;
-	private static final int TILE_CONTENT_HEIGHT = 16;
+	private static final int TILE_WIDTH = 16;
+	private static final int TILE_HEIGHT = 16;
 	private static final int TILE_SPRITE_HEIGHT = 18;
 	private static final int SHADOW_SIZE = 18;
-	private static final int SHADOW_Y_OFFSET = TILE_CONTENT_HEIGHT;
-	private static final int HOVER_LIFT = TILE_CONTENT_HEIGHT / 3;
+	private static final int SHADOW_Y_OFFSET = TILE_HEIGHT;
+	private static final int HOVER_LIFT = TILE_HEIGHT / 3;
 	private static final int HOVER_LIFT_MS = 50;
 
 	private final SDL_Rect srcRect = new SDL_Rect();
@@ -27,24 +22,23 @@ public class IsometricGridView extends Widget {
 	private final SDL_Texture shadowTex;
 	private final SDL_Rect shadowSrcRect = new SDL_Rect();
 
-	private final int gridWidth;
-	private final int gridHeight;
+	private final IsometricMapper mapper = new IsometricMapper(
+		TILE_WIDTH, TILE_HEIGHT
+	);
+	private int gridWidth;
+	private int gridHeight;
 	private final TileRegistry tileRegistry;
 	private final TileRegistry hlTileRegistry;
-	private final IsometricMapper mapper;
 	private boolean[][] highlighted;
 	private float[][] liftProgress;
-	private final int[][] depthOrder;
+	private int[][] depthOrder;
 	private final int[] measuredSize = new int[2];
-	int originOffsetX;
-	int originOffsetY;
+	private int originOffsetX;
+	private int originOffsetY;
 
-	public IsometricGridView(
-		IsometricMapper mapper, int gridWidth, int gridHeight
-	) {
+	public IsometricGridView(int gridWidth, int gridHeight) {
 		this.gridWidth = gridWidth;
 		this.gridHeight = gridHeight;
-		this.mapper = mapper;
 		this.tileRegistry = AssetManager.instance().get("tiles/typed");
 		this.hlTileRegistry = AssetManager.instance().get("hl-tiles/typed");
 		this.shadowTex = AssetManager.instance().get("shadow/texture");
@@ -52,7 +46,7 @@ public class IsometricGridView extends Widget {
 		this.liftProgress = new float[gridHeight][gridWidth];
 		srcRect.x = 1;
 		srcRect.y = 0;
-		srcRect.w = TILE_CONTENT_WIDTH;
+		srcRect.w = TILE_WIDTH;
 		srcRect.h = TILE_SPRITE_HEIGHT;
 		shadowSrcRect.x = 0;
 		shadowSrcRect.y = 0;
@@ -60,15 +54,75 @@ public class IsometricGridView extends Widget {
 		shadowSrcRect.h = SHADOW_SIZE;
 	}
 
-	/**
-	 * Re-initialize per-cell animation state for a new game round.
-	 */
+	public void setGridSize(int width, int height) {
+		this.gridWidth = width;
+		this.gridHeight = height;
+		this.depthOrder = mapper.getDepthSortedOrder(height, width);
+		this.highlighted = new boolean[height][width];
+		reset();
+	}
+
 	public void reset() {
 		this.liftProgress = new float[gridHeight][gridWidth];
 	}
 
 	public void setHighlighted(boolean[][] highlighted) {
 		this.highlighted = highlighted;
+	}
+
+	public void cellAt(
+		int originX, int originY, int mouseX, int mouseY, int prevRow,
+		int prevCol, int[] result
+	) {
+		result[0] = -1;
+		result[1] = -1;
+
+		if (mouseX < 0 || mouseY < 0) {
+			return;
+		}
+
+		int halfW = TILE_WIDTH / 2;
+		int halfH = TILE_HEIGHT / 2;
+		int hoverOffset = TILE_HEIGHT / 3;
+		int gx = originX + originOffsetX;
+		int gy = originY + originOffsetY + HOVER_LIFT;
+
+		GameState gameState = blackboard().get(GameState.class);
+
+		for (int i = depthOrder.length - 1; i >= 0; i--) {
+			int[] pos = depthOrder[i];
+			int r = pos[0];
+			int c = pos[1];
+
+			if (gameState.getTile(r, c) <= 0)
+				continue;
+
+			int cx = gx + (c - r) * TILE_WIDTH / 2;
+			int cy = gy + (c + r) * TILE_WIDTH / 4;
+
+			int left = cx - halfW;
+			int right = cx + halfW;
+			int top = cy - halfH;
+			int bottom = cy + halfH;
+
+			if (mouseX >= left && mouseX < right && mouseY >= top
+			    && mouseY < bottom) {
+				result[0] = r;
+				result[1] = c;
+				return;
+			}
+
+			if (r == prevRow && c == prevCol) {
+				int raisedTop = top - hoverOffset;
+				int raisedBottom = bottom - hoverOffset;
+				if (mouseX >= left && mouseX < right && mouseY >= raisedTop
+				    && mouseY < raisedBottom) {
+					result[0] = r;
+					result[1] = c;
+					return;
+				}
+			}
+		}
 	}
 
 	@Override
@@ -94,13 +148,11 @@ public class IsometricGridView extends Widget {
 	public int[] measure() {
 		int stepX = mapper.getTileWidth() / 2;
 		int stepY = mapper.getTileWidth() / 4;
-		measuredSize[0] = (gridWidth - 1 + gridHeight - 1) * stepX
-			+ TILE_CONTENT_WIDTH;
+		measuredSize[0] = (gridWidth - 1 + gridHeight - 1) * stepX + TILE_WIDTH;
 		measuredSize[1] = (gridHeight - 1 + gridWidth - 1) * stepY
-			+ TILE_CONTENT_HEIGHT / 2 + HOVER_LIFT + SHADOW_SIZE / 2
-			+ SHADOW_Y_OFFSET;
-		originOffsetX = (gridHeight - 1) * stepX + TILE_CONTENT_WIDTH / 2;
-		originOffsetY = TILE_CONTENT_HEIGHT / 2;
+			+ TILE_HEIGHT / 2 + HOVER_LIFT + SHADOW_SIZE / 2 + SHADOW_Y_OFFSET;
+		originOffsetX = (gridHeight - 1) * stepX + TILE_WIDTH / 2;
+		originOffsetY = TILE_HEIGHT / 2;
 		return measuredSize;
 	}
 
@@ -111,7 +163,7 @@ public class IsometricGridView extends Widget {
 		GameState gameState = blackboard().get(GameState.class);
 		tileRegistry.createTextures(renderer);
 		hlTileRegistry.createTextures(renderer);
-		int dstW = TILE_CONTENT_WIDTH * scale;
+		int dstW = TILE_WIDTH * scale;
 		int dstH = TILE_SPRITE_HEIGHT * scale;
 
 		int gridGlobalX = parentX + layoutX + originOffsetX;
@@ -125,14 +177,12 @@ public class IsometricGridView extends Widget {
 			if (typeId <= 0)
 				continue;
 
-			// Global logical → screen: screen = globalLogical * scale
 			IsometricMapper.IsometricCoordinate logical = mapper.gridToLogical(
 				row, col
 			);
 			int screenCenterX = (gridGlobalX + logical.x) * scale;
 			int screenCenterY = (gridGlobalY + logical.y) * scale;
 
-			// Render shadow below the tile
 			boolean isHighlighted = highlighted != null
 				&& highlighted[row][col];
 			int shadowDstW = SHADOW_SIZE * scale;

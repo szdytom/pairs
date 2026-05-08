@@ -14,16 +14,12 @@ import io.github.libsdl4j.api.render.*;
  * interaction.
  */
 public class LevelComponent extends Container {
-	private static final int TILE_CONTENT_WIDTH = 16;
-	private static final int TILE_CONTENT_HEIGHT = 16;
 	private static final int SIDEBAR_WIDTH = 100;
 
 	private GameState gameState;
 	private final IsometricGridView gridView;
-	private final IsometricMapper mapper;
 	private int gridWidth;
 	private int gridHeight;
-	private int[][] depthOrder;
 	private boolean[][] highlighted;
 
 	private int mouseX = -1;
@@ -32,6 +28,7 @@ public class LevelComponent extends Container {
 	private int hoveredCol = -1;
 	private int prevHoveredRow = -1;
 	private int prevHoveredCol = -1;
+	private final int[] hitResult = new int[2];
 
 	private int selectedRow = -1;
 	private int selectedCol = -1;
@@ -47,23 +44,16 @@ public class LevelComponent extends Container {
 	private final AlignLayout alignLayout;
 	private final LevelSidebar sidebar;
 	private final int[] measuredSize = new int[2];
-	/**
-	 * Grid origin in global logical space, cached in render() for hit-testing.
-	 */
-	private int gridGlobalX;
-	private int gridGlobalY;
+	private int gridOriginX;
+	private int gridOriginY;
 
 	// Child text components
 	private final TextComponent overlayText;
 
-	public LevelComponent(
-		GameState gameState, IsometricMapper mapper, long totalCountdownMs
-	) {
+	public LevelComponent(GameState gameState, long totalCountdownMs) {
 		this.gameState = gameState;
-		this.mapper = mapper;
 		this.gridWidth = gameState.getWidth();
 		this.gridHeight = gameState.getHeight();
-		this.depthOrder = mapper.getDepthSortedOrder(gridHeight, gridWidth);
 		this.highlighted = new boolean[gridHeight][gridWidth];
 
 		this.totalCountdownMs = totalCountdownMs;
@@ -76,7 +66,7 @@ public class LevelComponent extends Container {
 		bb.put(CountdownState.class, countdownState);
 		setBlackboard(bb);
 
-		this.gridView = new IsometricGridView(mapper, gridWidth, gridHeight);
+		this.gridView = new IsometricGridView(gridWidth, gridHeight);
 
 		this.alignLayout = new AlignLayout();
 		alignLayout.setProp("h-align", AlignLayout.HAlign.CENTER);
@@ -122,8 +112,10 @@ public class LevelComponent extends Container {
 		if (newW != gridWidth || newH != gridHeight) {
 			gridWidth = newW;
 			gridHeight = newH;
-			depthOrder = mapper.getDepthSortedOrder(gridHeight, gridWidth);
 			highlighted = new boolean[gridHeight][gridWidth];
+			gridView.setGridSize(newW, newH);
+		} else {
+			gridView.reset();
 		}
 		cleared = false;
 		timedOut = false;
@@ -137,7 +129,6 @@ public class LevelComponent extends Container {
 		prevHoveredCol = -1;
 		mouseX = -1;
 		mouseY = -1;
-		gridView.reset();
 		sidebar.notifyStateUpdated();
 	}
 
@@ -147,7 +138,7 @@ public class LevelComponent extends Container {
 			return;
 		}
 
-		resolveHoveredCell();
+		updateHoveredCell();
 
 		if (hoveredRow < 0 || hoveredCol < 0) {
 			return;
@@ -211,11 +202,10 @@ public class LevelComponent extends Container {
 		int myGlobalX = parentX + layoutX;
 		int myGlobalY = parentY + layoutY;
 
-		gridGlobalX = myGlobalX + gridView.layoutX + gridView.originOffsetX;
-		gridGlobalY = myGlobalY + gridView.layoutY + gridView.originOffsetY
-			+ TILE_CONTENT_HEIGHT / 3;
+		gridOriginX = myGlobalX + gridView.layoutX;
+		gridOriginY = myGlobalY + gridView.layoutY;
 
-		resolveHoveredCell();
+		updateHoveredCell();
 		updateHighlighted();
 
 		if (timedOut) {
@@ -253,56 +243,15 @@ public class LevelComponent extends Container {
 
 	// ---- private helpers ---------------------------------------------------
 
-	private void resolveHoveredCell() {
+	private void updateHoveredCell() {
 		prevHoveredRow = hoveredRow;
 		prevHoveredCol = hoveredCol;
-
-		if (mouseX < 0 || mouseY < 0) {
-			hoveredRow = -1;
-			hoveredCol = -1;
-			return;
-		}
-
-		int halfW = TILE_CONTENT_WIDTH / 2;
-		int halfH = TILE_CONTENT_HEIGHT / 2;
-		int hoverOffset = TILE_CONTENT_HEIGHT / 3;
-
-		for (int i = depthOrder.length - 1; i >= 0; i--) {
-			int[] pos = depthOrder[i];
-			int r = pos[0];
-			int c = pos[1];
-
-			if (gameState.getTile(r, c) <= 0)
-				continue;
-
-			int cx = gridGlobalX + (c - r) * TILE_CONTENT_WIDTH / 2;
-			int cy = gridGlobalY + (c + r) * TILE_CONTENT_WIDTH / 4;
-			int left = cx - halfW;
-			int right = cx + halfW;
-			int top = cy - halfH;
-			int bottom = cy + halfH;
-
-			if (mouseX >= left && mouseX < right && mouseY >= top
-			    && mouseY < bottom) {
-				hoveredRow = r;
-				hoveredCol = c;
-				return;
-			}
-
-			if (r == prevHoveredRow && c == prevHoveredCol) {
-				int raisedTop = top - hoverOffset;
-				int raisedBottom = bottom - hoverOffset;
-				if (mouseX >= left && mouseX < right && mouseY >= raisedTop
-				    && mouseY < raisedBottom) {
-					hoveredRow = r;
-					hoveredCol = c;
-					return;
-				}
-			}
-		}
-
-		hoveredRow = -1;
-		hoveredCol = -1;
+		gridView.cellAt(
+			gridOriginX, gridOriginY, mouseX, mouseY, prevHoveredRow,
+			prevHoveredCol, hitResult
+		);
+		hoveredRow = hitResult[0];
+		hoveredCol = hitResult[1];
 	}
 
 	private void updateHighlighted() {
