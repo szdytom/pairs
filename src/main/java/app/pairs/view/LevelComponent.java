@@ -50,7 +50,9 @@ public class LevelComponent extends Container {
 	// Child text components
 	private final TextComponent overlayText;
 
-	public LevelComponent(GameState gameState, long totalCountdownMs) {
+	public LevelComponent(
+		GameState gameState, long totalCountdownMs, Blackboard blackboard
+	) {
 		this.gameState = gameState;
 		this.gridWidth = gameState.getWidth();
 		this.gridHeight = gameState.getHeight();
@@ -61,10 +63,9 @@ public class LevelComponent extends Container {
 		countdownState.remainingMs = totalCountdownMs;
 		this.lastEliminationTimeMs = System.currentTimeMillis();
 
-		Blackboard bb = new Blackboard();
-		bb.put(GameState.class, gameState);
-		bb.put(CountdownState.class, countdownState);
-		setBlackboard(bb);
+		blackboard.put(GameState.class, gameState);
+		blackboard.put(CountdownState.class, countdownState);
+		setBlackboard(blackboard);
 
 		this.gridView = new IsometricGridView(gridWidth, gridHeight);
 

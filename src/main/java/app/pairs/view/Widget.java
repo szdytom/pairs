@@ -17,7 +17,7 @@ public abstract class Widget implements ViewComponent {
 	int layoutW;
 	int layoutH;
 
-	void setBlackboard(Blackboard bb) {
+	public void setBlackboard(Blackboard bb) {
 		this.blackboard = bb;
 	}
 
