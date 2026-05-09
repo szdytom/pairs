@@ -11,18 +11,18 @@ import app.pairs.view.Widget;
 import io.github.libsdl4j.api.render.*;
 
 public class Router {
-	private static final int MIN_SCALE = 1;
-	private static final int MAX_SCALE = 12;
-	private static final int SCALE_STEP = 1;
-	private static final int DEFAULT_SCALE = 6;
-
 	private static final Router INSTANCE = new Router();
 
+	private final ScaleManager scaleManager = new ScaleManager();
 	private Page currentPage;
-	private int scale = DEFAULT_SCALE;
 	private Page pendingPage;
 	private int windowWidth = 1_024;
 	private int windowHeight = 768;
+
+	private Router() {
+		scaleManager.updateAutoScale(windowWidth, windowHeight);
+		scaleManager.logScale(windowWidth, windowHeight);
+	}
 
 	public static Router instance() {
 		return INSTANCE;
@@ -77,7 +77,7 @@ public class Router {
 		);
 		SDL_RenderClear(renderer);
 		if (currentPage != null) {
-			currentPage.render(renderer, scale);
+			currentPage.render(renderer, scaleManager.getScale());
 		}
 	}
 
@@ -111,40 +111,43 @@ public class Router {
 	}
 
 	public int getScale() {
-		return scale;
+		return scaleManager.getScale();
 	}
 
 	public void windowResized(int w, int h) {
 		windowWidth = w;
 		windowHeight = h;
+		scaleManager.updateAutoScale(windowWidth, windowHeight);
+		scaleManager.logScale(windowWidth, windowHeight);
 		relayout();
 	}
 
 	public void zoomIn() {
-		scale = Math.min(MAX_SCALE, scale + SCALE_STEP);
-		System.out.println("Scale: " + scale);
+		scaleManager.zoomIn();
+		scaleManager.logScale(windowWidth, windowHeight);
 		relayout();
 	}
 
 	public void zoomOut() {
-		scale = Math.max(MIN_SCALE, scale - SCALE_STEP);
-		System.out.println("Scale: " + scale);
+		scaleManager.zoomOut();
+		scaleManager.logScale(windowWidth, windowHeight);
 		relayout();
 	}
 
 	public void zoomReset() {
-		scale = DEFAULT_SCALE;
-		System.out.println("Scale reset to " + scale);
+		scaleManager.zoomReset();
+		scaleManager.logScale(windowWidth, windowHeight);
 		relayout();
 	}
 
 	public void relayout() {
 		Widget root = getRoot();
 		if (root != null) {
+			int s = scaleManager.getScale();
+			int logicalW = (windowWidth + s - 1) / s;
+			int logicalH = (windowHeight + s - 1) / s;
 			root.measure();
-			root.layout(0, 0, windowWidth / scale, windowHeight / scale);
+			root.layout(0, 0, logicalW, logicalH);
 		}
 	}
-
-	private Router() {}
 }
