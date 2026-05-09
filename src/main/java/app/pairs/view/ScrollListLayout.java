@@ -10,6 +10,7 @@ public class ScrollListLayout extends Container {
 	private final int gap;
 	private final int padding;
 	private int scrollIndex;
+	private boolean snappedToBottom;
 	private final int[] measuredSize = new int[2];
 	private final SDL_Rect trackRect = new SDL_Rect();
 	private final SDL_Rect thumbRect = new SDL_Rect();
@@ -28,6 +29,7 @@ public class ScrollListLayout extends Container {
 	public void scrollBy(int delta, boolean page) {
 		if (children.isEmpty())
 			return;
+		snappedToBottom = false;
 		int step = page ? Math.max(1, visibleChildCount()) : 1;
 		scrollIndex = Math.max(
 			0, Math.min(scrollIndex + delta * step, maxScrollIndex())
@@ -36,6 +38,7 @@ public class ScrollListLayout extends Container {
 	}
 
 	public void scrollToBottom() {
+		snappedToBottom = true;
 		scrollIndex = Integer.MAX_VALUE;
 		blackboard().layoutDirty = true;
 	}
@@ -97,6 +100,9 @@ public class ScrollListLayout extends Container {
 				used += gap;
 				maxScroll = i;
 			}
+		}
+		if (snappedToBottom) {
+			scrollIndex = Integer.MAX_VALUE;
 		}
 		scrollIndex = Math.min(scrollIndex, maxScroll);
 
