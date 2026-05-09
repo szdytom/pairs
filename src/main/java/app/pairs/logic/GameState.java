@@ -173,12 +173,13 @@ public final class GameState {
 	}
 
 	public void repermute() {
-		gameStatus.timeFrozen = false;
-		gameStatus.consumeItem(ItemType.REPROMUTE);
+		gameStatus.requireItem(ItemType.REPERMUTE);
 		repermute(Seed.deviceRandom());
+		gameStatus.consumeItem(ItemType.REPERMUTE);
+		gameStatus.timeFrozen = false;
 	}
 
-	public void repermute(Seed seed) {
+	void repermute(Seed seed) {
 		new OpRepermute(
 			tilemap, factory.buildLegalPlacementShape(),
 			new Xoroshiro128PP(seed), opLogs::push
@@ -236,21 +237,24 @@ public final class GameState {
 	 * stack.
 	 */
 	public void autoSolve() {
-		gameStatus.timeFrozen = false;
-		gameStatus.consumeItem(ItemType.AUTOSOLVE);
+		gameStatus.requireItem(ItemType.AUTOSOLVE);
 		new OpAutoSolve(gameStatus, tilemap, opLogs::push).operate();
+		gameStatus.consumeItem(ItemType.AUTOSOLVE);
+		gameStatus.timeFrozen = false;
 	}
 
 	public void swap(int row1, int col1, int row2, int col2) {
 		requireInBounds(row1, col1);
 		requireInBounds(row2, col2);
-		gameStatus.timeFrozen = false;
-		gameStatus.consumeItem(ItemType.SWAP);
+		gameStatus.requireItem(ItemType.SWAP);
 		new OpSwap(tilemap, row1, col1, row2, col2, opLogs::push).operate();
+		gameStatus.consumeItem(ItemType.SWAP);
+		gameStatus.timeFrozen = false;
 	}
 
-	public void freeze() {
-		gameStatus.consumeItem(ItemType.TIMEFROZER);
+	public void freezeTime() {
+		gameStatus.requireItem(ItemType.TIMEFREEZER);
 		gameStatus.timeFrozen = true;
+		gameStatus.consumeItem(ItemType.TIMEFREEZER);
 	}
 }

@@ -9,14 +9,14 @@ public class OpSwap implements Operation {
 	private final int row2;
 	private final int col2;
 	private final Tilemap tilemap;
-	private final java.util.function.Consumer<Operation> pushFn;
+	private final Consumer<Operation> pushFn;
 	public OpSwap(
 		Tilemap tilemap, int row1, int col1, int row2, int col2,
 		Consumer<Operation> pushFn
 	) {
 		int t1 = tilemap.getTile(row1, col1);
 		int t2 = tilemap.getTile(row2, col2);
-		if (t1 <= 0 || t1 == t2) {
+		if (t1 <= 0 || t2 <= 0 || t1 == t2) {
 			throw new IllegalStateException(
 				"OpSwap requires two different non-empty tiles, got: (" + row1
 				+ "," + col1 + ")=" + t1 + ", (" + row2 + "," + col2

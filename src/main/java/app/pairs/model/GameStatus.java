@@ -5,9 +5,9 @@ public class GameStatus {
 	public boolean timeFrozen = false;
 
 	private int swap = 0;
-	private int repromute = 0;
+	private int repermute = 0;
 	private int autosolve = 0;
-	private int timefrozer = 0;
+	private int timeFreezer = 0;
 
 	public GameStatus() {
 		this.score = 0;
@@ -20,14 +20,14 @@ public class GameStatus {
 	public int getSwap() {
 		return swap;
 	}
-	public int getRepromute() {
-		return repromute;
+	public int getRepermute() {
+		return repermute;
 	}
 	public int getAutosolve() {
 		return autosolve;
 	}
-	public int getTimefrozer() {
-		return timefrozer;
+	public int getTimeFreezer() {
+		return timeFreezer;
 	}
 
 	public void addItem(ItemType type, int count) {
@@ -36,34 +36,44 @@ public class GameStatus {
 		}
 		switch (type) {
 		case SWAP -> swap += count;
-		case REPROMUTE -> repromute += count;
+		case REPERMUTE -> repermute += count;
 		case AUTOSOLVE -> autosolve += count;
-		case TIMEFROZER -> timefrozer += count;
+		case TIMEFREEZER -> timeFreezer += count;
+		}
+	}
+
+	public void requireItem(ItemType type) {
+		switch (type) {
+		case SWAP -> {
+			if (swap <= 0) {
+				throw new IllegalStateException("No swap item");
+			}
+		}
+		case REPERMUTE -> {
+			if (repermute <= 0) {
+				throw new IllegalStateException("No repermute item");
+			}
+		}
+		case AUTOSOLVE -> {
+			if (autosolve <= 0) {
+				throw new IllegalStateException("No autosolve item");
+			}
+		}
+		case TIMEFREEZER -> {
+			if (timeFreezer <= 0) {
+				throw new IllegalStateException("No time freezer item");
+			}
+		}
 		}
 	}
 
 	public void consumeItem(ItemType type) {
+		requireItem(type);
 		switch (type) {
-		case SWAP -> {
-			if (swap <= 0)
-				throw new IllegalStateException("No swap item");
-			swap--;
-		}
-		case REPROMUTE -> {
-			if (repromute <= 0)
-				throw new IllegalStateException("No repromute item");
-			repromute--;
-		}
-		case AUTOSOLVE -> {
-			if (autosolve <= 0)
-				throw new IllegalStateException("No autosolve item");
-			autosolve--;
-		}
-		case TIMEFROZER -> {
-			if (timefrozer <= 0)
-				throw new IllegalStateException("No timefrozer item");
-			timefrozer--;
-		}
+		case SWAP -> swap--;
+		case REPERMUTE -> repermute--;
+		case AUTOSOLVE -> autosolve--;
+		case TIMEFREEZER -> timeFreezer--;
 		}
 	}
 
@@ -71,8 +81,8 @@ public class GameStatus {
 		if (swap > 0) {
 			return ItemType.SWAP;
 		}
-		if (repromute > 0) {
-			return ItemType.REPROMUTE;
+		if (repermute > 0) {
+			return ItemType.REPERMUTE;
 		}
 		return null;
 	}

@@ -1,11 +1,13 @@
 package app.pairs.logic;
 import app.pairs.model.GameStatus;
 import app.pairs.model.Tilemap;
-import app.pairs.solver.*;
+import app.pairs.solver.Move;
+import app.pairs.solver.Solver;
+import app.pairs.solver.SolverResult;
 
 import java.util.function.Consumer;
 
-public class OpAutoSolve implements Operation {
+public class OpAutoSolve {
 	private final Tilemap tilemap;
 	private final Consumer<Operation> pushFn;
 	private final SolverResult opEls;
@@ -19,9 +21,7 @@ public class OpAutoSolve implements Operation {
 		this.pushFn = pushFn;
 		opEls = Solver.solve(tilemap);
 	}
-	@Override
 	public void operate() {
-		boolean auto = true;
 		if (executed) {
 			throw new IllegalStateException(
 				"OpAutoSolve already executed; replaying history entries is"
@@ -34,13 +34,10 @@ public class OpAutoSolve implements Operation {
 			int r2 = v.r2();
 			int c2 = v.c2();
 			OpElimination op = new OpElimination(
-				gameStatus, tilemap, r1, c1, r2, c2, 0, pushFn, auto
+				gameStatus, tilemap, r1, c1, r2, c2, 0, pushFn, true
 			);
 			op.operate();
 		}
 		executed = true;
 	}
-
-	@Override
-	public void undo() {}
 }
