@@ -125,6 +125,86 @@ class AlignLayoutTest {
 	}
 
 	@Test
+	void hPaddingWithLeftAlign() {
+		AlignLayout layout = new AlignLayout();
+		FixedWidget child = new FixedWidget(30, 20);
+		child.setProp("h-align", AlignLayout.HAlign.LEFT);
+		child.setProp("h-padding", 10);
+		layout.addChild(child);
+		layout.layout(0, 0, W, H);
+
+		assertEquals(10, child.layoutX);
+		assertEquals(0, child.layoutY);
+	}
+
+	@Test
+	void hPaddingWithRightAlign() {
+		AlignLayout layout = new AlignLayout();
+		FixedWidget child = new FixedWidget(30, 20);
+		child.setProp("h-align", AlignLayout.HAlign.RIGHT);
+		child.setProp("h-padding", 10);
+		layout.addChild(child);
+		layout.layout(0, 0, W, H);
+
+		assertEquals(W - 30 - 10, child.layoutX);
+		assertEquals(0, child.layoutY);
+	}
+
+	@Test
+	void vPaddingWithTopAlign() {
+		AlignLayout layout = new AlignLayout();
+		FixedWidget child = new FixedWidget(30, 20);
+		child.setProp("v-align", AlignLayout.VAlign.TOP);
+		child.setProp("v-padding", 10);
+		layout.addChild(child);
+		layout.layout(0, 0, W, H);
+
+		assertEquals(0, child.layoutX);
+		assertEquals(10, child.layoutY);
+	}
+
+	@Test
+	void vPaddingWithBottomAlign() {
+		AlignLayout layout = new AlignLayout();
+		FixedWidget child = new FixedWidget(30, 20);
+		child.setProp("v-align", AlignLayout.VAlign.BOTTOM);
+		child.setProp("v-padding", 10);
+		layout.addChild(child);
+		layout.layout(0, 0, W, H);
+
+		assertEquals(0, child.layoutX);
+		assertEquals(H - 20 - 10, child.layoutY);
+	}
+
+	@Test
+	void paddingIgnoredWhenCenter() {
+		AlignLayout layout = new AlignLayout();
+		FixedWidget child = new FixedWidget(30, 20);
+		child.setProp("h-align", AlignLayout.HAlign.CENTER);
+		child.setProp("v-align", AlignLayout.VAlign.CENTER);
+		child.setProp("h-padding", 10);
+		child.setProp("v-padding", 10);
+		layout.addChild(child);
+		layout.layout(0, 0, W, H);
+
+		assertEquals((W - 30) / 2, child.layoutX);
+		assertEquals((H - 20) / 2, child.layoutY);
+	}
+
+	@Test
+	void paddingDefaultZero() {
+		AlignLayout layout = new AlignLayout();
+		FixedWidget child = new FixedWidget(30, 20);
+		child.setProp("h-align", AlignLayout.HAlign.LEFT);
+		child.setProp("v-align", AlignLayout.VAlign.TOP);
+		layout.addChild(child);
+		layout.layout(0, 0, W, H);
+
+		assertEquals(0, child.layoutX);
+		assertEquals(0, child.layoutY);
+	}
+
+	@Test
 	void noOpWhenEmpty() {
 		AlignLayout layout = new AlignLayout();
 		layout.layout(0, 0, W, H); // should not throw
