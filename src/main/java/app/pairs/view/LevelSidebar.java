@@ -20,7 +20,7 @@ public class LevelSidebar extends Container {
 	public LevelSidebar() {
 		LevelInfo levelInfo = new LevelInfo();
 		this.levelInfoWrap = new AlignLayout();
-		levelInfoWrap.setProp("h-align", AlignLayout.HAlign.CENTER);
+		levelInfo.setProp("h-align", AlignLayout.HAlign.CENTER);
 		levelInfoWrap.addChild(levelInfo);
 		this.opLogList = new OpLogList();
 		addChild(levelInfoWrap);

@@ -16,8 +16,8 @@ public class MainMenuPage implements Page {
 			"Pairs - Press SPACE to Play", 2, 30, 30, 30
 		);
 		var layout = new AlignLayout();
-		layout.setProp("h-align", AlignLayout.HAlign.CENTER);
-		layout.setProp("v-align", AlignLayout.VAlign.CENTER);
+		text.setProp("h-align", AlignLayout.HAlign.CENTER);
+		text.setProp("v-align", AlignLayout.VAlign.CENTER);
 		layout.addChild(text);
 		layout.setBlackboard(blackboard);
 		this.root = layout;

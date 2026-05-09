@@ -37,11 +37,12 @@ public class OpLogEntry extends FlexLayout {
 	) {
 		super(Direction.ROW, GAP, PADDING);
 
-		AlignLayout numWrap = new AlignLayout();
-		numWrap.setProp("v-align", AlignLayout.VAlign.CENTER);
-		numWrap.addChild(
-			new TextComponent(String.format("%3d", index), 1, 160, 160, 160)
+		TextComponent numText = new TextComponent(
+			String.format("%3d", index), 1, 160, 160, 160
 		);
+		numText.setProp("v-align", AlignLayout.VAlign.CENTER);
+		AlignLayout numWrap = new AlignLayout();
+		numWrap.addChild(numText);
 		addChild(numWrap);
 
 		TileRegistry reg = AssetManager.instance().get("tiles/typed");
@@ -54,19 +55,21 @@ public class OpLogEntry extends FlexLayout {
 		int maxD = Math.max(mapRows, mapCols);
 		int s = (maxD + 15) / 16;
 
-		AlignLayout align = new AlignLayout();
-		align.setProp("v-align", AlignLayout.VAlign.CENTER);
-		align.addChild(new ImageComponent(
+		ImageComponent thumbImg = new ImageComponent(
 			thumbnail, (mapCols + s - 1) / s + 2, (mapRows + s - 1) / s + 2
-		));
+		);
+		thumbImg.setProp("v-align", AlignLayout.VAlign.CENTER);
+		AlignLayout align = new AlignLayout();
+		align.addChild(thumbImg);
 		addChild(align);
 
-		AlignLayout timeWrap = new AlignLayout();
-		timeWrap.setProp("v-align", AlignLayout.VAlign.CENTER);
-		timeWrap.setProp("h-align", AlignLayout.HAlign.RIGHT);
-		timeWrap.addChild(
-			new TextComponent(formatTime(timeMs), 1, 60, 60, 255)
+		TextComponent timeText = new TextComponent(
+			formatTime(timeMs), 1, 60, 60, 255
 		);
+		timeText.setProp("v-align", AlignLayout.VAlign.CENTER);
+		timeText.setProp("h-align", AlignLayout.HAlign.RIGHT);
+		AlignLayout timeWrap = new AlignLayout();
+		timeWrap.addChild(timeText);
 		addChild(timeWrap);
 	}
 

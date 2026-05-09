@@ -70,12 +70,14 @@ public class LevelComponent extends Container {
 		this.gridView = new IsometricGridView(gridWidth, gridHeight);
 
 		this.alignLayout = new AlignLayout();
-		alignLayout.setProp("h-align", AlignLayout.HAlign.CENTER);
-		alignLayout.setProp("v-align", AlignLayout.VAlign.CENTER);
+		gridView.setProp("h-align", AlignLayout.HAlign.CENTER);
+		gridView.setProp("v-align", AlignLayout.VAlign.CENTER);
 		alignLayout.addChild(gridView);
 
 		this.overlayText = new TextComponent("CLEARED!", 2, 40, 40, 40);
 		overlayText.setVisible(false);
+		overlayText.setProp("h-align", AlignLayout.HAlign.CENTER);
+		overlayText.setProp("v-align", AlignLayout.VAlign.CENTER);
 		alignLayout.addChild(overlayText);
 
 		this.sidebar = new LevelSidebar();

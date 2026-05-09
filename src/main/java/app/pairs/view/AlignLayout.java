@@ -5,12 +5,12 @@ package app.pairs.view;
  * Children may overlap freely. Later children are rendered later (higher
  * z-index).
  *
- * <p>Alignment is controlled via the {@code "h-align"} and
- * {@code "v-align"} properties, which accept {@link HAlign} and
+ * <p>Each child's alignment is controlled via its own {@code "h-align"}
+ * and {@code "v-align"} properties, which accept {@link HAlign} and
  * {@link VAlign} enum values respectively:
  * <pre>{@code
- * layout.setProp("h-align", AlignLayout.HAlign.CENTER);
- * layout.setProp("v-align", AlignLayout.VAlign.BOTTOM);
+ * child.setProp("h-align", AlignLayout.HAlign.CENTER);
+ * child.setProp("v-align", AlignLayout.VAlign.BOTTOM);
  * }</pre>
  * Defaults are {@link HAlign#LEFT} and {@link VAlign#TOP}.
  *
@@ -48,14 +48,14 @@ public class AlignLayout extends Container {
 	public void layout(int x, int y, int w, int h) {
 		super.layout(x, y, w, h);
 
-		HAlign ha = getProp("h-align");
-		if (ha == null)
-			ha = HAlign.LEFT;
-		VAlign va = getProp("v-align");
-		if (va == null)
-			va = VAlign.TOP;
-
 		for (Widget child : children) {
+			HAlign ha = child.getProp("h-align");
+			if (ha == null)
+				ha = HAlign.LEFT;
+			VAlign va = child.getProp("v-align");
+			if (va == null)
+				va = VAlign.TOP;
+
 			int[] childSize = child.measure();
 			int cw = childSize[0];
 			int ch = childSize[1];
