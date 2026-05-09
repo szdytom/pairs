@@ -19,9 +19,10 @@ public class OpElimination implements Operation {
 	private final int col2;
 	private final int tileId;
 	private final int time;
+	private boolean isAuto = false;
 	private final ArrayList<Integer> path;
 	private final Consumer<Operation> pushFn;
-	private int deltaScore;
+	private int deltaScore = 0;
 	// `executed` is true after `operate()` and false after `undo()`. Calling
 	// `operate()` twice in a row or `undo()` before `operate()` is illegal and
 	// indicates a caller bug (e.g. replaying a history entry). Re-executing
@@ -53,6 +54,31 @@ public class OpElimination implements Operation {
 		this.pushFn = pushFn;
 	}
 
+	public OpElimination(
+		GameStatus gameStatus, Tilemap tilemap, int row1, int col1, int row2,
+		int col2, int time, Consumer<Operation> pushFn, boolean isAuto
+	) {
+		int t1 = tilemap.getTile(row1, col1);
+		int t2 = tilemap.getTile(row2, col2);
+		if (t1 <= 0 || t1 != t2) {
+			throw new IllegalStateException(
+				"OpElimination requires two equal non-empty tiles, got: ("
+				+ row1 + "," + col1 + ")=" + t1 + ", (" + row2 + "," + col2
+				+ ")=" + t2
+			);
+		}
+		this.gameStatus = gameStatus;
+		this.tilemap = tilemap;
+		this.row1 = row1;
+		this.col1 = col1;
+		this.row2 = row2;
+		this.col2 = col2;
+		this.tileId = t1;
+		this.time = time;
+		this.path = Path.path(tilemap, row1, col1, row2, col2);
+		this.pushFn = pushFn;
+		this.isAuto = isAuto;
+	}
 	@Override
 	public void operate() {
 		if (executed) {
@@ -65,19 +91,7 @@ public class OpElimination implements Operation {
 		tilemap.setTile(row2, col2, 0);
 		executed = true;
 		pushFn.accept(this);
-		switch (tilemap.getDifficulty()) {
-		case EASY -> deltaScore = SCORE_PER_PAIR;
-		case HARD -> deltaScore = SCORE_PER_PAIR * 2;
-		case EXTREME -> deltaScore = SCORE_PER_PAIR * 3;
-		default -> deltaScore = SCORE_PER_PAIR;
-		}
-		switch (time / 1_000) {
-		case 1 -> deltaScore *= 4;
-		case 2 -> deltaScore *= 3;
-		case 3 -> deltaScore *= 2;
-		default -> deltaScore *= 1;
-		}
-		gameStatus.changeScore(deltaScore);
+		gameStatus.changeScore(getscore());
 	}
 
 	@Override
@@ -119,5 +133,23 @@ public class OpElimination implements Operation {
 
 	public int getTime() {
 		return time;
+	}
+	private int getscore() {
+		if (isAuto) {
+			return 0;
+		}
+		switch (tilemap.getDifficulty()) {
+		case EASY -> deltaScore = SCORE_PER_PAIR;
+		case HARD -> deltaScore = SCORE_PER_PAIR * 2;
+		case EXTREME -> deltaScore = SCORE_PER_PAIR * 3;
+		default -> deltaScore = SCORE_PER_PAIR;
+		}
+		switch (time / 1_000) {
+		case 1 -> deltaScore *= 4;
+		case 2 -> deltaScore *= 3;
+		case 3 -> deltaScore *= 2;
+		default -> deltaScore *= 1;
+		}
+		return deltaScore;
 	}
 }

@@ -226,4 +226,14 @@ public final class GameState {
 	public ItemType canRevive(Item item) {
 		return item.canRevive();
 	}
+
+	/**
+	 * Run the solver and apply all found eliminations to the board. Each
+	 * elimination is individually recorded in the history stack and can be
+	 * undone step by step. {@code OpAutoSolve} itself is not pushed onto the
+	 * stack.
+	 */
+	public void autoSolve() {
+		new OpAutoSolve(gameStatus, tilemap, opLogs::push).operate();
+	}
 }
