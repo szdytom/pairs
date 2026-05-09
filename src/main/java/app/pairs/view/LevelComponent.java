@@ -2,6 +2,7 @@ package app.pairs.view;
 
 import static io.github.libsdl4j.api.keycode.SDL_Keycode.*;
 
+import app.pairs.asset.IconManager;
 import app.pairs.logic.GameState;
 import app.pairs.model.CountdownState;
 
@@ -69,7 +70,15 @@ public class LevelComponent extends Container {
 
 		this.gridView = new IsometricGridView(gridWidth, gridHeight);
 
+		var hintIcon = IconManager.instance().getTexture("hint");
+		var hintImage = new ImageComponent(hintIcon, 16, 16);
+		var hintBtn = new Button(() -> System.out.println("hint clicked"));
+		hintBtn.setProp("h-align", AlignLayout.HAlign.RIGHT);
+		hintBtn.setProp("v-align", AlignLayout.VAlign.TOP);
+		hintBtn.addChild(hintImage);
+
 		this.alignLayout = new AlignLayout();
+		alignLayout.addChild(hintBtn);
 		gridView.setProp("h-align", AlignLayout.HAlign.CENTER);
 		gridView.setProp("v-align", AlignLayout.VAlign.CENTER);
 		alignLayout.addChild(gridView);
