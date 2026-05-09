@@ -14,6 +14,10 @@ package app.pairs.view;
  * }</pre>
  * Defaults are {@link HAlign#LEFT} and {@link VAlign#TOP}.
  *
+ * <p>Optional {@code "h-padding"} and {@code "v-padding"} (int) properties
+ * add space when alignment is not {@code CENTER}.  They are ignored when
+ * the corresponding alignment is {@code CENTER}.
+ *
  * <p>Each child keeps its measured natural size and is positioned according
  * to the alignment rules within the allocated rectangle.  The child's
  * {@code layoutX/Y} is always the top-left corner of its measured bounding
@@ -60,15 +64,20 @@ public class AlignLayout extends Container {
 			int cw = childSize[0];
 			int ch = childSize[1];
 
+			Integer hp = child.getProp("h-padding");
+			int hPad = hp != null ? hp : 0;
+			Integer vp = child.getProp("v-padding");
+			int vPad = vp != null ? vp : 0;
+
 			int cx = switch (ha) {
-				case LEFT -> 0;
+				case LEFT -> hPad;
 				case CENTER -> (w - cw) / 2;
-				case RIGHT -> w - cw;
+				case RIGHT -> w - cw - hPad;
 			};
 			int cy = switch (va) {
-				case TOP -> 0;
+				case TOP -> vPad;
 				case CENTER -> (h - ch) / 2;
-				case BOTTOM -> h - ch;
+				case BOTTOM -> h - ch - vPad;
 			};
 
 			child.layout(cx, cy, cw, ch);

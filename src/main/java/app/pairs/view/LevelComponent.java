@@ -97,6 +97,9 @@ public class LevelComponent extends Container {
 		});
 		hintBtn.setProp("h-align", AlignLayout.HAlign.RIGHT);
 		hintBtn.setProp("v-align", AlignLayout.VAlign.TOP);
+		hintBtn.setProp("h-padding", 4);
+		hintBtn.setProp("v-padding", 4);
+		hintBtn.setVisible(false);
 		hintBtn.addChild(hintImage);
 
 		this.alignLayout = new AlignLayout();
@@ -105,7 +108,7 @@ public class LevelComponent extends Container {
 		gridView.setProp("v-align", AlignLayout.VAlign.CENTER);
 		alignLayout.addChild(gridView);
 
-		this.overlayText = new TextComponent("CLEARED!", 2, rgb(40, 40, 40));
+		this.overlayText = new TextComponent("Cleared!", 2, rgb(40, 40, 40));
 		overlayText.setVisible(false);
 		overlayText.setProp("h-align", AlignLayout.HAlign.CENTER);
 		overlayText.setProp("v-align", AlignLayout.VAlign.CENTER);
@@ -238,7 +241,7 @@ public class LevelComponent extends Container {
 		if (timedOut) {
 			overlayText.setText("Time Out!");
 		} else if (cleared) {
-			overlayText.setText("CLEARED!");
+			overlayText.setText("Cleared!");
 		}
 		overlayText.setVisible(timedOut || cleared);
 		super.render(renderer, parentX, parentY, scale);
