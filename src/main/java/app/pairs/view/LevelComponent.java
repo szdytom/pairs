@@ -5,6 +5,8 @@ import static io.github.libsdl4j.api.keycode.SDL_Keycode.*;
 import app.pairs.asset.IconManager;
 import app.pairs.logic.GameState;
 import app.pairs.model.CountdownState;
+import app.pairs.solver.Move;
+import app.pairs.solver.SolverResult;
 
 import io.github.libsdl4j.api.render.*;
 
@@ -51,6 +53,12 @@ public class LevelComponent extends Container {
 	// Child text components
 	private final TextComponent overlayText;
 
+	private final AutoPairingState autoPairingState = new AutoPairingState();
+	private int autoHLRow1 = -1;
+	private int autoHLCol1 = -1;
+	private int autoHLRow2 = -1;
+	private int autoHLCol2 = -1;
+
 	public LevelComponent(
 		GameState gameState, long totalCountdownMs, Blackboard blackboard
 	) {
@@ -72,7 +80,17 @@ public class LevelComponent extends Container {
 
 		var hintIcon = IconManager.instance().getTexture("hint");
 		var hintImage = new ImageComponent(hintIcon, 16, 16);
-		var hintBtn = new Button(() -> System.out.println("hint clicked"));
+		var hintBtn = new Button(() -> {
+			if (timedOut || cleared || autoPairingState.isActive()) {
+				return;
+			}
+			SolverResult result = gameState.solve(50);
+			if (result.moves().isEmpty()) {
+				return;
+			}
+			Move m = result.moves().get(0);
+			startHint(m.r1(), m.c1(), m.r2(), m.c2());
+		});
 		hintBtn.setProp("h-align", AlignLayout.HAlign.RIGHT);
 		hintBtn.setProp("v-align", AlignLayout.VAlign.TOP);
 		hintBtn.addChild(hintImage);
@@ -106,6 +124,7 @@ public class LevelComponent extends Container {
 				gridView.setVisible(false);
 			}
 		}
+		autoPairingState.update(deltaTimeMs);
 		super.update(deltaTimeMs);
 	}
 
@@ -133,6 +152,8 @@ public class LevelComponent extends Container {
 		timedOut = false;
 		gridView.setVisible(true);
 		overlayText.setVisible(false);
+		autoPairingState.clear();
+		clearAutoHighlights();
 		selectedRow = -1;
 		selectedCol = -1;
 		hoveredRow = -1;
@@ -169,20 +190,9 @@ public class LevelComponent extends Container {
 			if (gameState.canEliminate(
 					selectedRow, selectedCol, hoveredRow, hoveredCol
 				)) {
-				long now = System.currentTimeMillis();
-				int elapsed = (int)(now - lastEliminationTimeMs);
-				gameState.operate(
-					selectedRow, selectedCol, hoveredRow, hoveredCol, elapsed
-				);
-				lastEliminationTimeMs = now;
-				gridView.reset();
-				if (gameState.isCleared()) {
-					cleared = true;
-					overlayText.setVisible(true);
-				}
+				eliminatePair(selectedRow, selectedCol, hoveredRow, hoveredCol);
 				selectedRow = -1;
 				selectedCol = -1;
-				sidebar.notifyStateUpdated();
 			} else {
 				selectedRow = hoveredRow;
 				selectedCol = hoveredCol;
@@ -217,7 +227,9 @@ public class LevelComponent extends Container {
 		gridOriginX = myGlobalX + gridView.layoutX;
 		gridOriginY = myGlobalY + gridView.layoutY;
 
-		updateHoveredCell();
+		if (!autoPairingState.isActive()) {
+			updateHoveredCell();
+		}
 		updateHighlighted();
 
 		if (timedOut) {
@@ -232,6 +244,9 @@ public class LevelComponent extends Container {
 	@Override
 	public boolean onEvent(Event event) {
 		if (event instanceof MouseEvent me) {
+			if (autoPairingState.isActive()) {
+				return false;
+			}
 			switch (me.type()) {
 			case MOUSE_MOVED:
 			case MOUSE_LEAVE:
@@ -251,6 +266,74 @@ public class LevelComponent extends Container {
 			}
 		}
 		return false;
+	}
+
+	// ---- auto-pairing
+	// --------------------------------------------------------
+
+	private static class ActionStep implements AutoPairingStep {
+		private final Runnable action;
+
+		ActionStep(Runnable action) {
+			this.action = action;
+		}
+
+		@Override
+		public boolean update(long deltaTimeMs) {
+			action.run();
+			return true;
+		}
+	}
+
+	public void pushAutoPairingStep(AutoPairingStep step) {
+		autoPairingState.push(step);
+	}
+
+	private void startHint(int r1, int c1, int r2, int c2) {
+		autoPairingState.push(new ActionStep(this::clearAutoHighlights));
+		pushHighlightAndWait(r1, c1);
+		pushHighlightAndWait(r2, c2);
+		autoPairingState.push(new ActionStep(() -> {
+			performAutoElimination(r1, c1, r2, c2);
+			clearAutoHighlights();
+		}));
+	}
+
+	private void pushHighlightAndWait(int row, int col) {
+		autoPairingState.push(new ActionStep(() -> addAutoHighlight(row, col)));
+		autoPairingState.push(dt -> gridView.isAnimationReady(row, col));
+		autoPairingState.push(new AutoPairingState.WaitStep(200));
+	}
+
+	private void clearAutoHighlights() {
+		autoHLRow1 = autoHLCol1 = autoHLRow2 = autoHLCol2 = -1;
+	}
+
+	private void addAutoHighlight(int row, int col) {
+		if (autoHLRow1 < 0) {
+			autoHLRow1 = row;
+			autoHLCol1 = col;
+		} else {
+			autoHLRow2 = row;
+			autoHLCol2 = col;
+		}
+	}
+
+	private void eliminatePair(int r1, int c1, int r2, int c2) {
+		long now = System.currentTimeMillis();
+		int elapsed = (int)(now - lastEliminationTimeMs);
+		gameState.operate(r1, c1, r2, c2, elapsed);
+		lastEliminationTimeMs = now;
+		gridView.reset();
+		if (gameState.isCleared()) {
+			cleared = true;
+			overlayText.setVisible(true);
+		}
+		sidebar.notifyStateUpdated();
+	}
+
+	private void performAutoElimination(int r1, int c1, int r2, int c2) {
+		eliminatePair(r1, c1, r2, c2);
 	}
 
 	// ---- private helpers ---------------------------------------------------
@@ -273,13 +356,20 @@ public class LevelComponent extends Container {
 			}
 		}
 
-		if (selectedRow >= 0) {
-			highlighted[selectedRow][selectedCol] = true;
-		}
-		if (hoveredRow >= 0) {
-			highlighted[hoveredRow][hoveredCol] = true;
+		if (autoPairingState.isActive()) {
+			highlightIf(autoHLRow1, autoHLCol1);
+			highlightIf(autoHLRow2, autoHLCol2);
+		} else {
+			highlightIf(selectedRow, selectedCol);
+			highlightIf(hoveredRow, hoveredCol);
 		}
 
 		gridView.setHighlighted(highlighted);
+	}
+
+	private void highlightIf(int row, int col) {
+		if (row >= 0) {
+			highlighted[row][col] = true;
+		}
 	}
 }

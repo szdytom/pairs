@@ -70,6 +70,13 @@ public class IsometricGridView extends Widget {
 		this.highlighted = highlighted;
 	}
 
+	public boolean isAnimationReady(int row, int col) {
+		if (row < 0 || row >= gridHeight || col < 0 || col >= gridWidth) {
+			return false;
+		}
+		return liftProgress[row][col] >= 1f;
+	}
+
 	public void cellAt(
 		int originX, int originY, int mouseX, int mouseY, int prevRow,
 		int prevCol, int[] result
