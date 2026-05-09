@@ -26,7 +26,7 @@ class EasyTileFactoryPrintTest {
 				initial[i][j] = 0;
 			}
 		}
-		TilemapPreset preset = new TilemapPreset(9, 9, 6, initial);
+		TilemapPreset preset = new TilemapPreset(9, 9, 6, initial, null);
 		Tilemap tilemap = CustomizedTilemapFactory
 							  .fromPreset(preset, Seed.deviceRandom())
 							  .generate();

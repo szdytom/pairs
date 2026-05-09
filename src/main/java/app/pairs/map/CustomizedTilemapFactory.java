@@ -49,8 +49,10 @@ public class CustomizedTilemapFactory implements TilemapFactory {
 	public Tilemap generate() {
 		int[][] map = (preset != null) ? preset.buildInitial()
 									   : new int[height][width];
+		var strategy = preset != null ? preset.pairingStrategy()
+									  : new BasePairingStrategy();
 		return TilemapGeneratorCore.generate(
-			map, types, new Xoroshiro128PP(seed)
+			map, types, new Xoroshiro128PP(seed), strategy
 		);
 	}
 }

@@ -88,7 +88,7 @@ class SolverTest {
 
 	@Test
 	void hardLikeMapSolveTimeBatch() {
-		TilemapPreset hardLike = new TilemapPreset(12, 12, 20, null);
+		TilemapPreset hardLike = new TilemapPreset(12, 12, 20, null, null);
 		int runs = 5;
 		long totalNanos = 0L;
 

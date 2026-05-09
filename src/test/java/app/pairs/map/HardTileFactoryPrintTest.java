@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 class HardTileFactoryPrintTest {
 	@Test
 	void printHardIdArray() {
-		TilemapPreset preset = new TilemapPreset(12, 12, 20, null);
+		TilemapPreset preset = new TilemapPreset(12, 12, 20, null, null);
 		Tilemap tilemap = CustomizedTilemapFactory
 							  .fromPreset(preset, Seed.deviceRandom())
 							  .generate();

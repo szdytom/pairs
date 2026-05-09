@@ -17,7 +17,10 @@ import com.google.gson.JsonObject;
  * in the file: {@code width}, {@code height}, {@code types},
  * {@code difficulty}, {@code includeSlabs}, {@code spread}. Optional
  * {@code initial} is a 2D int array seed grid (0 = fillable, -1 = blocked);
- * when omitted an all-fillable grid of the given size is used.
+ * when omitted an all-fillable grid of the given size is used. Optional
+ * {@code pairStrategy} selects the pair-matching strategy
+ * ({@code "base"}|{@code "nonAdjacent"}|{@code "distant"}); defaults to
+ * {@code "base"} when absent.
  */
 public class TilemapPresetOperation implements AssetOperation {
 	private String file;
@@ -65,7 +68,10 @@ public class TilemapPresetOperation implements AssetOperation {
 			+ height + ", types=" + types + ", " + difficulty + ")"
 		);
 
-		TilemapPreset preset = new TilemapPreset(width, height, types, initial);
+		var pairStrategy = TilemapPreset.parseStrategy(root);
+		TilemapPreset preset = new TilemapPreset(
+			width, height, types, initial, pairStrategy
+		);
 		TileSelectionPolicy policy = new TileSelectionPolicy(
 			includeSlabs, spread
 		);

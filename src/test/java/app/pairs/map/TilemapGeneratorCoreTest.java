@@ -1,6 +1,9 @@
 package app.pairs.map;
 
-import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
+import static org.assertj.core.api.Assertions.*;
+
+import app.pairs.utils.Seed;
+import app.pairs.utils.Xoroshiro128PP;
 
 import org.junit.jupiter.api.Test;
 
@@ -69,5 +72,34 @@ class TilemapGeneratorCoreTest {
 						   .generate()
 			)
 			.withMessageContaining("Not enough fillable tiles");
+	}
+
+	@Test
+	void baseStrategyProducesSolvableMap() {
+		var map = generateWithStrategy(new BasePairingStrategy());
+		assertThat(map).isNotNull();
+		assertThat(map.getHeight()).isEqualTo(6);
+	}
+
+	@Test
+	void nonAdjacentStrategyProducesSolvableMap() {
+		var map = generateWithStrategy(new NonAdjacentPairingStrategy());
+		assertThat(map).isNotNull();
+		assertThat(map.getHeight()).isEqualTo(6);
+	}
+
+	@Test
+	void distantStrategyProducesSolvableMap() {
+		var map = generateWithStrategy(new DistantPairingStrategy());
+		assertThat(map).isNotNull();
+		assertThat(map.getHeight()).isEqualTo(6);
+	}
+
+	private static app.pairs.model.Tilemap generateWithStrategy(
+		PairingStrategy strategy
+	) {
+		int[][] map = new int[6][6];
+		var random = new Xoroshiro128PP(Seed.deviceRandom());
+		return TilemapGeneratorCore.generate(map, 3, random, strategy);
 	}
 }
