@@ -21,6 +21,7 @@ import io.github.libsdl4j.api.render.*;
  */
 public abstract class Container extends Widget {
 	protected final List<Widget> children = new ArrayList<>();
+	private Widget prevHovered;
 
 	public void addChild(Widget child) {
 		if (child.parent == this) {
@@ -106,6 +107,10 @@ public abstract class Container extends Widget {
 		int myGlobalX = parentGlobalX + layoutX;
 		int myGlobalY = parentGlobalY + layoutY;
 
+		if (event instanceof MouseEvent me) {
+			hoverTrack(me, myGlobalX, myGlobalY);
+		}
+
 		// Hit-test events with position data front-to-back (topmost first).
 		int ex = Integer.MIN_VALUE, ey = Integer.MIN_VALUE;
 		if (event instanceof MouseEvent me) {
@@ -137,5 +142,48 @@ public abstract class Container extends Widget {
 			}
 		}
 		return onEvent(event) || event.isConsumed();
+	}
+
+	// ---- hover tracking ---------------------------------------------------
+
+	private void hoverTrack(MouseEvent me, int myGlobalX, int myGlobalY) {
+		if (me.type() == Event.Type.MOUSE_LEAVE) {
+			setHoveredChild(null);
+			return;
+		}
+		if (me.type() != Event.Type.MOUSE_MOVED) {
+			return;
+		}
+		Widget hit = null;
+		for (int i = children.size() - 1; i >= 0; i--) {
+			Widget child = children.get(i);
+			if (!child.isVisible()) {
+				continue;
+			}
+			int childGlobalX = myGlobalX + child.layoutX;
+			int childGlobalY = myGlobalY + child.layoutY;
+			if (me.x() >= childGlobalX && me.x() < childGlobalX + child.layoutW
+			    && me.y() >= childGlobalY
+			    && me.y() < childGlobalY + child.layoutH) {
+				hit = child;
+				break;
+			}
+		}
+		setHoveredChild(hit);
+	}
+
+	private void setHoveredChild(Widget child) {
+		if (child == prevHovered) {
+			return;
+		}
+		if (prevHovered != null) {
+			prevHovered.hovered = false;
+			prevHovered.onHoverChanged();
+		}
+		if (child != null) {
+			child.hovered = true;
+			child.onHoverChanged();
+		}
+		prevHovered = child;
 	}
 }
