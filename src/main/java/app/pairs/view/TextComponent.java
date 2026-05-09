@@ -13,28 +13,22 @@ public class TextComponent extends Widget {
 	private final BitmapFont font;
 	private String text;
 	private int size;
-	private int r;
-	private int g;
-	private int b;
+	private int color;
 	private final int[] measuredSize = new int[2];
 
-	public TextComponent(
-		BitmapFont font, String text, int size, int r, int g, int b
-	) {
+	public TextComponent(BitmapFont font, String text, int size, int color) {
 		this.font = font;
 		this.text = text;
 		this.size = size;
-		this.r = r;
-		this.g = g;
-		this.b = b;
+		this.color = color;
 	}
 
 	/**
 	 * Convenience constructor that retrieves the project's default font
 	 * ({@code "monogram/font"}) from the {@link AssetManager} singleton.
 	 */
-	public TextComponent(String text, int size, int r, int g, int b) {
-		this(AssetManager.instance().get("monogram/font"), text, size, r, g, b);
+	public TextComponent(String text, int size, int color) {
+		this(AssetManager.instance().get("monogram/font"), text, size, color);
 	}
 
 	public void setText(String text) {
@@ -63,7 +57,7 @@ public class TextComponent extends Widget {
 		int globalX = parentX + layoutX;
 		int globalY = parentY + layoutY;
 		BitmapFontRenderer.renderText(
-			renderer, font, text, globalX, globalY, size, scale, r, g, b
+			renderer, font, text, globalX, globalY, size, scale, color
 		);
 	}
 }

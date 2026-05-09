@@ -1,5 +1,7 @@
 package app.pairs.router;
 
+import static app.pairs.utils.Colors.*;
+
 import static io.github.libsdl4j.api.keycode.SDL_Keycode.*;
 import static io.github.libsdl4j.api.render.SdlRender.*;
 
@@ -72,9 +74,7 @@ public class Router {
 	}
 
 	public void render(SDL_Renderer renderer) {
-		SDL_SetRenderDrawColor(
-			renderer, (byte)255, (byte)255, (byte)255, (byte)255
-		);
+		setRenderDrawColor(renderer, rgb(255, 255, 255));
 		SDL_RenderClear(renderer);
 		if (currentPage != null) {
 			currentPage.render(renderer, scaleManager.getScale());

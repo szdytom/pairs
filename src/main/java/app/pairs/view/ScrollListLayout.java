@@ -1,5 +1,7 @@
 package app.pairs.view;
 
+import static app.pairs.utils.Colors.*;
+
 import static io.github.libsdl4j.api.blendmode.SDL_BlendMode.*;
 import static io.github.libsdl4j.api.render.SdlRender.*;
 
@@ -150,9 +152,7 @@ public class ScrollListLayout extends Container {
 		trackRect.y = sy * scale;
 		trackRect.w = sw * scale;
 		trackRect.h = sh * scale;
-		SDL_SetRenderDrawColor(
-			renderer, (byte)40, (byte)40, (byte)40, (byte)80
-		);
+		setRenderDrawColor(renderer, rgba(40, 40, 40, 80));
 		SDL_RenderFillRect(renderer, trackRect);
 
 		int ms = maxScrollIndex();
@@ -162,9 +162,7 @@ public class ScrollListLayout extends Container {
 		thumbRect.y = thumbY * scale;
 		thumbRect.w = sw * scale;
 		thumbRect.h = thumbH * scale;
-		SDL_SetRenderDrawColor(
-			renderer, (byte)160, (byte)160, (byte)160, (byte)160
-		);
+		setRenderDrawColor(renderer, rgba(160, 160, 160, 160));
 		SDL_RenderFillRect(renderer, thumbRect);
 
 		SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);

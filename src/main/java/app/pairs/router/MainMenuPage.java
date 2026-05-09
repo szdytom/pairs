@@ -1,5 +1,7 @@
 package app.pairs.router;
 
+import static app.pairs.utils.Colors.*;
+
 import static io.github.libsdl4j.api.keycode.SDL_Keycode.*;
 
 import app.pairs.view.*;
@@ -13,7 +15,7 @@ public class MainMenuPage implements Page {
 	public MainMenuPage() {
 		this.blackboard = new Blackboard();
 		var text = new TextComponent(
-			"Pairs - Press SPACE to Play", 2, 30, 30, 30
+			"Pairs - Press SPACE to Play", 2, rgb(30, 30, 30)
 		);
 		var layout = new AlignLayout();
 		text.setProp("h-align", AlignLayout.HAlign.CENTER);

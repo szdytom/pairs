@@ -1,5 +1,7 @@
 package app.pairs.view;
 
+import static app.pairs.utils.Colors.*;
+
 import static io.github.libsdl4j.api.keycode.SDL_Keycode.*;
 
 import app.pairs.asset.IconManager;
@@ -18,7 +20,7 @@ import io.github.libsdl4j.api.render.*;
  */
 public class LevelComponent extends Container {
 	private static final int SIDEBAR_WIDTH = 100;
-	private static final long HINT_COOLDOWN_MS = 50_00;
+	private static final long HINT_COOLDOWN_MS = 5_000;
 
 	private GameState gameState;
 	private final IsometricGridView gridView;
@@ -103,7 +105,7 @@ public class LevelComponent extends Container {
 		gridView.setProp("v-align", AlignLayout.VAlign.CENTER);
 		alignLayout.addChild(gridView);
 
-		this.overlayText = new TextComponent("CLEARED!", 2, 40, 40, 40);
+		this.overlayText = new TextComponent("CLEARED!", 2, rgb(40, 40, 40));
 		overlayText.setVisible(false);
 		overlayText.setProp("h-align", AlignLayout.HAlign.CENTER);
 		overlayText.setProp("v-align", AlignLayout.VAlign.CENTER);

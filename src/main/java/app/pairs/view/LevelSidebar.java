@@ -1,5 +1,7 @@
 package app.pairs.view;
 
+import static app.pairs.utils.Colors.*;
+
 import static io.github.libsdl4j.api.render.SdlRender.*;
 
 import io.github.libsdl4j.api.rect.SDL_Rect;
@@ -62,9 +64,7 @@ public class LevelSidebar extends Container {
 		borderRect.y = gy;
 		borderRect.w = BORDER_WIDTH * scale;
 		borderRect.h = gh;
-		SDL_SetRenderDrawColor(
-			renderer, (byte)80, (byte)80, (byte)80, (byte)255
-		);
+		setRenderDrawColor(renderer, rgb(80, 80, 80));
 		SDL_RenderFillRect(renderer, borderRect);
 
 		super.render(renderer, parentX, parentY, scale);
