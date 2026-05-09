@@ -18,6 +18,7 @@ import io.github.libsdl4j.api.render.*;
  */
 public class LevelComponent extends Container {
 	private static final int SIDEBAR_WIDTH = 100;
+	private static final long HINT_COOLDOWN_MS = 50_00;
 
 	private GameState gameState;
 	private final IsometricGridView gridView;
@@ -52,6 +53,7 @@ public class LevelComponent extends Container {
 
 	// Child text components
 	private final TextComponent overlayText;
+	private final Button hintBtn;
 
 	private final AutoPairingState autoPairingState = new AutoPairingState();
 	private int autoHLRow1 = -1;
@@ -80,7 +82,7 @@ public class LevelComponent extends Container {
 
 		var hintIcon = IconManager.instance().getTexture("hint");
 		var hintImage = new ImageComponent(hintIcon, 16, 16);
-		var hintBtn = new Button(() -> {
+		this.hintBtn = new Button(() -> {
 			if (timedOut || cleared || autoPairingState.isActive()) {
 				return;
 			}
@@ -124,6 +126,10 @@ public class LevelComponent extends Container {
 				gridView.setVisible(false);
 			}
 		}
+		boolean hintReady = !cleared && !timedOut
+			&& System.currentTimeMillis() - lastEliminationTimeMs
+				>= HINT_COOLDOWN_MS;
+		hintBtn.setVisible(hintReady);
 		autoPairingState.update(deltaTimeMs);
 		super.update(deltaTimeMs);
 	}
