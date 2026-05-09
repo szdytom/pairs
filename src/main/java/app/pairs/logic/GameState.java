@@ -8,7 +8,6 @@ import app.pairs.map.TileGroupRegistry;
 import app.pairs.map.TileSelectionPolicy;
 import app.pairs.map.TilemapFactory;
 import app.pairs.model.GameStatus;
-import app.pairs.model.Item;
 import app.pairs.model.ItemType;
 import app.pairs.model.OpLogs;
 import app.pairs.model.Tilemap;
@@ -166,6 +165,7 @@ public final class GameState {
 				+ "," + col2 + ")"
 			);
 		}
+		gameStatus.timeFrozen = false;
 		new OpElimination(
 			gameStatus, tilemap, row1, col1, row2, col2, time, opLogs::push
 		)
@@ -173,6 +173,8 @@ public final class GameState {
 	}
 
 	public void repermute() {
+		gameStatus.timeFrozen = false;
+		gameStatus.consumeItem(ItemType.REPROMUTE);
 		repermute(Seed.deviceRandom());
 	}
 
@@ -223,8 +225,8 @@ public final class GameState {
 		}
 		return true;
 	}
-	public ItemType canRevive(Item item) {
-		return item.canRevive();
+	public ItemType canRevive() {
+		return gameStatus.canRevive();
 	}
 
 	/**
@@ -234,6 +236,21 @@ public final class GameState {
 	 * stack.
 	 */
 	public void autoSolve() {
+		gameStatus.timeFrozen = false;
+		gameStatus.consumeItem(ItemType.AUTOSOLVE);
 		new OpAutoSolve(gameStatus, tilemap, opLogs::push).operate();
+	}
+
+	public void swap(int row1, int col1, int row2, int col2) {
+		requireInBounds(row1, col1);
+		requireInBounds(row2, col2);
+		gameStatus.timeFrozen = false;
+		gameStatus.consumeItem(ItemType.SWAP);
+		new OpSwap(tilemap, row1, col1, row2, col2, opLogs::push).operate();
+	}
+
+	public void freeze() {
+		gameStatus.consumeItem(ItemType.TIMEFROZER);
+		gameStatus.timeFrozen = true;
 	}
 }
