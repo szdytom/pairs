@@ -96,6 +96,12 @@
 			"description": "Defining easy mode tilemap preset"
 		},
 		{
+			"id": "tilemap/medium",
+			"type": "tilemap-preset",
+			"file": "preset-medium.json",
+			"description": "Defining medium mode tilemap preset"
+		},
+		{
 			"id": "tilemap/hard",
 			"type": "tilemap-preset",
 			"file": "preset-hard.json",
