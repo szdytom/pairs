@@ -16,6 +16,7 @@ public abstract class Widget implements ViewComponent {
 	int layoutY;
 	int layoutW;
 	int layoutH;
+	boolean hovered;
 
 	public void setBlackboard(Blackboard bb) {
 		this.blackboard = bb;
@@ -53,6 +54,16 @@ public abstract class Widget implements ViewComponent {
 		Boolean v = getProp("visible");
 		return v != null ? v : true;
 	}
+
+	public boolean isHovered() {
+		return hovered;
+	}
+
+	/**
+	 * Called when the hover state changes.
+	 * {@link #isHovered()} reflects the new state.
+	 */
+	protected void onHoverChanged() {}
 
 	/**
 	 * Handles an event dispatched to this widget.
