@@ -11,6 +11,7 @@ import app.pairs.asset.TileRegistry;
 
 import java.util.List;
 
+import io.github.libsdl4j.api.rect.*;
 import io.github.libsdl4j.api.render.*;
 import io.github.libsdl4j.api.surface.*;
 
@@ -44,9 +45,12 @@ public class OpLogEntry extends FlexLayout {
 
 		TileRegistry reg = AssetManager.instance().get("tiles/typed");
 		SDL_Texture tex = reg.getTexture(tileId);
-		addChild(
-			new ImageComponent(tex, reg.getTileWidth() - 2, reg.getTileHeight())
-		);
+		SDL_Rect iconSrc = new SDL_Rect();
+		iconSrc.x = 1;
+		iconSrc.y = 0;
+		iconSrc.w = 16;
+		iconSrc.h = 18;
+		addChild(new ImageComponent(tex, iconSrc));
 
 		thumbnail = createThumbnail(path, mapRows, mapCols);
 		int maxD = Math.max(mapRows, mapCols);
@@ -64,7 +68,6 @@ public class OpLogEntry extends FlexLayout {
 			formatTime(timeMs), 1, rgb(60, 60, 255)
 		);
 		timeText.setProp("v-align", AlignLayout.VAlign.CENTER);
-		timeText.setProp("h-align", AlignLayout.HAlign.RIGHT);
 		AlignLayout timeWrap = new AlignLayout();
 		timeWrap.addChild(timeText);
 		addChild(timeWrap);
