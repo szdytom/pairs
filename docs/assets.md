@@ -45,38 +45,10 @@ Each entry in `sequence` has:
 | `crop-tiles` | `CropTilesOperation` | `SDL_Surface` | `TileRegistry` | Split a spritesheet surface into individual tile surfaces stored in a registry. |
 | `mapping` | `MappingOperation` | — (uses `file`) | `String[][]` | Load an external JSON file containing a `mapping` 2D string array and store it as a named mapping for later reuse. |
 | `tile-type-mapping` | `TileTypeMappingOperation` | `TileRegistry` | `TileRegistry` | Overlay a 2D string-ID mapping on a registry (same object, new ID). Uses `mapping-id` to reference a `mapping` operation result. |
-| `tilemap-preset` | `TilemapPresetOperation` | — (uses `file`) | `PresetConfig` | Load an external JSON file containing `width`, `height`, `types`, `difficulty`, `includeSlabs`, `spread`, and optional `initial`. Stores a `PresetConfig` consumed by `TilemapFactory.fromPreset`. |
+| `tilemap-preset` | `TilemapPresetOperation` | — (uses `file`) | `PresetConfig` | Load an external JSON file containing width/height/types/difficulty/includeSlabs/spread, and optional initial/pairStrategy. |
 | `tile-groups` | `TileGroupsOperation` | — (uses `file`) | `TileGroupRegistry` | Load an external JSON file defining tile similarity groups for `TileSelectionPolicy`. |
 | `create-texture` | `CreateTextureOperation` | `SDL_Surface` | `SDL_Texture` | Upload a surface as an SDL texture for GPU rendering. |
 | `bitmap-font` | `BitmapFontOperation` | — (uses `file`) | `BitmapFont` | Load a JSON bitmap font definition and pre-build glyph textures. |
-
-### Example (current manifest)
-
-The project's `assets/manifest.json` defines a 14-step pipeline:
-
-1. **image** → loads `tinyblocks.png` (180×180 px), stores as `tinyblocks/raw`
-2. **crop-tiles** → crops `tinyblocks/raw` into 10×10 = 100 tiles, each 18×18 px, stored in a `TileRegistry` at `tiles/raw`
-3. **mapping** → loads `tile-mapping.json` (10×10 string ID grid), stores as `tile-mapping`
-4. **tile-type-mapping** → applies `tile-mapping` to `tiles/raw`, stored at `tiles/typed`
-5. **create-texture** → uploads `tinyblocks/raw` surface to an SDL texture, stored at `tinyblocks/texture`
-6. **image** → loads `tinyblocks-hl.png` (highlighted variant), stored as `hl-tinyblocks/raw`
-7. **crop-tiles** → crops `hl-tinyblocks/raw` into tiles, stored at `hl-tiles/raw`
-8. **tile-type-mapping** → reuses `tile-mapping` on highlighted tiles, stored at `hl-tiles/typed`
-9. **create-texture** → uploads `hl-tinyblocks/raw` surface to a texture, stored at `hl-tinyblocks/texture`
-10. **image** → loads `shadow.png`, stored as `shadow/raw`
-11. **create-texture** → uploads `shadow/raw` surface to a texture, stored at `shadow/texture`
-12. **bitmap-font** → loads `monogram-bitmap.json`, pre-builds glyph textures, stored at `monogram/font`
-13. **tile-groups** → loads `tile-groups.json`, stores a `TileGroupRegistry` at `tile-groups/default`
-14. **tilemap-preset** × 3 → loads `preset-easy.json`, `preset-hard.json`, `preset-extreme.json`, each stored as a `PresetConfig` at `tilemap/easy`, `tilemap/hard`, `tilemap/extreme`
-
-All data-heavy content (mapping arrays, tilemap parameters with initial grids, tile group definitions, bitmap font glyph data) lives in separate JSON files referenced by `file` — the manifest itself is a lightweight sequence of references.
-
-Consumers retrieve assets by ID, e.g.:
-
-```java
-TileRegistry tiles = AssetManager.instance().get("tiles/typed");
-BitmapFont font = AssetManager.instance().get("monogram/font");
-```
 
 ---
 
@@ -110,131 +82,20 @@ public interface AssetOperation {
 1. **`configure(JsonObject)`** — called once before processing; extracts parameters from the manifest entry (type-specific fields like `file`, `tileWidth`, `columns`, etc.)
 2. **`process(Context)`** — performs the actual work: reads input via `ctx.getInput()`, uses `ctx.loader()` for file I/O, stores result via `ctx.put()`
 
-The `Context` also provides access to the `Registry`, enabling operations to introspect available types.
-
-### Operation Details
-
-#### ImageOperation
-- Reads a PNG via `AssetLoader` → `BufferedImage` (Java ImageIO)
-- Converts ARGB pixel array to RGBA byte array
-- Creates an `SDL_Surface` in `ABGR8888` format and writes pixels into it
-- Stores the surface under the configured `id`
-
-#### CropTilesOperation
-- Takes an input `SDL_Surface` (the spritesheet)
-- Iterates row-major over a `columns` × `rows` grid, blitting each tile region onto a new `SDL_Surface`
-- Wraps all tile surfaces in a `TileRegistry`
-- Stores the registry under the configured `id`
-
-#### TileTypeMappingOperation
-- Takes an input `TileRegistry`
-- Resolves the mapping from either inline `mapping` (deprecated) or a `mapping-id` referencing a previous `mapping` operation
-- Calls `registry.setTypeMapping(resolved)` on the existing registry
-- Stores the **same** registry object under a new `id`
-- Using `mapping-id` is preferred: it avoids duplicating large mapping arrays and allows reuse across multiple registries (e.g., normal and highlighted tile variants)
-
-#### MappingOperation
-- No input; reads a `file` field pointing to an external JSON file
-- Loads the file via `AssetLoader`, parses the top-level `mapping` 2D string array
-- Stores the `String[][]` array in the asset map under the configured `id`
-- Used as a data source for `tile-type-mapping` via the `mapping-id` field
-- Enables reuse: the same mapping can be shared across multiple `tile-type-mapping` operations without duplication
-
-  External JSON format (`tile-mapping.json`):
-
-  ```json
-  {
-      "mapping": [
-          ["grass_block", "sand", null],
-          ["stone", "dirt", "gravel"]
-      ]
-  }
-  ```
-
-#### BitmapFontOperation
-- Reads a JSON font definition file via `AssetLoader`
-- Parses glyph data into a `Map<Integer, int[]>` (code point → 12 row bitmasks)
-- Constructs a `BitmapFont` instance and calls `prebuildTextures()` to create an `SDL_Texture` for each non-empty glyph
-- Stores the `BitmapFont` under the configured `id`
-
-  > See [`docs/bitmap-font.md`](bitmap-font.md) for the JSON format and pixel encoding scheme.
-
-#### CreateTextureOperation
-- Takes an input `SDL_Surface`
-- Creates an `SDL_Texture` via `SDL_CreateTextureFromSurface` using the `SDL_Renderer` from `AssetManager.instance().renderer()`
-- Stores the texture under the configured `id`
-
-#### TilemapPresetOperation
-- No input; reads a `file` field pointing to an external JSON file
-- Loads the file via `AssetLoader`, parses `width`, `height`, `types`, `difficulty`, `includeSlabs`, `spread`, and an optional `initial` 2D int array
-- Constructs a `TileSelectionPolicy` from `includeSlabs` and `spread`
-- Stores a `PresetConfig` (bundling a `TilemapPreset`, `Difficulty`, and `TileSelectionPolicy`) under the configured `id`
-- Used by `TilemapFactory.fromPreset` to generate `Tilemap`s for built-in difficulty levels (`tilemap/easy`, `tilemap/hard`, `tilemap/extreme`)
-- Decouples all gameplay parameters and policy from Java source — tweak JSON files to retune difficulty without recompiling
-
-  External JSON format (`preset-easy.json`):
-
-  ```json
-  {
-      "width": 9,
-      "height": 9,
-      "types": 6,
-      "difficulty": "EASY",
-      "includeSlabs": false,
-      "spread": "NO_DUPLICATES",
-      "initial": [
-          [0, 0, 0, 0, -1, -1, -1, -1, -1],
-          [0, 0, 0, 0, -1, -1, -1, -1, -1],
-          [0, 0, 0, 0, -1, -1, -1, -1, -1],
-          [0, 0, 0, 0, -1, -1, -1, -1, -1],
-          [-1, -1, -1, -1, -1, -1, -1, -1, -1],
-          [-1, -1, -1, -1, -1, 0, 0, 0, 0],
-          [-1, -1, -1, -1, -1, 0, 0, 0, 0],
-          [-1, -1, -1, -1, -1, 0, 0, 0, 0],
-          [-1, -1, -1, -1, -1, 0, 0, 0, 0]
-      ]
-  }
-  ```
-
-  | Field | Type | Description |
-  |-------|------|-------------|
-  | `width` | int | Tilemap width in tiles. |
-  | `height` | int | Tilemap height in tiles. |
-  | `types` | int | Number of distinct tile types to generate. |
-  | `difficulty` | string | One of `EASY`, `HARD`, `EXTREME`. |
-  | `includeSlabs` | bool | Whether slab-group tiles are eligible for palette selection. |
-  | `spread` | string | One of `NO_DUPLICATES`, `FREE`, `PREFER_DUPLICATES`. Controls how tile types are distributed across similarity groups. |
-  | `initial` | int[][] | Optional. Seed grid: `0` = fillable cell, `-1` = blocked cell. Dimensions must match `height` × `width`. Omit for an all-fillable grid. |
-
 ---
 
 ## AssetManager
 
 Singleton that orchestrates the loading pipeline and provides runtime access to all loaded assets.
 
-### Public API
-
 ```java
 public class AssetManager {
-    // Singleton access
     public static AssetManager instance();
-
-    // Initialization (must call before loadManifest)
     public void init(SDL_Renderer renderer);
-
-    // Accessors
     public SDL_Renderer renderer();
-
-    // Load a manifest JSON file and execute its operation sequence
     public void loadManifest(String path) throws Exception;
-
-    // Retrieval — throws if not found; casts to inferred type
     public <T> T get(String id);
-
-    // Existence check
     public boolean has(String id);
-
-    // Dispose — calls close() on all AutoCloseable assets
     public void dispose();
 }
 ```
@@ -248,56 +109,6 @@ public class AssetManager {
    - Calls `configure()` with the JSON entry
    - Calls `process()` with a `ContextImpl` wired to the asset map
 3. All results are stored in an internal `Map<String, Object>` — retained for the JVM lifetime.
-
-### Internal State
-
-- `Map<String, Object> assets` — the flat ID-to-asset cache
-- `AssetOperation.Registry` — maps type strings (`"image"`, `"crop-tiles"`, etc.) to `OperationFactory` instances
-
----
-
-## AutoCloseable Support
-
-Assets that hold native SDL resources (textures, surfaces) implement `AutoCloseable` to allow orderly cleanup.
-
-### BitmapFont
-
-`BitmapFont` implements `AutoCloseable`:
-
-```java
-public class BitmapFont implements AutoCloseable {
-    // ...
-    @Override
-    public void close();
-    public void dispose();
-}
-```
-
-- `close()` (the `AutoCloseable` entry point) delegates to `dispose()`
-- `dispose()` calls `SDL_DestroyTexture` on every pre-built glyph texture and clears the cache
-
-### AssetManager.dispose()
-
-`AssetManager.dispose()` iterates all loaded assets and calls `close()` on any that implement `AutoCloseable`:
-
-```java
-public void dispose() {
-    for (Object asset : assets.values()) {
-        if (asset instanceof AutoCloseable ac) {
-            ac.close();
-        }
-    }
-    assets.clear();
-}
-```
-
-This is a safe-to-call pattern: non-`AutoCloseable` assets like `SDL_Surface` (used directly in rendering) and `TileRegistry` are simply skipped. Call `AssetManager.instance().dispose()` during application shutdown.
-
-> **Note:** `TileRegistry` does not currently implement `AutoCloseable`. Its `dispose()` method must be called manually if cleanup is needed before JVM exit.
-
-### Design Principle
-
-Not all asset types need `AutoCloseable`. Only resources that wrap native SDL objects (textures, surfaces that must be freed via SDL APIs) implement it. Plain data objects (`String[][]`, collections) are GC'd normally.
 
 ---
 
@@ -318,7 +129,7 @@ public interface AssetLoader {
 | `FsAssetLoader` | Reads from file system, base path `"assets"` | During development (IDE run) |
 | `ClspAssetLoader` | Reads from classpath via `ClassLoader.getResourceAsStream()` | When running from a JAR |
 
-### Selection Logic (`AssetLoaderInstance`)
+### Selection Logic
 
 ```
 System.getProperty("app.pairs.assetLoader")
@@ -335,31 +146,25 @@ Override at runtime: `java -Dapp.pairs.assetLoader=fs -jar ...`
 
 ## TileRegistry
 
-Holds tile surfaces and optional type mappings after a `crop-tiles` + `tile-type-mapping` pipeline.
+Stores a flat list of tile surfaces with a bidirectional int↔String type-ID mapping. Each entry gets a sequential numeric ID (starting at 1) for use as the game's tile type identifier. SDL_Textures can be created and retrieved by numeric ID.
 
 ```java
-// Construction
-new TileRegistry(int columns, int rows, int tileWidth, int tileHeight);
+new TileRegistry(int tileWidth, int tileHeight,
+                 SDL_Surface[] tiles, String[] stringIds);
 
-// Access
-SDL_Surface getTile(int row, int col);   // 2D grid access
-SDL_Surface getTile(int id);             // 1D row-major index
 int getTileWidth();
 int getTileHeight();
-int getRows();
-int getColumns();
-int getTileCount();
+int getTypeCount();
 
-// Type mapping (set by TileTypeMappingOperation)
-void setTypeMapping(String[][] mapping);
-String getTypeId(int row, int col);      // returns null if unmapped or null entry
+// Bidirectional int↔String mapping
+int getNumericId(String stringId);   // returns -1 if unknown
+String getStringId(int numericId);   // returns null if unknown
 
-// Cleanup
-void dispose();                           // frees all SDL_Surfaces
+// Texture management
+void createTextures(SDL_Renderer renderer);
+SDL_Texture getTexture(int typeId);  // 1-based, null if not created
+
+// Cleanup (implements AutoCloseable)
+void dispose();
+void close();
 ```
-
-- Tiles are stored in a flat `SDL_Surface[]`, index = `row * columns + col`.
-- `getTile(int id)` returns `null` for out-of-range indices (no exception).
-- `getTypeId()` returns `null` if no mapping has been set or the cell maps to `null`.
-- **Lifetime:** allocated by the JVM, SDL surfaces must be freed via `dispose()`. Currently does not implement `AutoCloseable`, so disposal must be handled manually.
-
