@@ -134,11 +134,6 @@ public class LevelComponent extends Container {
 		super.update(deltaTimeMs);
 	}
 
-	public void setMousePosition(int x, int y) {
-		this.mouseX = x;
-		this.mouseY = y;
-	}
-
 	/** Reset the level with the map generated. */
 	public void restart() {
 		countdownState.remainingMs = totalCountdownMs;
