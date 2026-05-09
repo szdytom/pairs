@@ -8,6 +8,7 @@ import static io.github.libsdl4j.api.render.SdlRender.*;
 import app.pairs.view.Blackboard;
 import app.pairs.view.Event;
 import app.pairs.view.KeyEvent;
+import app.pairs.view.MouseEvent;
 import app.pairs.view.Widget;
 
 import io.github.libsdl4j.api.render.*;
@@ -82,6 +83,17 @@ public class Router {
 	}
 
 	public boolean onEvent(Event event) {
+		if (event instanceof MouseEvent me) {
+			Blackboard bb = getBlackboard();
+			if (bb != null) {
+				if (me.type() == Event.Type.MOUSE_MOVED) {
+					bb.mouseX = me.x();
+					bb.mouseY = me.y();
+				} else if (me.type() == Event.Type.MOUSE_LEAVE) {
+					bb.mouseX = bb.mouseY = -1;
+				}
+			}
+		}
 		if (event instanceof KeyEvent ke
 		    && ke.type() == Event.Type.KEY_PRESSED) {
 			switch (ke.keycode()) {

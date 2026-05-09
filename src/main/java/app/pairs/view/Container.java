@@ -59,6 +59,10 @@ public abstract class Container extends Widget {
 				child.update(deltaTimeMs);
 			}
 		}
+		Blackboard bb = blackboard();
+		if (bb != null && bb.mouseX >= 0) {
+			recheckHover(bb);
+		}
 	}
 
 	@Override
@@ -109,6 +113,14 @@ public abstract class Container extends Widget {
 
 		if (event instanceof MouseEvent me) {
 			hoverTrack(me, myGlobalX, myGlobalY);
+			if (me.type() == Event.Type.MOUSE_LEAVE) {
+				for (Widget child : children) {
+					if (child.isVisible()) {
+						child.dispatchEvent(event, myGlobalX, myGlobalY);
+					}
+				}
+				return onEvent(event) || event.isConsumed();
+			}
 		}
 
 		// Hit-test events with position data front-to-back (topmost first).
@@ -154,22 +166,7 @@ public abstract class Container extends Widget {
 		if (me.type() != Event.Type.MOUSE_MOVED) {
 			return;
 		}
-		Widget hit = null;
-		for (int i = children.size() - 1; i >= 0; i--) {
-			Widget child = children.get(i);
-			if (!child.isVisible()) {
-				continue;
-			}
-			int childGlobalX = myGlobalX + child.layoutX;
-			int childGlobalY = myGlobalY + child.layoutY;
-			if (me.x() >= childGlobalX && me.x() < childGlobalX + child.layoutW
-			    && me.y() >= childGlobalY
-			    && me.y() < childGlobalY + child.layoutH) {
-				hit = child;
-				break;
-			}
-		}
-		setHoveredChild(hit);
+		setHoveredChild(hitTestChild(me.x(), me.y(), myGlobalX, myGlobalY));
 	}
 
 	private void setHoveredChild(Widget child) {
@@ -185,5 +182,47 @@ public abstract class Container extends Widget {
 			child.onHoverChanged();
 		}
 		prevHovered = child;
+	}
+
+	private void recheckHover(Blackboard bb) {
+		setHoveredChild(
+			hitTestChild(bb.mouseX, bb.mouseY, globalX(), globalY())
+		);
+	}
+
+	private Widget hitTestChild(int mx, int my, int gx, int gy) {
+		for (int i = children.size() - 1; i >= 0; i--) {
+			Widget child = children.get(i);
+			if (!child.isVisible()) {
+				continue;
+			}
+			int childGlobalX = gx + child.layoutX;
+			int childGlobalY = gy + child.layoutY;
+			if (mx >= childGlobalX && mx < childGlobalX + child.layoutW
+			    && my >= childGlobalY && my < childGlobalY + child.layoutH) {
+				return child;
+			}
+		}
+		return null;
+	}
+
+	private int globalX() {
+		int x = layoutX;
+		Widget p = parent;
+		while (p != null) {
+			x += p.layoutX;
+			p = p.parent;
+		}
+		return x;
+	}
+
+	private int globalY() {
+		int y = layoutY;
+		Widget p = parent;
+		while (p != null) {
+			y += p.layoutY;
+			p = p.parent;
+		}
+		return y;
 	}
 }
