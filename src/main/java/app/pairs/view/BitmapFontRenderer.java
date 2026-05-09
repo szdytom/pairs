@@ -1,5 +1,7 @@
 package app.pairs.view;
 
+import static app.pairs.utils.Colors.*;
+
 import app.pairs.asset.BitmapFont;
 
 import io.github.libsdl4j.api.rect.*;
@@ -26,7 +28,7 @@ public final class BitmapFontRenderer {
 	 */
 	public static void renderText(
 		SDL_Renderer renderer, BitmapFont font, String text, int x, int y,
-		int size, int scale, int r, int g, int b
+		int size, int scale, int color
 	) {
 		int cursorX = x * scale;
 		int cursorY = y * scale;
@@ -54,7 +56,7 @@ public final class BitmapFontRenderer {
 				dstRect.h = lineHeight;
 
 				SdlRender.SDL_SetTextureColorMod(
-					tex, (byte)r, (byte)g, (byte)b
+					tex, (byte)r(color), (byte)g(color), (byte)b(color)
 				);
 				SdlRender.SDL_RenderCopy(
 					renderer, tex, (io.github.libsdl4j.api.rect.SDL_Rect)null,

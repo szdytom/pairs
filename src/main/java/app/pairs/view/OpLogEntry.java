@@ -1,5 +1,7 @@
 package app.pairs.view;
 
+import static app.pairs.utils.Colors.*;
+
 import static io.github.libsdl4j.api.pixels.SDL_PixelFormatEnum.*;
 import static io.github.libsdl4j.api.render.SdlRender.*;
 import static io.github.libsdl4j.api.surface.SdlSurface.*;
@@ -21,13 +23,8 @@ public class OpLogEntry extends FlexLayout {
 	private static final int GAP = 2;
 	private static final int PADDING = 1;
 
-	private static final byte PATH_R = (byte)60;
-	private static final byte PATH_G = (byte)140;
-	private static final byte PATH_B = (byte)240;
-
-	private static final byte ENDPOINT_R = (byte)240;
-	private static final byte ENDPOINT_G = (byte)200;
-	private static final byte ENDPOINT_B = (byte)40;
+	private static final int PATH_COLOR = rgb(60, 140, 240);
+	private static final int ENDPOINT_COLOR = rgb(240, 200, 40);
 
 	private SDL_Texture thumbnail;
 
@@ -38,7 +35,7 @@ public class OpLogEntry extends FlexLayout {
 		super(Direction.ROW, GAP, PADDING);
 
 		TextComponent numText = new TextComponent(
-			String.format("%3d", index), 1, 160, 160, 160
+			String.format("%3d", index), 1, rgb(160, 160, 160)
 		);
 		numText.setProp("v-align", AlignLayout.VAlign.CENTER);
 		AlignLayout numWrap = new AlignLayout();
@@ -64,7 +61,7 @@ public class OpLogEntry extends FlexLayout {
 		addChild(align);
 
 		TextComponent timeText = new TextComponent(
-			formatTime(timeMs), 1, 60, 60, 255
+			formatTime(timeMs), 1, rgb(60, 60, 255)
 		);
 		timeText.setProp("v-align", AlignLayout.VAlign.CENTER);
 		timeText.setProp("h-align", AlignLayout.HAlign.RIGHT);
@@ -110,16 +107,16 @@ public class OpLogEntry extends FlexLayout {
 				int l = Math.min(cA, cB), r = Math.max(cA, cB);
 				for (int c = l; c <= r; c++) {
 					drawCell(
-						data, texW, texH, scale, rA, c, PATH_R, PATH_G, PATH_B,
-						mapRows, mapCols
+						data, texW, texH, scale, rA, c, PATH_COLOR, mapRows,
+						mapCols
 					);
 				}
 			} else {
 				int t = Math.min(rA, rB), b = Math.max(rA, rB);
 				for (int r = t; r <= b; r++) {
 					drawCell(
-						data, texW, texH, scale, r, cA, PATH_R, PATH_G, PATH_B,
-						mapRows, mapCols
+						data, texW, texH, scale, r, cA, PATH_COLOR, mapRows,
+						mapCols
 					);
 				}
 			}
@@ -128,12 +125,10 @@ public class OpLogEntry extends FlexLayout {
 		int r1 = path.get(0), c1 = path.get(1);
 		int r2 = path.get(path.size() - 2), c2 = path.get(path.size() - 1);
 		drawCell(
-			data, texW, texH, scale, r1, c1, ENDPOINT_R, ENDPOINT_G, ENDPOINT_B,
-			mapRows, mapCols
+			data, texW, texH, scale, r1, c1, ENDPOINT_COLOR, mapRows, mapCols
 		);
 		drawCell(
-			data, texW, texH, scale, r2, c2, ENDPOINT_R, ENDPOINT_G, ENDPOINT_B,
-			mapRows, mapCols
+			data, texW, texH, scale, r2, c2, ENDPOINT_COLOR, mapRows, mapCols
 		);
 
 		surface.getPixels().write(0, data, 0, data.length);
@@ -145,8 +140,8 @@ public class OpLogEntry extends FlexLayout {
 	}
 
 	private static void drawCell(
-		byte[] data, int stride, int texH, int scale, int r, int c, byte rCol,
-		byte gCol, byte bCol, int mapRows, int mapCols
+		byte[] data, int stride, int texH, int scale, int r, int c, int color,
+		int mapRows, int mapCols
 	) {
 		if (r < -1 || r > mapRows || c < -1 || c > mapCols) {
 			return;
@@ -157,9 +152,9 @@ public class OpLogEntry extends FlexLayout {
 			return;
 		}
 		int idx = (py * stride + px) * 4;
-		data[idx] = bCol;
-		data[idx + 1] = gCol;
-		data[idx + 2] = rCol;
+		data[idx] = (byte)b(color);
+		data[idx + 1] = (byte)g(color);
+		data[idx + 2] = (byte)r(color);
 		data[idx + 3] = (byte)255;
 	}
 
