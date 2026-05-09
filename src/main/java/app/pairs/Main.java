@@ -205,12 +205,10 @@ public class Main {
 			? args[0].toLowerCase()
 			: "hard";
 		System.out.println("[Main] difficulty=" + mode);
-		if (!mode.equals("easy") && !mode.equals("hard")
-		    && !mode.equals("extreme")) {
-			throw new IllegalArgumentException(
-				"unknown difficulty: " + mode + " (expected easy|hard|extreme)"
-			);
+		String id = "tilemap/" + mode;
+		if (!AssetManager.instance().has(id)) {
+			throw new IllegalArgumentException("unknown difficulty: " + mode);
 		}
-		return new GameState(TilemapFactory.fromPreset("tilemap/" + mode));
+		return new GameState(TilemapFactory.fromPreset(id));
 	}
 }

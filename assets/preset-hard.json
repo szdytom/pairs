@@ -4,5 +4,6 @@
 	"types": 20,
 	"difficulty": "HARD",
 	"includeSlabs": false,
-	"spread": "FREE"
+	"spread": "FREE",
+	"pairStrategy": "nonAdjacent"
 }
