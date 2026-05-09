@@ -19,6 +19,9 @@ public class Blackboard {
 	private final Map<Class<?>, Object> store = new HashMap<>();
 	/** Set to true when the widget tree needs a full measure + layout cycle. */
 	public boolean layoutDirty;
+	/** Last mouse position in logical pixels, or -1 if unknown. */
+	public int mouseX = -1;
+	public int mouseY = -1;
 
 	public <T> void put(Class<T> type, T value) {
 		store.put(type, value);
