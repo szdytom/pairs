@@ -57,4 +57,14 @@ public class OpLogs {
 		Collections.reverse(list);
 		return list;
 	}
+	public void undoTo(int id) {
+		int cnt = stack.size() - id;
+		for (int i = 0; i < cnt; i++) {
+			Operation op = pop();
+			if (op == null) {
+				throw new IllegalStateException("no operation to undo");
+			}
+			op.undo();
+		}
+	}
 }
