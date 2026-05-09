@@ -71,10 +71,12 @@ class AlignLayoutTest {
 	@Test
 	void multipleChildrenAllAlignedCenter() {
 		AlignLayout layout = new AlignLayout();
-		layout.setProp("h-align", AlignLayout.HAlign.CENTER);
-		layout.setProp("v-align", AlignLayout.VAlign.CENTER);
 		FixedWidget a = new FixedWidget(30, 20);
+		a.setProp("h-align", AlignLayout.HAlign.CENTER);
+		a.setProp("v-align", AlignLayout.VAlign.CENTER);
 		FixedWidget b = new FixedWidget(50, 10);
+		b.setProp("h-align", AlignLayout.HAlign.CENTER);
+		b.setProp("v-align", AlignLayout.VAlign.CENTER);
 		layout.addChild(a);
 		layout.addChild(b);
 		layout.layout(0, 0, W, H);
@@ -99,9 +101,9 @@ class AlignLayoutTest {
 	@Test
 	void centerAlign() {
 		AlignLayout layout = new AlignLayout();
-		layout.setProp("h-align", AlignLayout.HAlign.CENTER);
-		layout.setProp("v-align", AlignLayout.VAlign.CENTER);
 		FixedWidget child = new FixedWidget(30, 20);
+		child.setProp("h-align", AlignLayout.HAlign.CENTER);
+		child.setProp("v-align", AlignLayout.VAlign.CENTER);
 		layout.addChild(child);
 		layout.layout(0, 0, W, H);
 
@@ -112,9 +114,9 @@ class AlignLayoutTest {
 	@Test
 	void rightBottomAlign() {
 		AlignLayout layout = new AlignLayout();
-		layout.setProp("h-align", AlignLayout.HAlign.RIGHT);
-		layout.setProp("v-align", AlignLayout.VAlign.BOTTOM);
 		FixedWidget child = new FixedWidget(30, 20);
+		child.setProp("h-align", AlignLayout.HAlign.RIGHT);
+		child.setProp("v-align", AlignLayout.VAlign.BOTTOM);
 		layout.addChild(child);
 		layout.layout(0, 0, W, H);
 
