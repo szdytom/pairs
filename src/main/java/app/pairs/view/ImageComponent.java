@@ -7,7 +7,6 @@ import io.github.libsdl4j.api.render.*;
 
 /**
  * Renders an {@link SDL_Texture} cropped to the specified content area
- * (1 px left inset to skip the shadow border).
  */
 public class ImageComponent extends Widget {
 	private final SDL_Texture texture;
@@ -21,10 +20,22 @@ public class ImageComponent extends Widget {
 		this.texture = texture;
 		this.contentW = contentW;
 		this.contentH = contentH;
-		srcRect.x = 1;
+		srcRect.x = 0;
 		srcRect.y = 0;
 		srcRect.w = contentW;
 		srcRect.h = contentH;
+		measuredSize[0] = contentW;
+		measuredSize[1] = contentH;
+	}
+
+	public ImageComponent(SDL_Texture texture, SDL_Rect srcRect) {
+		this.texture = texture;
+		this.srcRect.x = srcRect.x;
+		this.srcRect.y = srcRect.y;
+		this.srcRect.w = srcRect.w;
+		this.srcRect.h = srcRect.h;
+		contentW = srcRect.w;
+		contentH = srcRect.h;
 		measuredSize[0] = contentW;
 		measuredSize[1] = contentH;
 	}
