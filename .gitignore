@@ -9,6 +9,7 @@ bin/
 # Editor
 .vscode/
 *.sw?
+.idea
 
 CLAUDE.local.md
 CLAUDE.md
