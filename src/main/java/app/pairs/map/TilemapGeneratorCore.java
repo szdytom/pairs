@@ -9,7 +9,9 @@ import java.util.List;
 import java.util.Random;
 
 final class TilemapGeneratorCore {
-	static Tilemap generate(int[][] map, int types, Random random) {
+	static Tilemap generate(
+		int[][] map, int types, Random random, PairingStrategy strategy
+	) {
 		if (types < 1) {
 			throw new IllegalArgumentException(
 				"types must be >= 1, got: " + types
@@ -35,7 +37,7 @@ final class TilemapGeneratorCore {
 			);
 		}
 
-		int pairCount = fillSolvablePairs(map, random);
+		int pairCount = fillSolvablePairs(map, random, strategy);
 		if (pairCount < 0 || pairCount < types) {
 			throw new IllegalStateException(
 				"Not enough pairs to cover all tile types: pairs=" + pairCount
@@ -47,7 +49,9 @@ final class TilemapGeneratorCore {
 		return new Tilemap(idBuilder(map, pairToType));
 	}
 
-	private static int fillSolvablePairs(int[][] map, Random random) {
+	private static int fillSolvablePairs(
+		int[][] map, Random random, PairingStrategy strategy
+	) {
 		List<TileIndex> remainingTiles = new ArrayList<>();
 		for (int i = 0; i < map.length; i++) {
 			for (int j = 0; j < map[i].length; j++) {
@@ -70,8 +74,8 @@ final class TilemapGeneratorCore {
 				);
 				if (!candidates.isEmpty()) {
 					firstIdx = i;
-					secondIdx = candidates.get(
-						random.nextInt(candidates.size())
+					secondIdx = strategy.pickCandidate(
+						candidates, i, remainingTiles, random
 					);
 					break;
 				}
@@ -154,11 +158,11 @@ final class TilemapGeneratorCore {
 		return id;
 	}
 
-	private static final class TileIndex {
-		private final int row;
-		private final int col;
+	static final class TileIndex {
+		final int row;
+		final int col;
 
-		private TileIndex(int row, int col) {
+		TileIndex(int row, int col) {
 			this.row = row;
 			this.col = col;
 		}
