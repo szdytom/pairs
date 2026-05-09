@@ -128,10 +128,12 @@ public class LevelComponent extends Container {
 			);
 			if (countdownState.remainingMs == 0) {
 				timedOut = true;
+				autoPairingState.clear();
 				gridView.setVisible(false);
 			}
 		}
 		boolean hintReady = !cleared && !timedOut
+			&& !autoPairingState.isActive()
 			&& System.currentTimeMillis() - lastEliminationTimeMs
 				>= HINT_COOLDOWN_MS;
 		hintBtn.setVisible(hintReady);
@@ -326,6 +328,8 @@ public class LevelComponent extends Container {
 	}
 
 	private void eliminatePair(int r1, int c1, int r2, int c2) {
+		if (timedOut || cleared)
+			return;
 		long now = System.currentTimeMillis();
 		int elapsed = (int)(now - lastEliminationTimeMs);
 		gameState.operate(r1, c1, r2, c2, elapsed);
