@@ -10,6 +10,8 @@ import app.pairs.map.TilemapFactory;
 import app.pairs.model.GameStatus;
 import app.pairs.model.OpLogs;
 import app.pairs.model.Tilemap;
+import app.pairs.solver.Solver;
+import app.pairs.solver.SolverResult;
 import app.pairs.utils.Seed;
 import app.pairs.utils.Xoroshiro128PP;
 
@@ -208,5 +210,13 @@ public final class GameState {
 			}
 		}
 		return true;
+	}
+
+	public SolverResult solve() {
+		return solve(0); // 0 means no timeout
+	}
+
+	public SolverResult solve(long timeoutMs) {
+		return Solver.solve(tilemap, timeoutMs);
 	}
 }
