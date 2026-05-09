@@ -112,6 +112,35 @@
 			"type": "tilemap-preset",
 			"file": "preset-extreme.json",
 			"description": "Defining extreme mode tilemap preset"
+		},
+		{
+			"id": "icons/raw",
+			"type": "image",
+			"file": "icons.png",
+			"description": "Loading icons.png"
+		},
+		{
+			"id": "icons/cropped",
+			"type": "crop-tiles",
+			"input": "icons/raw",
+			"tileWidth": 16,
+			"tileHeight": 16,
+			"columns": 4,
+			"rows": 4,
+			"description": "Cropping icons into 16x16 tiles"
+		},
+		{
+			"id": "icons-mapping",
+			"type": "mapping",
+			"file": "icons-mapping.json",
+			"description": "Defining icon type mapping"
+		},
+		{
+			"id": "icons/typed",
+			"type": "tile-type-mapping",
+			"input": "icons/cropped",
+			"mapping-id": "icons-mapping",
+			"description": "Mapping icons to string IDs"
 		}
 	]
 }
