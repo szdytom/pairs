@@ -1,0 +1,364 @@
+{
+  "blocks": {
+    "grass_block": {
+      "break": "grass.break.wav",
+      "place": "grass.place.wav"
+    },
+    "deep_grass_block": {
+      "break": "grass.break.wav",
+      "place": "grass.place.wav"
+    },
+    "deep_grass_block2": {
+      "break": "grass.break.wav",
+      "place": "grass.place.wav"
+    },
+    "deep_grass_block3": {
+      "break": "grass.break.wav",
+      "place": "grass.place.wav"
+    },
+    "sand": {
+      "break": "sand.break.wav",
+      "place": "sand.place.wav"
+    },
+    "sand2": {
+      "break": "sand.break.wav",
+      "place": "sand.place.wav"
+    },
+    "dirt": {
+      "break": "gravel.break.wav",
+      "place": "gravel.place.wav"
+    },
+    "dirt2": {
+      "break": "gravel.break.wav",
+      "place": "gravel.place.wav"
+    },
+    "wet_dirt": {
+      "break": "mud.break.wav",
+      "place": "mud.place.wav"
+    },
+    "grass_dirt": {
+      "break": "grass.break.wav",
+      "place": "grass.place.wav"
+    },
+    "grass_dirt2": {
+      "break": "grass.break.wav",
+      "place": "grass.place.wav"
+    },
+    "grass_dirt_slab": {
+      "break": "grass.break.wav",
+      "place": "grass.place.wav"
+    },
+    "snowed_dirt": {
+      "break": "snow.break.wav",
+      "place": "snow.place.wav"
+    },
+    "snowed_dirt2": {
+      "break": "snow.break.wav",
+      "place": "snow.place.wav"
+    },
+    "snowed_dirt_slab": {
+      "break": "snow.break.wav",
+      "place": "snow.place.wav"
+    },
+    "ice": {
+      "break": "glass.break.wav",
+      "place": "glass.place.wav"
+    },
+    "snow": {
+      "break": "snow.break.wav",
+      "place": "snow.place.wav"
+    },
+    "packed_hay": {
+      "break": "grass.break.wav",
+      "place": "grass.place.wav"
+    },
+    "hay_block": {
+      "break": "grass.break.wav",
+      "place": "grass.place.wav"
+    },
+    "redsand_dirt": {
+      "break": "sand.break.wav",
+      "place": "sand.place.wav"
+    },
+    "redsand_dirt2": {
+      "break": "sand.break.wav",
+      "place": "sand.place.wav"
+    },
+    "redsand_dirt_slab": {
+      "break": "sand.break.wav",
+      "place": "sand.place.wav"
+    },
+    "blue_pillar": {
+      "break": "stone.break.wav",
+      "place": "stone.place.wav"
+    },
+    "blue_pillar_slab": {
+      "break": "stone.break.wav",
+      "place": "stone.place.wav"
+    },
+    "red_pillar": {
+      "break": "stone.break.wav",
+      "place": "stone.place.wav"
+    },
+    "red_pillar_slab": {
+      "break": "stone.break.wav",
+      "place": "stone.place.wav"
+    },
+    "green_pillar": {
+      "break": "stone.break.wav",
+      "place": "stone.place.wav"
+    },
+    "green_pillar_slab": {
+      "break": "stone.break.wav",
+      "place": "stone.place.wav"
+    },
+    "dark_log": {
+      "break": "wood.break.wav",
+      "place": "wood.place.wav"
+    },
+    "dark_plank": {
+      "break": "wood.break.wav",
+      "place": "wood.place.wav"
+    },
+    "dark_plank_slab": {
+      "break": "wood.break.wav",
+      "place": "wood.place.wav"
+    },
+    "log": {
+      "break": "wood.break.wav",
+      "place": "wood.place.wav"
+    },
+    "plank": {
+      "break": "wood.break.wav",
+      "place": "wood.place.wav"
+    },
+    "plank_slab": {
+      "break": "wood.break.wav",
+      "place": "wood.place.wav"
+    },
+    "birch_log": {
+      "break": "wood.break.wav",
+      "place": "wood.place.wav"
+    },
+    "birch_plank": {
+      "break": "wood.break.wav",
+      "place": "wood.place.wav"
+    },
+    "birch_plank_slab": {
+      "break": "wood.break.wav",
+      "place": "wood.place.wav"
+    },
+    "leaves": {
+      "break": "grass.break.wav",
+      "place": "grass.place.wav"
+    },
+    "cherry_leaves": {
+      "break": "cherry_leaves.break.wav",
+      "place": "cherry_leaves.place.wav"
+    },
+    "azalea_leaves": {
+      "break": "azalea_leaves.break.wav",
+      "place": "azalea_leaves.place.wav"
+    },
+    "flowered_leaves": {
+      "break": "flowering_azalea.break.wav",
+      "place": "flowering_azalea.place.wav"
+    },
+    "fruited_leaves": {
+      "break": "cave_vines.break.wav",
+      "place": "cave_vines.place.wav"
+    },
+    "berry_leaves": {
+      "break": "sweet_berry_bush.break.wav",
+      "place": "sweet_berry_bush.place.wav"
+    },
+    "yellow_leaves": {
+      "break": "grass.break.wav",
+      "place": "grass.place.wav"
+    },
+    "withered_leaves": {
+      "break": "grass.break.wav",
+      "place": "grass.place.wav"
+    },
+    "red_leaves": {
+      "break": "grass.break.wav",
+      "place": "grass.place.wav"
+    },
+    "smooth_stone": {
+      "break": "stone.break.wav",
+      "place": "stone.place.wav"
+    },
+    "smooth_stone2": {
+      "break": "stone.break.wav",
+      "place": "stone.place.wav"
+    },
+    "stone": {
+      "break": "stone.break.wav",
+      "place": "stone.place.wav"
+    },
+    "stone2": {
+      "break": "stone.break.wav",
+      "place": "stone.place.wav"
+    },
+    "coal_ore": {
+      "break": "stone.break.wav",
+      "place": "stone.place.wav"
+    },
+    "gold_ore": {
+      "break": "stone.break.wav",
+      "place": "stone.place.wav"
+    },
+    "copper_ore": {
+      "break": "stone.break.wav",
+      "place": "stone.place.wav"
+    },
+    "emerald_ore": {
+      "break": "stone.break.wav",
+      "place": "stone.place.wav"
+    },
+    "diamond_ore": {
+      "break": "stone.break.wav",
+      "place": "stone.place.wav"
+    },
+    "deepslate_bricks": {
+      "break": "deepslate_bricks.break.wav",
+      "place": "deepslate_bricks.place.wav"
+    },
+    "deepslate_bricks_slab": {
+      "break": "deepslate_bricks.break.wav",
+      "place": "deepslate_bricks.place.wav"
+    },
+    "bricks": {
+      "break": "stone.break.wav",
+      "place": "stone.place.wav"
+    },
+    "bricks_slab": {
+      "break": "stone.break.wav",
+      "place": "stone.place.wav"
+    },
+    "diorite_bricks": {
+      "break": "stone.break.wav",
+      "place": "stone.place.wav"
+    },
+    "diorite_bricks_slab": {
+      "break": "stone.break.wav",
+      "place": "stone.place.wav"
+    },
+    "rose_quartz_bircks": {
+      "break": "amethyst_block.break.wav",
+      "place": "amethyst_block.place.wav"
+    },
+    "rose_quartz_bricks_slab": {
+      "break": "amethyst_block.break.wav",
+      "place": "amethyst_block.place.wav"
+    },
+    "purpur_bricks": {
+      "break": "nether_bricks.break.wav",
+      "place": "nether_bricks.place.wav"
+    },
+    "purpur_bricks_slab": {
+      "break": "nether_bricks.break.wav",
+      "place": "nether_bricks.place.wav"
+    },
+    "redsand_bricks": {
+      "break": "sand.break.wav",
+      "place": "sand.place.wav"
+    },
+    "redsand_bricks_slab": {
+      "break": "sand.break.wav",
+      "place": "sand.place.wav"
+    },
+    "ice_bricks": {
+      "break": "glass.break.wav",
+      "place": "glass.place.wav"
+    },
+    "ice_bricks_slab": {
+      "break": "glass.break.wav",
+      "place": "glass.place.wav"
+    },
+    "blue_bricks": {
+      "break": "stone.break.wav",
+      "place": "stone.place.wav"
+    },
+    "blue_bricks_slab": {
+      "break": "stone.break.wav",
+      "place": "stone.place.wav"
+    },
+    "mossy_prismarine": {
+      "break": "moss.break.wav",
+      "place": "moss.place.wav"
+    },
+    "mossy_prismarine_brick": {
+      "break": "moss.break.wav",
+      "place": "moss.place.wav"
+    },
+    "mossy_dark_prismarine": {
+      "break": "moss.break.wav",
+      "place": "moss.place.wav"
+    },
+    "mossy_redsand_bricks": {
+      "break": "moss.break.wav",
+      "place": "moss.place.wav"
+    },
+    "mossy_blue_bricks": {
+      "break": "moss.break.wav",
+      "place": "moss.place.wav"
+    },
+    "smooth_stone_stairs_l": {
+      "break": "stone.break.wav",
+      "place": "stone.place.wav"
+    },
+    "smooth_stone_stairs_r": {
+      "break": "stone.break.wav",
+      "place": "stone.place.wav"
+    },
+    "gold_block": {
+      "break": "metal.break.wav",
+      "place": "metal.place.wav"
+    },
+    "emerald_block": {
+      "break": "amethyst_block.break.wav",
+      "place": "amethyst_block.place.wav"
+    },
+    "diamond_block": {
+      "break": "amethyst_block.break.wav",
+      "place": "amethyst_block.place.wav"
+    },
+    "redstone_bricks": {
+      "break": "stone.break.wav",
+      "place": "stone.place.wav"
+    },
+    "emerald_bircks": {
+      "break": "stone.break.wav",
+      "place": "stone.place.wav"
+    },
+    "emerald_bircks2": {
+      "break": "stone.break.wav",
+      "place": "stone.place.wav"
+    },
+    "gold_bricks": {
+      "break": "metal.break.wav",
+      "place": "metal.place.wav"
+    },
+    "orange_missing": {
+      "break": "stone.break.wav",
+      "place": "stone.place.wav"
+    },
+    "gray_missing": {
+      "break": "stone.break.wav",
+      "place": "stone.place.wav"
+    },
+    "black_missing": {
+      "break": "stone.break.wav",
+      "place": "stone.place.wav"
+    },
+    "blue_missing": {
+      "break": "stone.break.wav",
+      "place": "stone.place.wav"
+    },
+    "green_missing": {
+      "break": "stone.break.wav",
+      "place": "stone.place.wav"
+    }
+  }
+}

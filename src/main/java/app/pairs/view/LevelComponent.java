@@ -5,6 +5,7 @@ import static app.pairs.utils.Colors.*;
 import static io.github.libsdl4j.api.keycode.SDL_Keycode.*;
 
 import app.pairs.asset.IconManager;
+import app.pairs.audio.AudioManager;
 import app.pairs.logic.GameState;
 import app.pairs.model.CountdownState;
 import app.pairs.solver.Move;
@@ -360,8 +361,12 @@ public class LevelComponent extends Container {
 			return;
 		long now = System.currentTimeMillis();
 		int elapsed = (int)(now - lastEliminationTimeMs);
-		gameState.operate(r1, c1, r2, c2, elapsed);
+		AudioManager.instance().play(
+			"eliminate", gameState.getTileString(r1, c1)
+		);
+		gameState.eliminate(r1, c1, r2, c2, elapsed);
 		lastEliminationTimeMs = now;
+
 		gridView.reset();
 		if (gameState.isCleared()) {
 			cleared = true;
