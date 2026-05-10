@@ -59,17 +59,45 @@ public class FlexLayout extends Container {
 	@Override
 	public void layout(int x, int y, int w, int h) {
 		super.layout(x, y, w, h);
-		int cursor = padding;
 		int innerW = w - padding * 2;
 		int innerH = h - padding * 2;
+
+		int totalNatural = 0;
+		int totalGrow = 0;
 		for (Widget child : children) {
 			int[] size = child.measure();
+			Integer grow = child.getProp("flex-grow");
+			if (grow != null && grow > 0) {
+				totalGrow += grow;
+			}
 			if (direction == Direction.ROW) {
-				child.layout(cursor, padding, size[0], innerH);
-				cursor += size[0] + gap;
+				totalNatural += size[0];
 			} else {
-				child.layout(padding, cursor, innerW, size[1]);
-				cursor += size[1] + gap;
+				totalNatural += size[1];
+			}
+		}
+		int gaps = gap * Math.max(0, children.size() - 1);
+		int avail = direction == Direction.ROW ? innerW : innerH;
+		int remaining = Math.max(0, avail - totalNatural - gaps);
+
+		int cursor = padding;
+		for (Widget child : children) {
+			int[] size = child.measure();
+			Integer grow = child.getProp("flex-grow");
+			if (direction == Direction.ROW) {
+				int cw = size[0];
+				if (grow != null && grow > 0 && totalGrow > 0) {
+					cw += remaining * grow / totalGrow;
+				}
+				child.layout(cursor, padding, cw, innerH);
+				cursor += cw + gap;
+			} else {
+				int ch = size[1];
+				if (grow != null && grow > 0 && totalGrow > 0) {
+					ch += remaining * grow / totalGrow;
+				}
+				child.layout(padding, cursor, innerW, ch);
+				cursor += ch + gap;
 			}
 		}
 	}

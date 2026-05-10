@@ -1,7 +1,5 @@
 package app.pairs.router;
 
-import app.pairs.logic.GameState;
-import app.pairs.map.TilemapFactory;
 import app.pairs.view.*;
 
 import io.github.libsdl4j.api.render.*;
@@ -17,10 +15,7 @@ public class MainMenuPage implements Page {
 	}
 
 	private void startGame() {
-		var gameState = new GameState(
-			TilemapFactory.fromPreset("tilemap/medium")
-		);
-		Router.instance().navigateTo(new LevelPage(gameState, 180_000L));
+		Router.instance().navigateTo(new DifficultyPage());
 	}
 
 	private void quitGame() {

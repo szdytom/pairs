@@ -270,4 +270,109 @@ class FlexLayoutTest {
 		l.addChild(new FixedWidget(10, 10));
 		assertArrayEquals(new int[] {15, 30}, l.measure());
 	}
+
+	// ---- flex-grow: row ---------------------------------------------------
+
+	@Test
+	void layoutRowFlexGrowExpandsChildToFillRemaining() {
+		FlexLayout l = new FlexLayout(FlexLayout.Direction.ROW, 0);
+		FixedWidget a = new FixedWidget(30, 20);
+		FixedWidget b = new FixedWidget(50, 10);
+		b.setProp("flex-grow", 1);
+		l.addChild(a);
+		l.addChild(b);
+		l.layout(0, 0, 100, 50);
+
+		assertEquals(30, a.layoutW);
+		assertEquals(70, b.layoutW); // 50 + (100-30-50)*1/1
+		assertEquals(0, a.layoutX);
+		assertEquals(30, b.layoutX);
+	}
+
+	@Test
+	void layoutRowFlexGrowMultipleChildrenShareRemaining() {
+		FlexLayout l = new FlexLayout(FlexLayout.Direction.ROW, 0);
+		FixedWidget a = new FixedWidget(20, 10);
+		FixedWidget b = new FixedWidget(30, 10);
+		FixedWidget c = new FixedWidget(10, 10);
+		b.setProp("flex-grow", 2);
+		c.setProp("flex-grow", 1);
+		l.addChild(a);
+		l.addChild(b);
+		l.addChild(c);
+		l.layout(0, 0, 90, 50);
+		// remaining = 90 - (20+30+10) = 30
+		// b gets 30 + 30*2/3 = 50
+		// c gets 10 + 30*1/3 = 20
+
+		assertEquals(20, a.layoutW);
+		assertEquals(50, b.layoutW);
+		assertEquals(20, c.layoutW);
+		assertEquals(0, a.layoutX);
+		assertEquals(20, b.layoutX);
+		assertEquals(70, c.layoutX);
+	}
+
+	@Test
+	void layoutRowFlexGrowNoShrinkBelowMeasured() {
+		FlexLayout l = new FlexLayout(FlexLayout.Direction.ROW, 0);
+		FixedWidget a = new FixedWidget(30, 20);
+		FixedWidget b = new FixedWidget(80, 10);
+		b.setProp("flex-grow", 1);
+		l.addChild(a);
+		l.addChild(b);
+		l.layout(0, 0, 80, 50);
+		// remaining = 80 - (30+80) = -30, clamped to 0
+		// b gets 80 + 0 = 80 (measured size preserved)
+
+		assertEquals(30, a.layoutW);
+		assertEquals(80, b.layoutW);
+	}
+
+	@Test
+	void layoutRowNoGrowKeepsMeasuredSize() {
+		FlexLayout l = new FlexLayout(FlexLayout.Direction.ROW, 0);
+		FixedWidget a = new FixedWidget(30, 20);
+		FixedWidget b = new FixedWidget(50, 10);
+		l.addChild(a);
+		l.addChild(b);
+		l.layout(0, 0, 200, 50);
+		// no flex-grow — children keep measured sizes
+
+		assertEquals(30, a.layoutW);
+		assertEquals(50, b.layoutW);
+	}
+
+	// ---- flex-grow: column -------------------------------------------------
+
+	@Test
+	void layoutColumnFlexGrowExpandsChildToFillRemaining() {
+		FlexLayout l = new FlexLayout(FlexLayout.Direction.COLUMN, 0);
+		FixedWidget a = new FixedWidget(30, 20);
+		FixedWidget b = new FixedWidget(30, 30);
+		b.setProp("flex-grow", 1);
+		l.addChild(a);
+		l.addChild(b);
+		l.layout(0, 0, 100, 70);
+
+		assertEquals(20, a.layoutH);
+		assertEquals(50, b.layoutH); // 30 + (70-20-30)*1/1
+		assertEquals(0, a.layoutY);
+		assertEquals(20, b.layoutY);
+	}
+
+	@Test
+	void layoutColumnFlexGrowNoShrinkBelowMeasured() {
+		FlexLayout l = new FlexLayout(FlexLayout.Direction.COLUMN, 0);
+		FixedWidget a = new FixedWidget(30, 20);
+		FixedWidget b = new FixedWidget(30, 60);
+		b.setProp("flex-grow", 1);
+		l.addChild(a);
+		l.addChild(b);
+		l.layout(0, 0, 100, 50);
+		// remaining = 50 - (20+60) = -30, clamped to 0
+
+		assertEquals(20, a.layoutH);
+		assertEquals(60, b.layoutH); // measured size preserved
+	}
 }
