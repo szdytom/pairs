@@ -78,7 +78,7 @@ public class LevelComponent extends Container {
 		this.totalCountdownMs = totalCountdownMs;
 		this.countdownState = new CountdownState();
 		countdownState.remainingMs = totalCountdownMs;
-		this.lastEliminationTimeMs = System.currentTimeMillis();
+		this.lastEliminationTimeMs = countdownState.now();
 
 		blackboard.put(GameState.class, gameState);
 		blackboard.put(CountdownState.class, countdownState);
@@ -163,8 +163,7 @@ public class LevelComponent extends Container {
 		}
 		boolean hintReady = !cleared && !timedOut
 			&& !autoPairingState.isActive()
-			&& System.currentTimeMillis() - lastEliminationTimeMs
-				>= HINT_COOLDOWN_MS;
+			&& countdownState.now() - lastEliminationTimeMs >= HINT_COOLDOWN_MS;
 		hintBtn.setVisible(hintReady);
 		autoPairingState.update(deltaTimeMs);
 		super.update(deltaTimeMs);
@@ -173,7 +172,8 @@ public class LevelComponent extends Container {
 	/** Reset the level with the map generated. */
 	public void restart() {
 		countdownState.remainingMs = totalCountdownMs;
-		lastEliminationTimeMs = System.currentTimeMillis();
+		countdownState.resetPause();
+		lastEliminationTimeMs = countdownState.now();
 		gameState.restart();
 		int newW = gameState.getWidth();
 		int newH = gameState.getHeight();
@@ -205,6 +205,7 @@ public class LevelComponent extends Container {
 
 	private void startEntryAnimation() {
 		gameStarted = false;
+		countdownState.pause();
 		gridView.setEntryPlaying(true);
 		int[][] order = gridView.getDepthOrder();
 		for (int[] cell : order) {
@@ -223,6 +224,7 @@ public class LevelComponent extends Container {
 		autoPairingState.push(dt -> gridView.isEntryComplete());
 		autoPairingState.push(new ActionStep(() -> {
 			gridView.setEntryPlaying(false);
+			countdownState.resume();
 			gameStarted = true;
 		}));
 	}
@@ -384,7 +386,7 @@ public class LevelComponent extends Container {
 	private void eliminatePair(int r1, int c1, int r2, int c2) {
 		if (timedOut || cleared)
 			return;
-		long now = System.currentTimeMillis();
+		long now = countdownState.now();
 		int elapsed = (int)(now - lastEliminationTimeMs);
 		AudioManager.instance().play(
 			"eliminate", gameState.getTileString(r1, c1)
