@@ -3,7 +3,9 @@ package app.pairs.asset;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
@@ -30,6 +32,15 @@ public final class AudioRegistry {
 		return new AudioRegistry(categories);
 	}
 
+	public boolean has(String category, String object) {
+		Category config = categories.get(category);
+		if (config == null) {
+			return false;
+		}
+		JsonObject events = config.objects().getAsJsonObject(object);
+		return events != null && events.has(config.event());
+	}
+
 	public String resolve(String category, String object) {
 		Category config = categories.get(category);
 		if (config == null) {
@@ -39,6 +50,17 @@ public final class AudioRegistry {
 		}
 		String file = config.resolve(object);
 		return config.basePath() + "/" + file;
+	}
+
+	/** Returns all unique asset paths registered across every category. */
+	public Set<String> allPaths() {
+		Set<String> result = new HashSet<>();
+		for (Category cat : categories.values()) {
+			for (String object : cat.objects().keySet()) {
+				result.add(cat.basePath() + "/" + cat.resolve(object));
+			}
+		}
+		return result;
 	}
 
 	private static Category loadCategory(AssetLoader loader, JsonObject config)

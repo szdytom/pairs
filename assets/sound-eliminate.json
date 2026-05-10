@@ -1,252 +1,4 @@
 {
-  "files": {
-    "grass.break.wav": [
-      "grass_block",
-      "deep_grass_block",
-      "deep_grass_block2",
-      "deep_grass_block3",
-      "grass_dirt",
-      "grass_dirt2",
-      "grass_dirt_slab",
-      "packed_hay",
-      "hay_block",
-      "leaves",
-      "yellow_leaves",
-      "withered_leaves",
-      "red_leaves"
-    ],
-    "grass.place.wav": [
-      "grass_block",
-      "deep_grass_block",
-      "deep_grass_block2",
-      "deep_grass_block3",
-      "grass_dirt",
-      "grass_dirt2",
-      "grass_dirt_slab",
-      "packed_hay",
-      "hay_block",
-      "leaves",
-      "yellow_leaves",
-      "withered_leaves",
-      "red_leaves"
-    ],
-    "sand.break.wav": [
-      "sand",
-      "sand2",
-      "redsand_dirt",
-      "redsand_dirt2",
-      "redsand_dirt_slab",
-      "redsand_bricks",
-      "redsand_bricks_slab"
-    ],
-    "sand.place.wav": [
-      "sand",
-      "sand2",
-      "redsand_dirt",
-      "redsand_dirt2",
-      "redsand_dirt_slab",
-      "redsand_bricks",
-      "redsand_bricks_slab"
-    ],
-    "gravel.break.wav": [
-      "dirt",
-      "dirt2"
-    ],
-    "gravel.place.wav": [
-      "dirt",
-      "dirt2"
-    ],
-    "mud.break.wav": [
-      "wet_dirt"
-    ],
-    "mud.place.wav": [
-      "wet_dirt"
-    ],
-    "snow.break.wav": [
-      "snowed_dirt",
-      "snowed_dirt2",
-      "snowed_dirt_slab",
-      "snow"
-    ],
-    "snow.place.wav": [
-      "snowed_dirt",
-      "snowed_dirt2",
-      "snowed_dirt_slab",
-      "snow"
-    ],
-    "glass.break.wav": [
-      "ice",
-      "ice_bricks",
-      "ice_bricks_slab"
-    ],
-    "glass.place.wav": [
-      "ice",
-      "ice_bricks",
-      "ice_bricks_slab"
-    ],
-    "stone.break.wav": [
-      "blue_pillar",
-      "blue_pillar_slab",
-      "red_pillar",
-      "red_pillar_slab",
-      "green_pillar",
-      "green_pillar_slab",
-      "smooth_stone",
-      "smooth_stone2",
-      "stone",
-      "stone2",
-      "coal_ore",
-      "gold_ore",
-      "emerald_ore",
-      "diamond_ore",
-      "bricks",
-      "bricks_slab",
-      "diorite_bricks",
-      "diorite_bricks_slab",
-      "blue_bricks",
-      "blue_bricks_slab",
-      "smooth_stone_stairs_l",
-      "smooth_stone_stairs_r",
-      "redstone_bricks",
-      "emerald_bircks",
-      "emerald_bircks2"
-    ],
-    "stone.place.wav": [
-      "blue_pillar",
-      "blue_pillar_slab",
-      "red_pillar",
-      "red_pillar_slab",
-      "green_pillar",
-      "green_pillar_slab",
-      "smooth_stone",
-      "smooth_stone2",
-      "stone",
-      "stone2",
-      "coal_ore",
-      "gold_ore",
-      "emerald_ore",
-      "diamond_ore",
-      "bricks",
-      "bricks_slab",
-      "diorite_bricks",
-      "diorite_bricks_slab",
-      "blue_bricks",
-      "blue_bricks_slab",
-      "smooth_stone_stairs_l",
-      "smooth_stone_stairs_r",
-      "redstone_bricks",
-      "emerald_bircks",
-      "emerald_bircks2"
-    ],
-    "wood.break.wav": [
-      "dark_log",
-      "dark_plank",
-      "dark_plank_slab",
-      "log",
-      "plank",
-      "plank_slab",
-      "birch_log",
-      "birch_plank",
-      "birch_plank_slab"
-    ],
-    "wood.place.wav": [
-      "dark_log",
-      "dark_plank",
-      "dark_plank_slab",
-      "log",
-      "plank",
-      "plank_slab",
-      "birch_log",
-      "birch_plank",
-      "birch_plank_slab"
-    ],
-    "cherry_leaves.break.wav": [
-      "cherry_leaves"
-    ],
-    "cherry_leaves.place.wav": [
-      "cherry_leaves"
-    ],
-    "azalea_leaves.break.wav": [
-      "azalea_leaves"
-    ],
-    "azalea_leaves.place.wav": [
-      "azalea_leaves"
-    ],
-    "flowering_azalea.break.wav": [
-      "flowered_leaves"
-    ],
-    "flowering_azalea.place.wav": [
-      "flowered_leaves"
-    ],
-    "cave_vines.break.wav": [
-      "fruited_leaves"
-    ],
-    "cave_vines.place.wav": [
-      "fruited_leaves"
-    ],
-    "sweet_berry_bush.break.wav": [
-      "berry_leaves"
-    ],
-    "sweet_berry_bush.place.wav": [
-      "berry_leaves"
-    ],
-    "copper.break.wav": [
-      "copper_ore"
-    ],
-    "copper.place.wav": [
-      "copper_ore"
-    ],
-    "deepslate_bricks.break.wav": [
-      "deepslate_bricks",
-      "deepslate_bricks_slab"
-    ],
-    "deepslate_bricks.place.wav": [
-      "deepslate_bricks",
-      "deepslate_bricks_slab"
-    ],
-    "amethyst_block.break.wav": [
-      "rose_quartz_bircks",
-      "rose_quartz_bricks_slab",
-      "emerald_block",
-      "diamond_block"
-    ],
-    "amethyst_block.place.wav": [
-      "rose_quartz_bircks",
-      "rose_quartz_bricks_slab",
-      "emerald_block",
-      "diamond_block"
-    ],
-    "nether_bricks.break.wav": [
-      "purpur_bricks",
-      "purpur_bricks_slab"
-    ],
-    "nether_bricks.place.wav": [
-      "purpur_bricks",
-      "purpur_bricks_slab"
-    ],
-    "moss.break.wav": [
-      "mossy_prismarine",
-      "mossy_prismarine_brick",
-      "mossy_dark_prismarine",
-      "mossy_redsand_bricks",
-      "mossy_blue_bricks"
-    ],
-    "moss.place.wav": [
-      "mossy_prismarine",
-      "mossy_prismarine_brick",
-      "mossy_dark_prismarine",
-      "mossy_redsand_bricks",
-      "mossy_blue_bricks"
-    ],
-    "metal.break.wav": [
-      "gold_block",
-      "gold_bricks"
-    ],
-    "metal.place.wav": [
-      "gold_block",
-      "gold_bricks"
-    ]
-  },
   "blocks": {
     "grass_block": {
       "break": "grass.break.wav",
@@ -457,8 +209,8 @@
       "place": "stone.place.wav"
     },
     "copper_ore": {
-      "break": "copper.break.wav",
-      "place": "copper.place.wav"
+      "break": "stone.break.wav",
+      "place": "stone.place.wav"
     },
     "emerald_ore": {
       "break": "stone.break.wav",
@@ -587,6 +339,26 @@
     "gold_bricks": {
       "break": "metal.break.wav",
       "place": "metal.place.wav"
+    },
+    "orange_missing": {
+      "break": "stone.break.wav",
+      "place": "stone.place.wav"
+    },
+    "gray_missing": {
+      "break": "stone.break.wav",
+      "place": "stone.place.wav"
+    },
+    "black_missing": {
+      "break": "stone.break.wav",
+      "place": "stone.place.wav"
+    },
+    "blue_missing": {
+      "break": "stone.break.wav",
+      "place": "stone.place.wav"
+    },
+    "green_missing": {
+      "break": "stone.break.wav",
+      "place": "stone.place.wav"
     }
   }
 }
