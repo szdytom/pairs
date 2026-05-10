@@ -15,6 +15,7 @@ import static io.github.libsdl4j.api.video.SdlVideo.*;
 import static io.github.libsdl4j.api.video.SdlVideoConst.*;
 
 import app.pairs.asset.AssetManager;
+import app.pairs.audio.AudioManager;
 import app.pairs.logic.GameState;
 import app.pairs.map.TilemapFactory;
 import app.pairs.router.LevelPage;
@@ -65,6 +66,7 @@ public class Main {
 
 		try {
 			AssetManager.instance().loadManifest("manifest.json");
+			AudioManager.instance().init();
 		} catch (Exception e) {
 			System.err.println("Failed to load assets: " + e.getMessage());
 			e.printStackTrace();
@@ -144,6 +146,7 @@ public class Main {
 		}
 
 		router.shutdown();
+		AudioManager.instance().close();
 		AssetManager.instance().dispose();
 		SDL_DestroyRenderer(renderer);
 		SDL_DestroyWindow(window);

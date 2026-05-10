@@ -1,0 +1,10 @@
+{
+  "categories": {
+    "eliminate": {
+      "file": "sound-eliminate.json",
+      "objectRoot": "blocks",
+      "event": "break",
+      "basePath": "EliminateSound"
+    }
+  }
+}
