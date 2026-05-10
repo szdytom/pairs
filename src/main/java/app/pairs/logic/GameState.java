@@ -58,6 +58,7 @@ public final class GameState {
 	public void restart() {
 		this.tilemap = factory.generate();
 		this.opLogs.clear();
+		this.gameStatus.reset();
 	}
 
 	/** Custom dimensions and tile-type count, no group constraints. */
