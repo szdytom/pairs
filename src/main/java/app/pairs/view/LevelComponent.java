@@ -7,6 +7,8 @@ import app.pairs.audio.AudioManager;
 import app.pairs.logic.GameState;
 import app.pairs.model.CountdownState;
 import app.pairs.model.ItemType;
+import app.pairs.router.MainMenuPage;
+import app.pairs.router.Router;
 import app.pairs.solver.Move;
 import app.pairs.solver.SolverResult;
 
@@ -114,8 +116,20 @@ public class LevelComponent extends Container {
 		topBar.addChild(hintBtn);
 		topBar.addChild(retryBtn);
 
+		var homeIcon = IconManager.instance().getTexture("home");
+		var homeImage = new ImageComponent(homeIcon, 16, 16);
+		var homeBtn = new Button(
+			() -> Router.instance().navigateTo(new MainMenuPage())
+		);
+		homeBtn.setProp("h-align", AlignLayout.HAlign.LEFT);
+		homeBtn.setProp("v-align", AlignLayout.VAlign.TOP);
+		homeBtn.setProp("h-padding", 4);
+		homeBtn.setProp("v-padding", 4);
+		homeBtn.addChild(homeImage);
+
 		this.alignLayout = new AlignLayout();
 		alignLayout.addChild(topBar);
+		alignLayout.addChild(homeBtn);
 		gridView.setProp("h-align", AlignLayout.HAlign.CENTER);
 		gridView.setProp("v-align", AlignLayout.VAlign.CENTER);
 		alignLayout.addChild(gridView);
