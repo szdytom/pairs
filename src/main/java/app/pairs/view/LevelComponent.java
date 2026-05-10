@@ -2,8 +2,6 @@ package app.pairs.view;
 
 import static app.pairs.utils.Colors.*;
 
-import static io.github.libsdl4j.api.keycode.SDL_Keycode.*;
-
 import app.pairs.asset.IconManager;
 import app.pairs.audio.AudioManager;
 import app.pairs.logic.GameState;
@@ -59,6 +57,7 @@ public class LevelComponent extends Container {
 	// Child text components
 	private final TextComponent overlayText;
 	private final Button hintBtn;
+	private final Button retryBtn;
 
 	private final AutoPairingState autoPairingState = new AutoPairingState();
 	private int autoHLRow1 = -1;
@@ -99,15 +98,24 @@ public class LevelComponent extends Container {
 			Move m = result.moves().get(0);
 			startHint(m.r1(), m.c1(), m.r2(), m.c2());
 		});
-		hintBtn.setProp("h-align", AlignLayout.HAlign.RIGHT);
-		hintBtn.setProp("v-align", AlignLayout.VAlign.TOP);
-		hintBtn.setProp("h-padding", 4);
-		hintBtn.setProp("v-padding", 4);
 		hintBtn.setVisible(false);
 		hintBtn.addChild(hintImage);
 
+		var restartIcon = IconManager.instance().getTexture("restart");
+		var restartImage = new ImageComponent(restartIcon, 16, 16);
+		this.retryBtn = new Button(() -> restart());
+		retryBtn.addChild(restartImage);
+
+		var topBar = new FlexLayout(FlexLayout.Direction.ROW, 4);
+		topBar.setProp("h-align", AlignLayout.HAlign.RIGHT);
+		topBar.setProp("v-align", AlignLayout.VAlign.TOP);
+		topBar.setProp("h-padding", 4);
+		topBar.setProp("v-padding", 4);
+		topBar.addChild(hintBtn);
+		topBar.addChild(retryBtn);
+
 		this.alignLayout = new AlignLayout();
-		alignLayout.addChild(hintBtn);
+		alignLayout.addChild(topBar);
 		gridView.setProp("h-align", AlignLayout.HAlign.CENTER);
 		gridView.setProp("v-align", AlignLayout.VAlign.CENTER);
 		alignLayout.addChild(gridView);
@@ -322,11 +330,6 @@ public class LevelComponent extends Container {
 				return true;
 			default:
 				break;
-			}
-		} else if (event instanceof KeyEvent ke) {
-			if (ke.keycode() == SDLK_SPACE) {
-				restart();
-				return true;
 			}
 		}
 		return false;
