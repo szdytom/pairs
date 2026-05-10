@@ -58,6 +58,8 @@ public class LevelComponent extends Container {
 
 	// Child text components
 	private final TextComponent overlayText;
+	private final PairCounter pairCounter;
+	private int lastEliminatedCount;
 	private final Button hintBtn;
 	private final Button retryBtn;
 
@@ -75,6 +77,14 @@ public class LevelComponent extends Container {
 		this.gridWidth = gameState.getWidth();
 		this.gridHeight = gameState.getHeight();
 		this.highlighted = new boolean[gridHeight][gridWidth];
+
+		int tileCount = 0;
+		for (int r = 0; r < gridHeight; r++) {
+			for (int c = 0; c < gridWidth; c++)
+				if (gameState.getTile(r, c) > 0)
+					tileCount++;
+		}
+		int totalPairs = tileCount / 2;
 
 		this.totalCountdownMs = totalCountdownMs;
 		this.countdownState = new CountdownState();
@@ -127,9 +137,15 @@ public class LevelComponent extends Container {
 		homeBtn.setProp("v-padding", 4);
 		homeBtn.addChild(homeImage);
 
+		this.pairCounter = new PairCounter(totalPairs);
+		pairCounter.setProp("h-align", AlignLayout.HAlign.CENTER);
+		pairCounter.setProp("v-align", AlignLayout.VAlign.TOP);
+		pairCounter.setProp("v-padding", 0);
+
 		this.alignLayout = new AlignLayout();
 		alignLayout.addChild(topBar);
 		alignLayout.addChild(homeBtn);
+		alignLayout.addChild(pairCounter);
 		gridView.setProp("h-align", AlignLayout.HAlign.CENTER);
 		gridView.setProp("v-align", AlignLayout.VAlign.CENTER);
 		alignLayout.addChild(gridView);
@@ -187,6 +203,11 @@ public class LevelComponent extends Container {
 			&& !autoPairingState.isActive()
 			&& countdownState.now() - lastEliminationTimeMs >= HINT_COOLDOWN_MS;
 		hintBtn.setVisible(hintReady);
+		int count = gameState.getOpLogCount();
+		if (count != lastEliminatedCount) {
+			lastEliminatedCount = count;
+			pairCounter.setProgress(count);
+		}
 		autoPairingState.update(deltaTimeMs);
 		super.update(deltaTimeMs);
 	}

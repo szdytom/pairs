@@ -195,6 +195,11 @@ public final class GameState {
 		return opLogs.history();
 	}
 
+	/** Returns the number of eliminated pairs (cheap, no allocation). */
+	public int getOpLogCount() {
+		return opLogs.size();
+	}
+
 	/** Check whether the game is in a stalled state (no more valid moves). */
 	public boolean isStall() {
 		return IsStall.isStall(tilemap);
