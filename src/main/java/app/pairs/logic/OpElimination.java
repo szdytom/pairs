@@ -71,12 +71,7 @@ public class OpElimination implements Operation {
 		case EXTREME -> deltaScore = SCORE_PER_PAIR * 3;
 		default -> deltaScore = SCORE_PER_PAIR;
 		}
-		switch (time / 1_000) {
-		case 1 -> deltaScore *= 4;
-		case 2 -> deltaScore *= 3;
-		case 3 -> deltaScore *= 2;
-		default -> deltaScore *= 1;
-		}
+		deltaScore *= Math.max(1, 5 - time / 1_000);
 		gameStatus.changeScore(deltaScore);
 	}
 
