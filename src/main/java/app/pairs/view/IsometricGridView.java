@@ -15,6 +15,8 @@ public class IsometricGridView extends Widget {
 	private static final int SHADOW_Y_OFFSET = TILE_HEIGHT;
 	private static final int HOVER_LIFT = TILE_HEIGHT / 3;
 	private static final int HOVER_LIFT_MS = 50;
+	private static final long ENTRY_DURATION_MS = 300;
+	private static final float ENTRY_START_EPSILON = 0.001f;
 
 	private final SDL_Rect srcRect = new SDL_Rect();
 	private final SDL_Rect dstRect = new SDL_Rect();
@@ -35,6 +37,9 @@ public class IsometricGridView extends Widget {
 	private final int[] measuredSize = new int[2];
 	private int originOffsetX;
 	private int originOffsetY;
+	private float[][] entryProgress;
+	private boolean entryActive;
+	private int entryFlyDistance;
 
 	public IsometricGridView(int gridWidth, int gridHeight) {
 		this.gridWidth = gridWidth;
@@ -68,6 +73,45 @@ public class IsometricGridView extends Widget {
 
 	public void setHighlighted(boolean[][] highlighted) {
 		this.highlighted = highlighted;
+	}
+
+	public void setEntryPlaying(boolean active) {
+		this.entryActive = active;
+		if (active) {
+			entryProgress = new float[gridHeight][gridWidth];
+			entryFlyDistance = computeEntryFlyDistance();
+		}
+	}
+
+	private int computeEntryFlyDistance() {
+		int stepY = mapper.getTileWidth() / 4;
+		return 2
+			* ((gridHeight - 1 + gridWidth - 1) * stepY + TILE_HEIGHT / 2
+		       + SHADOW_SIZE / 2 + SHADOW_Y_OFFSET);
+	}
+
+	public void startEntry(int row, int col) {
+		if (!entryActive)
+			return;
+		entryProgress[row][col] = ENTRY_START_EPSILON;
+	}
+
+	public boolean isEntryComplete() {
+		if (!entryActive)
+			return false;
+		GameState gameState = blackboard().get(GameState.class);
+		for (int r = 0; r < gridHeight; r++) {
+			for (int c = 0; c < gridWidth; c++) {
+				if (gameState.getTile(r, c) > 0 && entryProgress[r][c] < 1f) {
+					return false;
+				}
+			}
+		}
+		return true;
+	}
+
+	public int[][] getDepthOrder() {
+		return depthOrder;
 	}
 
 	public boolean isAnimationReady(int row, int col) {
@@ -149,6 +193,18 @@ public class IsometricGridView extends Widget {
 				}
 			}
 		}
+		if (entryActive) {
+			float entryStep = deltaTimeMs / (float)ENTRY_DURATION_MS;
+			for (int r = 0; r < gridHeight; r++) {
+				for (int c = 0; c < gridWidth; c++) {
+					if (entryProgress[r][c] > 0 && entryProgress[r][c] < 1f) {
+						entryProgress[r][c] = Math.min(
+							1f, entryProgress[r][c] + entryStep
+						);
+					}
+				}
+			}
+		}
 	}
 
 	@Override
@@ -190,20 +246,30 @@ public class IsometricGridView extends Widget {
 			int screenCenterX = (gridGlobalX + logical.x) * scale;
 			int screenCenterY = (gridGlobalY + logical.y) * scale;
 
+			float progress = entryActive ? entryProgress[row][col] : 1f;
+			if (progress < ENTRY_START_EPSILON)
+				continue;
+
+			int entryOffset = entryActive
+				? Math.round((1f - progress) * entryFlyDistance * scale)
+				: 0;
+
 			boolean isHighlighted = highlighted != null
 				&& highlighted[row][col];
-			int shadowDstW = SHADOW_SIZE * scale;
-			int shadowDstH = SHADOW_SIZE * scale;
-			int shadowX = screenCenterX - shadowDstW / 2;
-			int shadowY = screenCenterY - shadowDstH / 2
-				+ SHADOW_Y_OFFSET * scale;
-			shadowDstRect.x = shadowX;
-			shadowDstRect.y = shadowY;
-			shadowDstRect.w = shadowDstW;
-			shadowDstRect.h = shadowDstH;
-			SdlRender.SDL_RenderCopy(
-				renderer, shadowTex, shadowSrcRect, shadowDstRect
-			);
+			if (!entryActive || progress >= 0.5f) {
+				int shadowDstW = SHADOW_SIZE * scale;
+				int shadowDstH = SHADOW_SIZE * scale;
+				int shadowX = screenCenterX - shadowDstW / 2;
+				int shadowY = screenCenterY - shadowDstH / 2
+					+ SHADOW_Y_OFFSET * scale;
+				shadowDstRect.x = shadowX;
+				shadowDstRect.y = shadowY;
+				shadowDstRect.w = shadowDstW;
+				shadowDstRect.h = shadowDstH;
+				SdlRender.SDL_RenderCopy(
+					renderer, shadowTex, shadowSrcRect, shadowDstRect
+				);
+			}
 
 			SDL_Texture tex = isHighlighted
 				? hlTileRegistry.getTexture(typeId)
@@ -213,7 +279,8 @@ public class IsometricGridView extends Widget {
 				int liftPixels = Math.round(
 					HOVER_LIFT * liftProgress[row][col]
 				);
-				dstRect.y = screenCenterY - dstH / 2 - liftPixels * scale;
+				dstRect.y = screenCenterY - dstH / 2 - liftPixels * scale
+					- entryOffset;
 				dstRect.w = dstW;
 				dstRect.h = dstH;
 
