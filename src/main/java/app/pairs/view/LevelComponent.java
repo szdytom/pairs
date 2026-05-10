@@ -8,6 +8,7 @@ import app.pairs.asset.IconManager;
 import app.pairs.audio.AudioManager;
 import app.pairs.logic.GameState;
 import app.pairs.model.CountdownState;
+import app.pairs.model.ItemType;
 import app.pairs.solver.Move;
 import app.pairs.solver.SolverResult;
 
@@ -116,6 +117,30 @@ public class LevelComponent extends Container {
 		overlayText.setProp("h-align", AlignLayout.HAlign.CENTER);
 		overlayText.setProp("v-align", AlignLayout.VAlign.CENTER);
 		alignLayout.addChild(overlayText);
+
+		var itemList = new ItemListComponent(
+			gameState.gameStatus.getCount(ItemType.AUTO_SOLVER), type -> {
+				if (timedOut || cleared || autoPairingState.isActive()) {
+					return;
+				}
+
+				switch (type) {
+				case AUTO_SOLVER -> {
+					if (!gameState.gameStatus.reduceItem(type)) {
+						return;
+					}
+					SolverResult result = gameState.solve(1_000);
+					for (Move m : result.moves()) {
+						startHint(m.r1(), m.c1(), m.r2(), m.c2());
+					}
+				}
+				}
+			}
+		);
+		itemList.setProp("v-align", AlignLayout.VAlign.BOTTOM);
+		itemList.setProp("h-align", AlignLayout.HAlign.CENTER);
+		itemList.setProp("v-padding", 20);
+		alignLayout.addChild(itemList);
 
 		this.sidebar = new LevelSidebar();
 
