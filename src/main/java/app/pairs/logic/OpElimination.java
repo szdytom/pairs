@@ -19,6 +19,7 @@ public class OpElimination implements Operation {
 	private final int col2;
 	private final int tileId;
 	private final int time;
+	private final boolean isAuto;
 	private final ArrayList<Integer> path;
 	private final Consumer<Operation> pushFn;
 	private int deltaScore;
@@ -31,6 +32,13 @@ public class OpElimination implements Operation {
 	public OpElimination(
 		GameStatus gameStatus, Tilemap tilemap, int row1, int col1, int row2,
 		int col2, int time, Consumer<Operation> pushFn
+	) {
+		this(gameStatus, tilemap, row1, col1, row2, col2, time, pushFn, false);
+	}
+
+	public OpElimination(
+		GameStatus gameStatus, Tilemap tilemap, int row1, int col1, int row2,
+		int col2, int time, Consumer<Operation> pushFn, boolean isAuto
 	) {
 		int t1 = tilemap.getTile(row1, col1);
 		int t2 = tilemap.getTile(row2, col2);
@@ -51,8 +59,8 @@ public class OpElimination implements Operation {
 		this.time = time;
 		this.path = Path.path(tilemap, row1, col1, row2, col2);
 		this.pushFn = pushFn;
+		this.isAuto = isAuto;
 	}
-
 	@Override
 	public void operate() {
 		if (executed) {
@@ -65,18 +73,7 @@ public class OpElimination implements Operation {
 		tilemap.setTile(row2, col2, 0);
 		executed = true;
 		pushFn.accept(this);
-		switch (tilemap.getDifficulty()) {
-		case EASY -> deltaScore = SCORE_PER_PAIR;
-		case HARD -> deltaScore = SCORE_PER_PAIR * 2;
-		case EXTREME -> deltaScore = SCORE_PER_PAIR * 3;
-		default -> deltaScore = SCORE_PER_PAIR;
-		}
-		switch (time / 1_000) {
-		case 1 -> deltaScore *= 4;
-		case 2 -> deltaScore *= 3;
-		case 3 -> deltaScore *= 2;
-		default -> deltaScore *= 1;
-		}
+		deltaScore = computeDeltaScore();
 		gameStatus.changeScore(deltaScore);
 	}
 
@@ -119,5 +116,25 @@ public class OpElimination implements Operation {
 
 	public int getTime() {
 		return time;
+	}
+
+	private int computeDeltaScore() {
+		if (isAuto) {
+			return 0;
+		}
+		int score;
+		switch (tilemap.getDifficulty()) {
+		case EASY -> score = SCORE_PER_PAIR;
+		case HARD -> score = SCORE_PER_PAIR * 2;
+		case EXTREME -> score = SCORE_PER_PAIR * 3;
+		default -> score = SCORE_PER_PAIR;
+		}
+		switch (time / 1_000) {
+		case 1 -> score *= 4;
+		case 2 -> score *= 3;
+		case 3 -> score *= 2;
+		default -> score *= 1;
+		}
+		return score;
 	}
 }

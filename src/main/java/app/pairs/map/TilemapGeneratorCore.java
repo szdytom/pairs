@@ -17,14 +17,7 @@ final class TilemapGeneratorCore {
 				"types must be >= 1, got: " + types
 			);
 		}
-		int fillableTiles = 0;
-		for (int[] row : map) {
-			for (int cell : row) {
-				if (cell == 0) {
-					fillableTiles++;
-				}
-			}
-		}
+		int fillableTiles = countFillableTiles(map);
 		if (fillableTiles % 2 != 0) {
 			throw new IllegalArgumentException(
 				"Fillable tile count must be even, got: " + fillableTiles
@@ -36,17 +29,54 @@ final class TilemapGeneratorCore {
 				+ fillableTiles + ", need at least " + (types * 2)
 			);
 		}
+		PairTypeMappingStrategy mapping = new RandomPairTypeMappingStrategy(
+			types
+		);
+		return new Tilemap(generateIds(map, mapping, random, strategy));
+	}
 
-		int pairCount = fillSolvablePairs(map, random, strategy);
-		if (pairCount < 0 || pairCount < types) {
-			throw new IllegalStateException(
-				"Not enough pairs to cover all tile types: pairs=" + pairCount
-				+ ", types=" + types
+	static Tilemap generate(int[][] map, int types, Random random) {
+		return generate(map, types, random, new BasePairingStrategy());
+	}
+
+	static int[][] generateIds(
+		int[][] map, PairTypeMappingStrategy mapping, Random random
+	) {
+		return generateIds(map, mapping, random, new BasePairingStrategy());
+	}
+
+	static int[][] generateIds(
+		int[][] map, PairTypeMappingStrategy mapping, Random random,
+		PairingStrategy strategy
+	) {
+		int fillableTiles = countFillableTiles(map);
+		if (fillableTiles % 2 != 0) {
+			throw new IllegalArgumentException(
+				"Fillable tile count must be even, got: " + fillableTiles
 			);
 		}
 
-		int[] pairToType = buildRandomTypeMapping(pairCount, types, random);
-		return new Tilemap(idBuilder(map, pairToType));
+		int pairCount = fillSolvablePairs(map, random, strategy);
+		if (pairCount < 0) {
+			throw new IllegalStateException(
+				"Failed to build solvable tile pairs"
+			);
+		}
+
+		int[] pairToType = mapping.build(pairCount, random);
+		return idBuilder(map, pairToType);
+	}
+
+	private static int countFillableTiles(int[][] map) {
+		int fillableTiles = 0;
+		for (int[] row : map) {
+			for (int cell : row) {
+				if (cell == 0) {
+					fillableTiles++;
+				}
+			}
+		}
+		return fillableTiles;
 	}
 
 	private static int fillSolvablePairs(
@@ -128,27 +158,7 @@ final class TilemapGeneratorCore {
 		return candidates;
 	}
 
-	private static int[] buildRandomTypeMapping(
-		int pairCount, int typeCount, Random random
-	) {
-		int[] pairToType = new int[pairCount + 1];
-		for (int i = 0; i < typeCount; i++) {
-			pairToType[i + 1] = i + 1;
-		}
-		for (int i = typeCount; i < pairCount; i++) {
-			pairToType[i + 1] = random.nextInt(typeCount) + 1;
-		}
-		// Fisher-Yates over indexes 1..pairCount; pairToType[0] stays 0.
-		for (int i = pairCount; i > 1; i--) {
-			int j = random.nextInt(i) + 1;
-			int tmp = pairToType[i];
-			pairToType[i] = pairToType[j];
-			pairToType[j] = tmp;
-		}
-		return pairToType;
-	}
-
-	private static int[][] idBuilder(int[][] map, int[] pairToType) {
+	public static int[][] idBuilder(int[][] map, int[] pairToType) {
 		int[][] id = new int[map.length][map[0].length];
 		for (int i = 0; i < map.length; i++) {
 			for (int j = 0; j < map[i].length; j++) {

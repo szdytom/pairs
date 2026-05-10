@@ -160,7 +160,7 @@ public class LevelComponent extends Container {
 				)) {
 				long now = System.currentTimeMillis();
 				int elapsed = (int)(now - lastEliminationTimeMs);
-				gameState.operate(
+				gameState.eliminate(
 					selectedRow, selectedCol, hoveredRow, hoveredCol, elapsed
 				);
 				lastEliminationTimeMs = now;

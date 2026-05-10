@@ -3,8 +3,11 @@ package app.pairs.logic;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import app.pairs.map.TilemapFactory;
 import app.pairs.model.GameStatus;
+import app.pairs.model.ItemType;
 import app.pairs.model.Tilemap;
+import app.pairs.utils.Seed;
 
 import java.util.function.Consumer;
 
@@ -90,7 +93,7 @@ class GameStateBehaviorTest {
 		GameState state = GameState.customized(2, 2, 1);
 		assertThat(state.getOpLogs()).isEmpty();
 
-		state.operate(0, 0, 0, 1, 5_000);
+		state.eliminate(0, 0, 0, 1, 5_000);
 		assertThat(state.getTile(0, 0)).isZero();
 		assertThat(state.getTile(0, 1)).isZero();
 		assertThat(state.getOpLogs()).hasSize(1);
@@ -99,7 +102,7 @@ class GameStateBehaviorTest {
 	@Test
 	void gameStateUndoRestoresAndPops() {
 		GameState state = GameState.customized(2, 2, 1);
-		state.operate(0, 0, 0, 1, 5_000);
+		state.eliminate(0, 0, 0, 1, 5_000);
 
 		state.undo();
 		assertThat(state.getTile(0, 0)).isEqualTo(1);
@@ -117,8 +120,8 @@ class GameStateBehaviorTest {
 	@Test
 	void gameStateOpLogsAreChronological() {
 		GameState state = GameState.customized(2, 2, 1);
-		state.operate(0, 0, 0, 1, 5_000);
-		state.operate(1, 0, 1, 1, 5_000);
+		state.eliminate(0, 0, 0, 1, 5_000);
+		state.eliminate(1, 0, 1, 1, 5_000);
 
 		var logs = state.getOpLogs();
 		assertThat(logs).hasSize(2);
@@ -133,12 +136,12 @@ class GameStateBehaviorTest {
 		GameState state = GameState.customized(2, 2, 1);
 		// Same cell.
 		assertThat(state.canEliminate(0, 0, 0, 0)).isFalse();
-		assertThatThrownBy(() -> state.operate(0, 0, 0, 0, 5_000))
+		assertThatThrownBy(() -> state.eliminate(0, 0, 0, 0, 5_000))
 			.isInstanceOf(IllegalStateException.class);
 		assertThat(state.getOpLogs()).isEmpty();
 
 		// Empty cell after a successful elimination.
-		state.operate(0, 0, 0, 1, 5_000);
+		state.eliminate(0, 0, 0, 1, 5_000);
 		assertThat(state.canEliminate(0, 0, 1, 0)).isFalse();
 	}
 
@@ -156,8 +159,8 @@ class GameStateBehaviorTest {
 	@Test
 	void clearedEmptyBoardReturnsTrue() {
 		GameState state = GameState.customized(2, 2, 1);
-		state.operate(0, 0, 0, 1, 5_000);
-		state.operate(1, 0, 1, 1, 5_000);
+		state.eliminate(0, 0, 0, 1, 5_000);
+		state.eliminate(1, 0, 1, 1, 5_000);
 		assertThat(state.isCleared()).isTrue();
 	}
 
@@ -170,7 +173,7 @@ class GameStateBehaviorTest {
 	@Test
 	void partialEliminationNotCleared() {
 		GameState state = GameState.customized(2, 2, 1);
-		state.operate(0, 0, 0, 1, 5_000);
+		state.eliminate(0, 0, 0, 1, 5_000);
 		assertThat(state.isCleared()).isFalse();
 	}
 
@@ -185,10 +188,10 @@ class GameStateBehaviorTest {
 	@Test
 	void eachEliminationAddsScore() {
 		GameState state = GameState.customized(2, 2, 1);
-		state.operate(0, 0, 0, 1, 5_000);
+		state.eliminate(0, 0, 0, 1, 5_000);
 		assertThat(state.gameStatus.score)
 			.isEqualTo(OpElimination.SCORE_PER_PAIR);
-		state.operate(1, 0, 1, 1, 5_000);
+		state.eliminate(1, 0, 1, 1, 5_000);
 		assertThat(state.gameStatus.score)
 			.isEqualTo(2 * OpElimination.SCORE_PER_PAIR);
 	}
@@ -196,8 +199,153 @@ class GameStateBehaviorTest {
 	@Test
 	void undoRollsBackScore() {
 		GameState state = GameState.customized(2, 2, 1);
-		state.operate(0, 0, 0, 1, 5_000);
+		state.eliminate(0, 0, 0, 1, 5_000);
 		state.undo();
 		assertThat(state.gameStatus.score).isZero();
+	}
+
+	@Test
+	void gameStateRepermutePushesAndUndoRestores() {
+		GameState state = GameState.customized(
+			4, 4, 2, Seed.fromString("state-repermute-source")
+		);
+		int[][] before = snapshot(state);
+
+		state.repermute(Seed.fromString("state-repermute-op"));
+
+		assertThat(state.getOpLogs()).hasSize(1);
+		assertThat(state.getOpLogs().get(0)).isInstanceOf(OpRepermute.class);
+
+		state.undo();
+
+		assertThat(snapshot(state)).isDeepEqualTo(before);
+		assertThat(state.getOpLogs()).isEmpty();
+	}
+
+	@Test
+	void repermuteConsumesItemAfterSuccessAndUnfreezesTime() {
+		GameState state = gameStateFrom(new int[][] {
+			{1, 1, 1, 1},
+			{1, 1, 1, 1},
+			{1, 1, 1, 1},
+			{1, 1, 1, 1},
+		});
+		state.gameStatus.addItem(ItemType.REPERMUTE, 1);
+		state.gameStatus.timeFrozen = true;
+
+		state.repermute();
+
+		assertThat(state.gameStatus.getRepermute()).isZero();
+		assertThat(state.gameStatus.timeFrozen).isFalse();
+		assertThat(state.getOpLogs()).hasSize(1);
+		assertThat(state.getOpLogs().get(0)).isInstanceOf(OpRepermute.class);
+	}
+
+	@Test
+	void repermuteFailureDoesNotConsumeItemOrUnfreezeTime() {
+		GameState state = gameStateFrom(new int[][] {{1, 0}, {0, 0}});
+		state.gameStatus.addItem(ItemType.REPERMUTE, 1);
+		state.gameStatus.timeFrozen = true;
+
+		assertThatThrownBy(state::repermute)
+			.isInstanceOf(IllegalStateException.class);
+
+		assertThat(state.gameStatus.getRepermute()).isEqualTo(1);
+		assertThat(state.gameStatus.timeFrozen).isTrue();
+		assertThat(state.getOpLogs()).isEmpty();
+	}
+
+	@Test
+	void autoSolveConsumesItemAfterSuccessAndPushesEliminationsOnly() {
+		GameState state = gameStateFrom(new int[][] {{1, 1}, {1, 1}});
+		state.gameStatus.addItem(ItemType.AUTOSOLVE, 1);
+		state.gameStatus.timeFrozen = true;
+
+		state.autoSolve();
+
+		assertThat(state.isCleared()).isTrue();
+		assertThat(state.gameStatus.getAutosolve()).isZero();
+		assertThat(state.gameStatus.timeFrozen).isFalse();
+		assertThat(state.gameStatus.score).isZero();
+		assertThat(state.getOpLogs()).hasSize(2);
+		assertThat(state.getOpLogs())
+			.allSatisfy(op -> assertThat(op).isInstanceOf(OpElimination.class));
+	}
+
+	@Test
+	void swapConsumesItemAfterSuccessAndUndoRestores() {
+		GameState state = gameStateFrom(new int[][] {{1, 2}, {1, 2}});
+		state.gameStatus.addItem(ItemType.SWAP, 1);
+		state.gameStatus.timeFrozen = true;
+
+		state.swap(0, 0, 0, 1);
+
+		assertThat(state.getTile(0, 0)).isEqualTo(2);
+		assertThat(state.getTile(0, 1)).isEqualTo(1);
+		assertThat(state.gameStatus.getSwap()).isZero();
+		assertThat(state.gameStatus.timeFrozen).isFalse();
+		assertThat(state.getOpLogs()).hasSize(1);
+
+		state.undo();
+
+		assertThat(state.getTile(0, 0)).isEqualTo(1);
+		assertThat(state.getTile(0, 1)).isEqualTo(2);
+	}
+
+	@Test
+	void swapFailureDoesNotConsumeItemOrUnfreezeTime() {
+		GameState state = gameStateFrom(new int[][] {{1, 1}, {2, 2}});
+		state.gameStatus.addItem(ItemType.SWAP, 1);
+		state.gameStatus.timeFrozen = true;
+
+		assertThatThrownBy(() -> state.swap(0, 0, 0, 1))
+			.isInstanceOf(IllegalStateException.class);
+
+		assertThat(state.gameStatus.getSwap()).isEqualTo(1);
+		assertThat(state.gameStatus.timeFrozen).isTrue();
+		assertThat(state.getOpLogs()).isEmpty();
+	}
+
+	@Test
+	void freezeConsumesTimeFreezerAndSetsFlag() {
+		GameState state = gameStateFrom(new int[][] {{1, 1}});
+		state.gameStatus.addItem(ItemType.TIMEFREEZER, 1);
+
+		state.freezeTime();
+
+		assertThat(state.gameStatus.getTimeFreezer()).isZero();
+		assertThat(state.gameStatus.timeFrozen).isTrue();
+	}
+
+	private static int[][] snapshot(GameState state) {
+		int[][] result = new int[state.getHeight()][state.getWidth()];
+		for (int r = 0; r < state.getHeight(); r++) {
+			for (int c = 0; c < state.getWidth(); c++) {
+				result[r][c] = state.getTile(r, c);
+			}
+		}
+		return result;
+	}
+
+	private static GameState gameStateFrom(int[][] map) {
+		return new GameState(new TilemapFactory() {
+			@Override
+			public Tilemap generate() {
+				return new Tilemap(copy(map));
+			}
+
+			@Override
+			public int[][] buildLegalPlacementShape() {
+				return new int[map.length][map[0].length];
+			}
+		});
+	}
+
+	private static int[][] copy(int[][] source) {
+		int[][] result = new int[source.length][source[0].length];
+		for (int r = 0; r < source.length; r++) {
+			result[r] = source[r].clone();
+		}
+		return result;
 	}
 }

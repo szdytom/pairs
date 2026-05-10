@@ -11,7 +11,7 @@ public class Tilemap {
 
 	private final int width;
 	private final int height;
-	private final int[][] id;
+	private int[][] id;
 	private Difficulty difficulty = Difficulty.NORMAL;
 
 	public Tilemap(int[][] id) {
@@ -26,6 +26,13 @@ public class Tilemap {
 
 	public void setTile(int row, int col, int newId) {
 		id[row][col] = newId;
+	}
+
+	public void setMap(int[][] newId) {
+		if (newId.length != height || newId[0].length != width) {
+			throw new IllegalStateException("not same size map");
+		}
+		id = newId;
 	}
 
 	public int getWidth() {

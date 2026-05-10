@@ -8,6 +8,7 @@ import app.pairs.map.TileGroupRegistry;
 import app.pairs.map.TileSelectionPolicy;
 import app.pairs.map.TilemapFactory;
 import app.pairs.model.GameStatus;
+import app.pairs.model.ItemType;
 import app.pairs.model.OpLogs;
 import app.pairs.model.Tilemap;
 import app.pairs.utils.Seed;
@@ -157,15 +158,31 @@ public final class GameState {
 	 * onto the history stack. Throws {@link IllegalStateException} if the
 	 * move is illegal — callers should gate on {@link #canEliminate} first.
 	 */
-	public void operate(int row1, int col1, int row2, int col2, int time) {
+	public void eliminate(int row1, int col1, int row2, int col2, int time) {
 		if (!canEliminate(row1, col1, row2, col2)) {
 			throw new IllegalStateException(
 				"illegal elimination: (" + row1 + "," + col1 + ") -> (" + row2
 				+ "," + col2 + ")"
 			);
 		}
+		gameStatus.timeFrozen = false;
 		new OpElimination(
 			gameStatus, tilemap, row1, col1, row2, col2, time, opLogs::push
+		)
+			.operate();
+	}
+
+	public void repermute() {
+		gameStatus.requireItem(ItemType.REPERMUTE);
+		repermute(Seed.deviceRandom());
+		gameStatus.consumeItem(ItemType.REPERMUTE);
+		gameStatus.timeFrozen = false;
+	}
+
+	void repermute(Seed seed) {
+		new OpRepermute(
+			tilemap, factory.buildLegalPlacementShape(),
+			new Xoroshiro128PP(seed), opLogs::push
 		)
 			.operate();
 	}
@@ -208,5 +225,36 @@ public final class GameState {
 			}
 		}
 		return true;
+	}
+	public ItemType canRevive() {
+		return gameStatus.canRevive();
+	}
+
+	/**
+	 * Run the solver and apply all found eliminations to the board. Each
+	 * elimination is individually recorded in the history stack and can be
+	 * undone step by step. {@code OpAutoSolve} itself is not pushed onto the
+	 * stack.
+	 */
+	public void autoSolve() {
+		gameStatus.requireItem(ItemType.AUTOSOLVE);
+		new OpAutoSolve(gameStatus, tilemap, opLogs::push).operate();
+		gameStatus.consumeItem(ItemType.AUTOSOLVE);
+		gameStatus.timeFrozen = false;
+	}
+
+	public void swap(int row1, int col1, int row2, int col2) {
+		requireInBounds(row1, col1);
+		requireInBounds(row2, col2);
+		gameStatus.requireItem(ItemType.SWAP);
+		new OpSwap(tilemap, row1, col1, row2, col2, opLogs::push).operate();
+		gameStatus.consumeItem(ItemType.SWAP);
+		gameStatus.timeFrozen = false;
+	}
+
+	public void freezeTime() {
+		gameStatus.requireItem(ItemType.TIMEFREEZER);
+		gameStatus.timeFrozen = true;
+		gameStatus.consumeItem(ItemType.TIMEFREEZER);
 	}
 }

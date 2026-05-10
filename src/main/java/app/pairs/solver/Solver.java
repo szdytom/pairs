@@ -88,9 +88,7 @@ public final class Solver {
 			: Long.MAX_VALUE;
 		s.bestRemainingTiles = s.remainingTiles;
 		s.dfs();
-		return new SolverResult(
-			List.copyOf(s.bestPath), s.bestRemainingTiles / 2
-		);
+		return new SolverResult(s.bestPath, s.bestRemainingTiles / 2);
 	}
 
 	private int dfs() {
