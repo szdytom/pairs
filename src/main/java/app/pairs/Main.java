@@ -18,6 +18,7 @@ import app.pairs.asset.AssetManager;
 import app.pairs.logic.GameState;
 import app.pairs.map.TilemapFactory;
 import app.pairs.router.LevelPage;
+import app.pairs.router.MainMenuPage;
 import app.pairs.router.Router;
 import app.pairs.view.Event;
 import app.pairs.view.KeyEvent;
@@ -75,8 +76,12 @@ public class Main {
 
 		Router router = Router.instance();
 
-		GameState gameState = pickDifficulty(args);
-		router.navigateTo(new LevelPage(gameState, 180_000L));
+		if (args == null || args.length == 0) {
+			router.navigateTo(new MainMenuPage());
+		} else {
+			GameState gameState = pickDifficulty(args);
+			router.navigateTo(new LevelPage(gameState, 180_000L));
+		}
 
 		System.out.println("Controls: +/- zoom | 0 reset scale | ESC quit");
 
@@ -84,7 +89,7 @@ public class Main {
 		boolean shouldRun = true;
 		long lastTime = System.currentTimeMillis();
 
-		while (shouldRun) {
+		while (shouldRun && !router.shouldQuit()) {
 			while (SDL_PollEvent(evt) != 0) {
 				switch (evt.type) {
 				case SDL_QUIT:
