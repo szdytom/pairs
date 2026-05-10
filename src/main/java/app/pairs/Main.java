@@ -83,8 +83,6 @@ public class Main {
 			router.navigateTo(new LevelPage(gameState, 180_000L));
 		}
 
-		System.out.println("Controls: +/- zoom | 0 reset scale | ESC quit");
-
 		SDL_Event evt = new SDL_Event();
 		boolean shouldRun = true;
 		long lastTime = System.currentTimeMillis();
@@ -96,13 +94,9 @@ public class Main {
 					shouldRun = false;
 					break;
 				case SDL_KEYDOWN:
-					if (evt.key.keysym.sym == SDLK_ESCAPE) {
-						shouldRun = false;
-					} else {
-						router.onEvent(new KeyEvent(
-							Event.Type.KEY_PRESSED, evt.key.keysym.sym
-						));
-					}
+					router.onEvent(
+						new KeyEvent(Event.Type.KEY_PRESSED, evt.key.keysym.sym)
+					);
 					break;
 				case SDL_MOUSEMOTION:
 					router.onEvent(new MouseEvent(
