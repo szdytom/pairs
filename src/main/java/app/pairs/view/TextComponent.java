@@ -35,6 +35,10 @@ public class TextComponent extends Widget {
 		this.text = text;
 	}
 
+	public void setColor(int color) {
+		this.color = color;
+	}
+
 	public String text() {
 		return text;
 	}
