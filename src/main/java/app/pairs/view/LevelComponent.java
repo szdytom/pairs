@@ -21,6 +21,7 @@ import io.github.libsdl4j.api.render.*;
 public class LevelComponent extends Container {
 	private static final int SIDEBAR_WIDTH = 100;
 	private static final long HINT_COOLDOWN_MS = 5_000;
+	private static final long ENTRY_STAGGER_MS = 20;
 
 	private GameState gameState;
 	private final IsometricGridView gridView;
@@ -62,6 +63,7 @@ public class LevelComponent extends Container {
 	private int autoHLCol1 = -1;
 	private int autoHLRow2 = -1;
 	private int autoHLCol2 = -1;
+	private boolean gameStarted;
 
 	public LevelComponent(
 		GameState gameState, long totalCountdownMs, Blackboard blackboard
@@ -118,11 +120,12 @@ public class LevelComponent extends Container {
 
 		addChild(alignLayout);
 		addChild(sidebar);
+		startEntryAnimation();
 	}
 
 	@Override
 	public void update(long deltaTimeMs) {
-		if (!cleared && !timedOut) {
+		if (!cleared && !timedOut && gameStarted) {
 			countdownState.remainingMs = Math.max(
 				0, countdownState.remainingMs - deltaTimeMs
 			);
@@ -170,12 +173,37 @@ public class LevelComponent extends Container {
 		prevHoveredCol = -1;
 		mouseX = -1;
 		mouseY = -1;
+		startEntryAnimation();
 		sidebar.notifyStateUpdated();
+	}
+
+	private void startEntryAnimation() {
+		gameStarted = false;
+		gridView.setEntryPlaying(true);
+		int[][] order = gridView.getDepthOrder();
+		for (int[] cell : order) {
+			int r = cell[0], c = cell[1];
+			if (gameState.getTile(r, c) > 0) {
+				final int row = r;
+				final int col = c;
+				autoPairingState.push(
+					new ActionStep(() -> gridView.startEntry(row, col))
+				);
+				autoPairingState.push(
+					new AutoPairingState.WaitStep(ENTRY_STAGGER_MS)
+				);
+			}
+		}
+		autoPairingState.push(dt -> gridView.isEntryComplete());
+		autoPairingState.push(new ActionStep(() -> {
+			gridView.setEntryPlaying(false);
+			gameStarted = true;
+		}));
 	}
 
 	/** Handle a mouse click at the current cursor position. */
 	public void handleClick() {
-		if (timedOut || cleared) {
+		if (timedOut || cleared || !gameStarted) {
 			return;
 		}
 

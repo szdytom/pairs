@@ -77,7 +77,7 @@ public class IsometricMapper {
 
 		int idx = 0;
 		for (int sum = 0; sum < gridRows + gridCols - 1; sum++) {
-			for (int row = 0; row < gridRows; row++) {
+			for (int row = gridRows - 1; row >= 0; row--) {
 				int col = sum - row;
 				if (col >= 0 && col < gridCols) {
 					order[idx++] = new int[] {row, col};
