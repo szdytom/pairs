@@ -86,9 +86,8 @@ public class OpLogEntry extends FlexLayout {
 		int scale = (maxDim + 15) / 16;
 		int w = (mapCols + scale - 1) / scale;
 		int h = (mapRows + scale - 1) / scale;
-		// +1 for ImageComponent srcRect.x offset, +2 for 1px outside-board
-		// border
-		int texW = w + 3;
+		// +2 for 1px outside-board border on each side
+		int texW = w + 2;
 		int texH = h + 2;
 
 		SDL_Surface surface = SDL_CreateRGBSurfaceWithFormat(
@@ -98,7 +97,7 @@ public class OpLogEntry extends FlexLayout {
 
 		for (int py = 1; py <= h; py++) {
 			int rowOff = py * texW * 4;
-			for (int px = 2; px <= w + 1; px++) {
+			for (int px = 1; px <= w; px++) {
 				data[rowOff + px * 4 + 3] = 20;
 			}
 		}
@@ -149,9 +148,9 @@ public class OpLogEntry extends FlexLayout {
 		if (r < -1 || r > mapRows || c < -1 || c > mapCols) {
 			return;
 		}
-		int px = Math.floorDiv(c, scale) + 2;
+		int px = Math.floorDiv(c, scale) + 1;
 		int py = Math.floorDiv(r, scale) + 1;
-		if (px < 1 || px >= stride || py < 0 || py >= texH) {
+		if (px < 0 || px >= stride || py < 0 || py >= texH) {
 			return;
 		}
 		int idx = (py * stride + px) * 4;
