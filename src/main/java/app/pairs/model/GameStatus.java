@@ -10,4 +10,7 @@ public class GameStatus {
 	public void changeScore(int delta) {
 		score += delta;
 	}
+	public void reset() {
+		score = 0;
+	}
 }
