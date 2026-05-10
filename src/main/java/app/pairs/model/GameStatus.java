@@ -15,4 +15,21 @@ public class GameStatus {
 	public void reset() {
 		score = 0;
 	}
+
+	public int getCount(ItemType type) {
+		return switch (type) {
+			case AUTO_SOLVER -> autoSolvers;
+		};
+	}
+
+	public boolean reduceItem(ItemType type) {
+		int count = getCount(type);
+		if (count <= 0) {
+			return false;
+		}
+		switch (type) {
+		case AUTO_SOLVER -> autoSolvers--;
+		}
+		return true;
+	}
 }
