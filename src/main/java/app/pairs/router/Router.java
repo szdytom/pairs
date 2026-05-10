@@ -21,6 +21,7 @@ public class Router {
 	private Page pendingPage;
 	private int windowWidth = 1_024;
 	private int windowHeight = 768;
+	private boolean quitRequested;
 
 	private Router() {
 		scaleManager.updateAutoScale(windowWidth, windowHeight);
@@ -39,6 +40,14 @@ public class Router {
 			return;
 		}
 		pendingPage = page;
+	}
+
+	public void quit() {
+		quitRequested = true;
+	}
+
+	public boolean shouldQuit() {
+		return quitRequested;
 	}
 
 	public void shutdown() {

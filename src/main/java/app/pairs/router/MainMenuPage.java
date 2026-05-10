@@ -1,9 +1,7 @@
 package app.pairs.router;
 
-import static app.pairs.utils.Colors.*;
-
-import static io.github.libsdl4j.api.keycode.SDL_Keycode.*;
-
+import app.pairs.logic.GameState;
+import app.pairs.map.TilemapFactory;
 import app.pairs.view.*;
 
 import io.github.libsdl4j.api.render.*;
@@ -14,15 +12,19 @@ public class MainMenuPage implements Page {
 
 	public MainMenuPage() {
 		this.blackboard = new Blackboard();
-		var text = new TextComponent(
-			"Pairs - Press SPACE to Play", 2, rgb(30, 30, 30)
+		this.root = new MainMenuComponent(this::startGame, this::quitGame);
+		root.setBlackboard(blackboard);
+	}
+
+	private void startGame() {
+		var gameState = new GameState(
+			TilemapFactory.fromPreset("tilemap/medium")
 		);
-		var layout = new AlignLayout();
-		text.setProp("h-align", AlignLayout.HAlign.CENTER);
-		text.setProp("v-align", AlignLayout.VAlign.CENTER);
-		layout.addChild(text);
-		layout.setBlackboard(blackboard);
-		this.root = layout;
+		Router.instance().navigateTo(new LevelPage(gameState, 180_000L));
+	}
+
+	private void quitGame() {
+		Router.instance().quit();
 	}
 
 	@Override
@@ -37,12 +39,7 @@ public class MainMenuPage implements Page {
 
 	@Override
 	public boolean onEvent(Event event) {
-		if (event instanceof KeyEvent ke && ke.type() == Event.Type.KEY_PRESSED
-		    && ke.keycode() == SDLK_SPACE) {
-			// TODO: navigate to actual LevelPage when game starts
-			return true;
-		}
-		return false;
+		return root.dispatchEvent(event, 0, 0);
 	}
 
 	@Override
