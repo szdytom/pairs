@@ -55,3 +55,7 @@ Application entry point: `app.pairs.Main` (configured in `build.gradle`)
 ### git
 
 - Keep the commit history linear. 
+
+### audio
+
+- Make sure all audio files are 48KHz, wav. If not, use ffmepg to transform them. 
