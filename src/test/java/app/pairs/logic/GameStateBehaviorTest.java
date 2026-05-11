@@ -15,7 +15,7 @@ class GameStateBehaviorTest {
 	@Test
 	void opEliminationRejectsNonPositiveTileId() {
 		assertThatThrownBy(
-			() -> new OpElimination(0, 0, 0, 0, 0, 0, List.of(), 0)
+			() -> new OpElimination(0, 0, 0, 0, 0, 0, List.of(), 0, 0)
 		)
 			.isInstanceOf(IllegalArgumentException.class);
 	}
@@ -23,7 +23,7 @@ class GameStateBehaviorTest {
 	@Test
 	void opEliminationStoresFields() {
 		var op = new OpElimination(
-			42, 1, 2, 3, 4, 5_000, List.of(0, 0, 0, 2), 1_000
+			42, 1, 2, 3, 4, 5_000, List.of(0, 0, 0, 2), 1_000, 0
 		);
 		assertThat(op.getTileId()).isEqualTo(42);
 		assertThat(op.getRow1()).isEqualTo(1);
@@ -53,7 +53,7 @@ class GameStateBehaviorTest {
 		GameState state = GameState.customized(2, 2, 1);
 		assertThat(state.getOpLogs()).isEmpty();
 
-		state.eliminate(0, 0, 0, 1, 5_000);
+		state.eliminate(0, 0, 0, 1, 5_000, GameState.OpKind.MANUAL);
 		assertThat(state.getTile(0, 0)).isZero();
 		assertThat(state.getTile(0, 1)).isZero();
 		assertThat(state.getOpLogs()).hasSize(1);
@@ -62,7 +62,7 @@ class GameStateBehaviorTest {
 	@Test
 	void gameStateUndoRestoresAndPops() {
 		GameState state = GameState.customized(2, 2, 1);
-		state.eliminate(0, 0, 0, 1, 5_000);
+		state.eliminate(0, 0, 0, 1, 5_000, GameState.OpKind.MANUAL);
 
 		state.undo();
 		assertThat(state.getTile(0, 0)).isEqualTo(1);
@@ -80,8 +80,8 @@ class GameStateBehaviorTest {
 	@Test
 	void gameStateOpLogsAreChronological() {
 		GameState state = GameState.customized(2, 2, 1);
-		state.eliminate(0, 0, 0, 1, 5_000);
-		state.eliminate(1, 0, 1, 1, 5_000);
+		state.eliminate(0, 0, 0, 1, 5_000, GameState.OpKind.MANUAL);
+		state.eliminate(1, 0, 1, 1, 5_000, GameState.OpKind.MANUAL);
 
 		var logs = state.getOpLogs();
 		assertThat(logs).hasSize(2);
@@ -93,11 +93,13 @@ class GameStateBehaviorTest {
 	void gameStateRejectsIllegalSelections() {
 		GameState state = GameState.customized(2, 2, 1);
 		assertThat(state.canEliminate(0, 0, 0, 0)).isFalse();
-		assertThatThrownBy(() -> state.eliminate(0, 0, 0, 0, 5_000))
+		assertThatThrownBy(
+			() -> state.eliminate(0, 0, 0, 0, 5_000, GameState.OpKind.MANUAL)
+		)
 			.isInstanceOf(IllegalStateException.class);
 		assertThat(state.getOpLogs()).isEmpty();
 
-		state.eliminate(0, 0, 0, 1, 5_000);
+		state.eliminate(0, 0, 0, 1, 5_000, GameState.OpKind.MANUAL);
 		assertThat(state.canEliminate(0, 0, 1, 0)).isFalse();
 	}
 
@@ -115,8 +117,8 @@ class GameStateBehaviorTest {
 	@Test
 	void clearedEmptyBoardReturnsTrue() {
 		GameState state = GameState.customized(2, 2, 1);
-		state.eliminate(0, 0, 0, 1, 5_000);
-		state.eliminate(1, 0, 1, 1, 5_000);
+		state.eliminate(0, 0, 0, 1, 5_000, GameState.OpKind.MANUAL);
+		state.eliminate(1, 0, 1, 1, 5_000, GameState.OpKind.MANUAL);
 		assertThat(state.isCleared()).isTrue();
 	}
 
@@ -129,7 +131,7 @@ class GameStateBehaviorTest {
 	@Test
 	void partialEliminationNotCleared() {
 		GameState state = GameState.customized(2, 2, 1);
-		state.eliminate(0, 0, 0, 1, 5_000);
+		state.eliminate(0, 0, 0, 1, 5_000, GameState.OpKind.MANUAL);
 		assertThat(state.isCleared()).isFalse();
 	}
 
@@ -144,10 +146,10 @@ class GameStateBehaviorTest {
 	@Test
 	void eachEliminationAddsScore() {
 		GameState state = GameState.customized(2, 2, 1);
-		state.eliminate(0, 0, 0, 1, 5_000);
+		state.eliminate(0, 0, 0, 1, 5_000, GameState.OpKind.MANUAL);
 		assertThat(state.gameStatus.score)
 			.isEqualTo(OpElimination.SCORE_PER_PAIR);
-		state.eliminate(1, 0, 1, 1, 5_000);
+		state.eliminate(1, 0, 1, 1, 5_000, GameState.OpKind.MANUAL);
 		assertThat(state.gameStatus.score)
 			.isEqualTo(2 * OpElimination.SCORE_PER_PAIR);
 	}
@@ -155,7 +157,7 @@ class GameStateBehaviorTest {
 	@Test
 	void undoRollsBackScore() {
 		GameState state = GameState.customized(2, 2, 1);
-		state.eliminate(0, 0, 0, 1, 5_000);
+		state.eliminate(0, 0, 0, 1, 5_000, GameState.OpKind.MANUAL);
 		state.undo();
 		assertThat(state.gameStatus.score).isZero();
 	}
@@ -163,8 +165,8 @@ class GameStateBehaviorTest {
 	@Test
 	void undoToUndoesToSpecifiedIndex() {
 		GameState state = GameState.customized(2, 2, 1);
-		state.eliminate(0, 0, 0, 1, 5_000);
-		state.eliminate(1, 0, 1, 1, 5_000);
+		state.eliminate(0, 0, 0, 1, 5_000, GameState.OpKind.MANUAL);
+		state.eliminate(1, 0, 1, 1, 5_000, GameState.OpKind.MANUAL);
 		assertThat(state.getOpLogCount()).isEqualTo(2);
 
 		state.undoTo(0);

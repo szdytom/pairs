@@ -14,10 +14,11 @@ public class OpElimination {
 	private final int time;
 	private final List<Integer> path;
 	private final int deltaScore;
+	private final int comboBefore;
 
 	public OpElimination(
 		int tileId, int row1, int col1, int row2, int col2, int time,
-		List<Integer> path, int deltaScore
+		List<Integer> path, int deltaScore, int comboBefore
 	) {
 		if (tileId <= 0) {
 			throw new IllegalArgumentException(
@@ -32,6 +33,7 @@ public class OpElimination {
 		this.time = time;
 		this.path = Collections.unmodifiableList(path);
 		this.deltaScore = deltaScore;
+		this.comboBefore = comboBefore;
 	}
 
 	public int getRow1() {
@@ -64,5 +66,9 @@ public class OpElimination {
 
 	public int getDeltaScore() {
 		return deltaScore;
+	}
+
+	public int getComboBefore() {
+		return comboBefore;
 	}
 }
