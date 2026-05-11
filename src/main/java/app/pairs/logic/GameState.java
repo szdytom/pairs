@@ -21,9 +21,9 @@ import java.util.List;
 /**
  * Single facade exposed to the frontend. Bundles a {@link Tilemap}, an
  * {@link OpLogs} history stack, transition checking and elimination semantics
- * behind one entry point. Callers should treat {@link Operation} entries
- * returned by {@link #getOpLogs()} as opaque history records and only act on
- * them via {@link #undo()}; invoking their methods directly is undefined.
+ * behind one entry point. Callers should treat the entries returned by
+ * {@link #getOpLogs()} as opaque history records and only act on them via
+ * {@link #undo()}; invoking their methods directly is undefined.
  *
  * <p>
  * The canonical way to build a {@code GameState} is to pass a
@@ -144,8 +144,12 @@ public final class GameState {
 		if (row1 == row2 && col1 == col2) {
 			return false;
 		}
-		if (tilemap.getTile(row1, col1) <= 0
-		    || tilemap.getTile(row2, col2) <= 0) {
+		int t1 = tilemap.getTile(row1, col1);
+		int t2 = tilemap.getTile(row2, col2);
+		if (t1 <= 0 || t2 <= 0) {
+			return false;
+		}
+		if (t1 != t2) {
 			return false;
 		}
 		return TileTransition.transition(tilemap, row1, col1, row2, col2);
@@ -174,10 +178,21 @@ public final class GameState {
 				+ "," + col2 + ")"
 			);
 		}
-		new OpElimination(
-			gameStatus, tilemap, row1, col1, row2, col2, time, opLogs::push
-		)
-			.operate();
+		int tileId = tilemap.getTile(row1, col1);
+		var path = Path.path(tilemap, row1, col1, row2, col2);
+		int deltaScore = switch (tilemap.getDifficulty()) {
+			case EASY -> OpElimination.SCORE_PER_PAIR;
+			case HARD -> OpElimination.SCORE_PER_PAIR * 2;
+			case EXTREME -> OpElimination.SCORE_PER_PAIR * 3;
+			default -> OpElimination.SCORE_PER_PAIR;
+		};
+		deltaScore *= Math.max(1, 5 - time / 1_000);
+		tilemap.setTile(row1, col1, 0);
+		tilemap.setTile(row2, col2, 0);
+		gameStatus.changeScore(deltaScore);
+		opLogs.push(new OpElimination(
+			tileId, row1, col1, row2, col2, time, path, deltaScore
+		));
 	}
 
 	/**
@@ -185,13 +200,23 @@ public final class GameState {
 	 * {@link IllegalStateException} if the history is empty.
 	 */
 	public void undo() {
-		if (!Operation.undoFrom(opLogs::pop)) {
+		OpElimination op = opLogs.pop();
+		if (op == null) {
 			throw new IllegalStateException("no operation to undo");
+		}
+		tilemap.setTile(op.getRow1(), op.getCol1(), op.getTileId());
+		tilemap.setTile(op.getRow2(), op.getCol2(), op.getTileId());
+		gameStatus.changeScore(-op.getDeltaScore());
+	}
+
+	public void undoTo(int id) {
+		while (opLogs.size() > id) {
+			undo();
 		}
 	}
 
 	/** Returns the operation history in chronological order (oldest first). */
-	public List<Operation> getOpLogs() {
+	public List<OpElimination> getOpLogs() {
 		return opLogs.history();
 	}
 

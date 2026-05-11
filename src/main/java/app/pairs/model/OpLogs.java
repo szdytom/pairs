@@ -1,6 +1,6 @@
 package app.pairs.model;
 
-import app.pairs.logic.Operation;
+import app.pairs.logic.OpElimination;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -8,34 +8,18 @@ import java.util.Collections;
 import java.util.Deque;
 import java.util.List;
 
-/**
- * A pure stack data structure that holds {@link Operation}s.
- *
- * <p>
- * Pair {@link #push(Operation) push} with {@link Operation#operate()} to record
- * an operation, and use
- * {@link Operation#undoFrom(java.util.function.Supplier)
- * Operation.undoFrom(log::pop)} to undo the most recent one.
- */
 public class OpLogs {
-	private final Deque<Operation> stack = new ArrayDeque<>();
+	private final Deque<OpElimination> stack = new ArrayDeque<>();
 
-	/** Push an operation onto the log (does NOT execute it). */
-	public void push(Operation op) {
+	public void push(OpElimination op) {
 		stack.push(op);
 	}
 
-	/**
-	 * Remove and return the most recent operation.
-	 *
-	 * @return the operation, or {@code null} if the log is empty
-	 */
-	public Operation pop() {
+	public OpElimination pop() {
 		return stack.poll();
 	}
 
-	/** Peek at the most recent operation without removing it. */
-	public Operation peek() {
+	public OpElimination peek() {
 		return stack.peek();
 	}
 
@@ -51,20 +35,9 @@ public class OpLogs {
 		stack.clear();
 	}
 
-	/** Returns all operations in chronological order (oldest first). */
-	public List<Operation> history() {
-		List<Operation> list = new ArrayList<>(stack);
+	public List<OpElimination> history() {
+		List<OpElimination> list = new ArrayList<>(stack);
 		Collections.reverse(list);
 		return list;
-	}
-	public void undoTo(int id) {
-		int cnt = stack.size() - id;
-		for (int i = 0; i < cnt; i++) {
-			Operation op = pop();
-			if (op == null) {
-				throw new IllegalStateException("no operation to undo");
-			}
-			op.undo();
-		}
 	}
 }
