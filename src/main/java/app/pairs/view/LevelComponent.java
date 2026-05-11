@@ -7,6 +7,7 @@ import app.pairs.audio.AudioManager;
 import app.pairs.logic.GameState;
 import app.pairs.model.CountdownState;
 import app.pairs.model.ItemType;
+import app.pairs.model.Tilemap;
 import app.pairs.router.MainMenuPage;
 import app.pairs.router.Router;
 import app.pairs.solver.Move;
@@ -44,6 +45,8 @@ public class LevelComponent extends Container {
 
 	private boolean cleared;
 	private boolean timedOut;
+	private int totalPairs;
+	private boolean tntSelecting;
 
 	private long totalCountdownMs;
 	private final CountdownState countdownState;
@@ -64,6 +67,7 @@ public class LevelComponent extends Container {
 	private final Button retryBtn;
 
 	private final AutoPairingState autoPairingState = new AutoPairingState();
+	private ItemListComponent itemList;
 	private int autoHLRow1 = -1;
 	private int autoHLCol1 = -1;
 	private int autoHLRow2 = -1;
@@ -86,6 +90,7 @@ public class LevelComponent extends Container {
 		}
 		int totalPairs = tileCount / 2;
 
+		this.totalPairs = totalPairs;
 		this.totalCountdownMs = totalCountdownMs;
 		this.countdownState = new CountdownState();
 		countdownState.remainingMs = totalCountdownMs;
@@ -156,8 +161,9 @@ public class LevelComponent extends Container {
 		overlayText.setProp("v-align", AlignLayout.VAlign.CENTER);
 		alignLayout.addChild(overlayText);
 
-		var itemList = new ItemListComponent(
-			gameState.gameStatus.getCount(ItemType.AUTO_SOLVER), type -> {
+		this.itemList = new ItemListComponent(
+			gameState.gameStatus.getCount(ItemType.AUTO_SOLVER),
+			gameState.gameStatus.getCount(ItemType.TNT), type -> {
 				if (timedOut || cleared || autoPairingState.isActive()) {
 					return;
 				}
@@ -172,13 +178,22 @@ public class LevelComponent extends Container {
 						startHint(m.r1(), m.c1(), m.r2(), m.c2());
 					}
 				}
+				case TNT -> {
+					if (!gameState.gameStatus.reduceItem(type)) {
+						return;
+					}
+					selectedRow = -1;
+					selectedCol = -1;
+					tntSelecting = true;
+					itemList.showAbort();
+				}
 				}
 			}
 		);
-		itemList.setProp("v-align", AlignLayout.VAlign.BOTTOM);
-		itemList.setProp("h-align", AlignLayout.HAlign.CENTER);
-		itemList.setProp("v-padding", 20);
-		alignLayout.addChild(itemList);
+		this.itemList.setProp("v-align", AlignLayout.VAlign.BOTTOM);
+		this.itemList.setProp("h-align", AlignLayout.HAlign.CENTER);
+		this.itemList.setProp("v-padding", 20);
+		alignLayout.addChild(this.itemList);
 
 		this.sidebar = new LevelSidebar();
 
@@ -203,10 +218,10 @@ public class LevelComponent extends Container {
 			&& !autoPairingState.isActive()
 			&& countdownState.now() - lastEliminationTimeMs >= HINT_COOLDOWN_MS;
 		hintBtn.setVisible(hintReady);
-		int count = gameState.getOpLogCount();
-		if (count != lastEliminatedCount) {
-			lastEliminatedCount = count;
-			pairCounter.setProgress(count);
+		int eliminated = totalPairs - gameState.remainingPairs();
+		if (eliminated != lastEliminatedCount) {
+			lastEliminatedCount = eliminated;
+			pairCounter.setProgress(eliminated);
 		}
 		autoPairingState.update(deltaTimeMs);
 		super.update(deltaTimeMs);
@@ -218,6 +233,7 @@ public class LevelComponent extends Container {
 		countdownState.resetPause();
 		lastEliminationTimeMs = countdownState.now();
 		gameState.restart();
+		tntSelecting = false;
 		int newW = gameState.getWidth();
 		int newH = gameState.getHeight();
 		if (newW != gridWidth || newH != gridHeight) {
@@ -275,6 +291,11 @@ public class LevelComponent extends Container {
 	/** Handle a mouse click at the current cursor position. */
 	public void handleClick() {
 		if (timedOut || cleared || !gameStarted) {
+			return;
+		}
+
+		if (tntSelecting) {
+			handleTntClick();
 			return;
 		}
 
@@ -444,6 +465,41 @@ public class LevelComponent extends Container {
 		eliminatePair(r1, c1, r2, c2);
 	}
 
+	// ---- TNT ---------------------------------------------------------------
+
+	private void handleTntClick() {
+		updateHoveredCell();
+		if (hoveredRow < 0 || hoveredCol < 0) {
+			abortTnt();
+			return;
+		}
+		int tileId = gameState.getTile(hoveredRow, hoveredCol);
+		if (tileId <= 0) {
+			abortTnt();
+			return;
+		}
+		var positions = gameState.eliminateType(tileId);
+		tntSelecting = false;
+		itemList.hideAbort();
+		int score = gameState.tntScorePerTile();
+		for (Tilemap.TilePos pos : positions) {
+			gameState.clearTile(pos.row(), pos.col());
+			gameState.gameStatus.changeScore(score);
+		}
+		gridView.reset();
+		if (gameState.isCleared()) {
+			cleared = true;
+			overlayText.setVisible(true);
+		}
+		sidebar.notifyStateUpdated();
+	}
+
+	private void abortTnt() {
+		tntSelecting = false;
+		gameState.gameStatus.items.add(ItemType.TNT, 1);
+		itemList.hideAbort();
+	}
+
 	// ---- private helpers ---------------------------------------------------
 
 	private void updateHoveredCell() {
@@ -467,6 +523,17 @@ public class LevelComponent extends Container {
 		if (autoPairingState.isActive()) {
 			highlightIf(autoHLRow1, autoHLCol1);
 			highlightIf(autoHLRow2, autoHLCol2);
+		} else if (tntSelecting && hoveredRow >= 0 && hoveredCol >= 0) {
+			int tileId = gameState.getTile(hoveredRow, hoveredCol);
+			if (tileId > 0) {
+				for (int r = 0; r < gridHeight; r++) {
+					for (int c = 0; c < gridWidth; c++) {
+						if (gameState.getTile(r, c) == tileId) {
+							highlighted[r][c] = true;
+						}
+					}
+				}
+			}
 		} else {
 			highlightIf(selectedRow, selectedCol);
 			highlightIf(hoveredRow, hoveredCol);
