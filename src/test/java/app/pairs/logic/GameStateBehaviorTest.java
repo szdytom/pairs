@@ -3,76 +3,39 @@ package app.pairs.logic;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import app.pairs.model.GameStatus;
 import app.pairs.model.Tilemap;
 
-import java.util.function.Consumer;
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
 class GameStateBehaviorTest {
-	// `GameState` constructors only expose factory presets; behavior tests
-	// drive `OpElimination` directly against a controlled `Tilemap` so the
-	// outcomes are deterministic.
+	// ---- `OpElimination` construction tests -------------------------------
 
 	@Test
-	void operateClearsTilesAndUndoRestores() {
-		int[][] map = {{1, 0, 1}};
-		Tilemap tm = new Tilemap(map);
-		OpElimination op = new OpElimination(
-			new GameStatus(), tm, 0, 0, 0, 2, 5_000, ignored -> {}
-		);
-
-		op.operate();
-		assertThat(tm.getTile(0, 0)).isZero();
-		assertThat(tm.getTile(0, 2)).isZero();
-
-		op.undo();
-		assertThat(tm.getTile(0, 0)).isEqualTo(1);
-		assertThat(tm.getTile(0, 2)).isEqualTo(1);
-	}
-
-	@Test
-	void doubleOperateThrows() {
-		Tilemap tm = new Tilemap(new int[][] {{1, 0, 1}});
-		OpElimination op = new OpElimination(
-			new GameStatus(), tm, 0, 0, 0, 2, 5_000, ignored -> {}
-		);
-		op.operate();
-		assertThatThrownBy(op::operate)
-			.isInstanceOf(IllegalStateException.class);
-	}
-
-	@Test
-	void undoBeforeOperateThrows() {
-		Tilemap tm = new Tilemap(new int[][] {{1, 0, 1}});
-		OpElimination op = new OpElimination(
-			new GameStatus(), tm, 0, 0, 0, 2, 5_000, ignored -> {}
-		);
-		assertThatThrownBy(op::undo).isInstanceOf(IllegalStateException.class);
-	}
-
-	@Test
-	void constructionRejectsMismatchedTiles() {
-		Tilemap tm = new Tilemap(new int[][] {{1, 0, 2}});
-		Consumer<Operation> noop = ignored -> {};
-		GameStatus gs = new GameStatus();
+	void opEliminationRejectsNonPositiveTileId() {
 		assertThatThrownBy(
-			() -> new OpElimination(gs, tm, 0, 0, 0, 2, 5_000, noop)
+			() -> new OpElimination(0, 0, 0, 0, 0, 0, List.of(), 0)
 		)
-			.isInstanceOf(IllegalStateException.class);
+			.isInstanceOf(IllegalArgumentException.class);
 	}
 
 	@Test
-	void constructionRejectsEmptyTiles() {
-		Tilemap tm = new Tilemap(new int[][] {{0, 0, 0}});
-		Consumer<Operation> noop = ignored -> {};
-		GameStatus gs = new GameStatus();
-		assertThatThrownBy(
-			() -> new OpElimination(gs, tm, 0, 0, 0, 2, 5_000, noop)
-		)
-			.isInstanceOf(IllegalStateException.class);
+	void opEliminationStoresFields() {
+		var op = new OpElimination(
+			42, 1, 2, 3, 4, 5_000, List.of(0, 0, 0, 2), 1_000
+		);
+		assertThat(op.getTileId()).isEqualTo(42);
+		assertThat(op.getRow1()).isEqualTo(1);
+		assertThat(op.getCol1()).isEqualTo(2);
+		assertThat(op.getRow2()).isEqualTo(3);
+		assertThat(op.getCol2()).isEqualTo(4);
+		assertThat(op.getTime()).isEqualTo(5_000);
+		assertThat(op.getPath()).containsExactly(0, 0, 0, 2);
+		assertThat(op.getDeltaScore()).isEqualTo(1_000);
 	}
+
+	// ---- `TileTransition` tests -------------------------------------------
 
 	@Test
 	void transitionRejectsEmptyEndpoint() {
@@ -81,7 +44,7 @@ class GameStateBehaviorTest {
 			.isInstanceOf(IllegalStateException.class);
 	}
 
-	// ---- `GameState` facade tests ----------------------------------------
+	// ---- `GameState` facade tests -----------------------------------------
 	// `customized(2, 2, 1)` deterministically yields a 2x2 board where every
 	// cell holds tile id 1, so any pair is eliminable.
 
@@ -122,22 +85,18 @@ class GameStateBehaviorTest {
 
 		var logs = state.getOpLogs();
 		assertThat(logs).hasSize(2);
-		OpElimination first = (OpElimination)logs.get(0);
-		OpElimination second = (OpElimination)logs.get(1);
-		assertThat(first.getRow1()).isZero();
-		assertThat(second.getRow1()).isEqualTo(1);
+		assertThat(logs.get(0).getRow1()).isZero();
+		assertThat(logs.get(1).getRow1()).isEqualTo(1);
 	}
 
 	@Test
 	void gameStateRejectsIllegalSelections() {
 		GameState state = GameState.customized(2, 2, 1);
-		// Same cell.
 		assertThat(state.canEliminate(0, 0, 0, 0)).isFalse();
 		assertThatThrownBy(() -> state.eliminate(0, 0, 0, 0, 5_000))
 			.isInstanceOf(IllegalStateException.class);
 		assertThat(state.getOpLogs()).isEmpty();
 
-		// Empty cell after a successful elimination.
 		state.eliminate(0, 0, 0, 1, 5_000);
 		assertThat(state.canEliminate(0, 0, 1, 0)).isFalse();
 	}
@@ -174,7 +133,7 @@ class GameStateBehaviorTest {
 		assertThat(state.isCleared()).isFalse();
 	}
 
-	// ---- scoring tests ---------------------------------------------------
+	// ---- scoring tests ----------------------------------------------------
 
 	@Test
 	void freshGameStateHasZeroScore() {
@@ -199,5 +158,18 @@ class GameStateBehaviorTest {
 		state.eliminate(0, 0, 0, 1, 5_000);
 		state.undo();
 		assertThat(state.gameStatus.score).isZero();
+	}
+
+	@Test
+	void undoToUndoesToSpecifiedIndex() {
+		GameState state = GameState.customized(2, 2, 1);
+		state.eliminate(0, 0, 0, 1, 5_000);
+		state.eliminate(1, 0, 1, 1, 5_000);
+		assertThat(state.getOpLogCount()).isEqualTo(2);
+
+		state.undoTo(0);
+		assertThat(state.getOpLogCount()).isZero();
+		assertThat(state.gameStatus.score).isZero();
+		assertThat(state.isCleared()).isFalse();
 	}
 }
