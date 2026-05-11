@@ -231,6 +231,14 @@ public final class GameState {
 		return opLogs.history();
 	}
 
+	/**
+	 * Returns {@code true} if an undo operation is available (not past
+	 * barrier).
+	 */
+	public boolean canUndo() {
+		return opLogs.size() > undoBarrier;
+	}
+
 	/** Returns the number of eliminated pairs (cheap, no allocation). */
 	public int getOpLogCount() {
 		return opLogs.size();

@@ -64,6 +64,7 @@ public class LevelComponent extends Container {
 	private final PairCounter pairCounter;
 	private int lastEliminatedCount;
 	private final Button hintBtn;
+	private final Button undoBtn;
 	private final Button retryBtn;
 
 	private final AutoPairingState autoPairingState = new AutoPairingState();
@@ -129,7 +130,6 @@ public class LevelComponent extends Container {
 		topBar.setProp("h-padding", 4);
 		topBar.setProp("v-padding", 4);
 		topBar.addChild(hintBtn);
-		topBar.addChild(retryBtn);
 
 		var homeIcon = IconManager.instance().getTexture("home");
 		var homeImage = new ImageComponent(homeIcon, 16, 16);
@@ -197,6 +197,21 @@ public class LevelComponent extends Container {
 
 		this.sidebar = new LevelSidebar();
 
+		var undoIcon = IconManager.instance().getTexture("revert");
+		var undoImage = new ImageComponent(undoIcon, 16, 16);
+		this.undoBtn = new Button(() -> {
+			if (timedOut || cleared || autoPairingState.isActive()) {
+				return;
+			}
+			gameState.undo();
+			gridView.reset();
+			sidebar.notifyStateUpdated();
+		});
+		undoBtn.addChild(undoImage);
+		undoBtn.setVisible(false);
+		topBar.addChild(undoBtn);
+		topBar.addChild(retryBtn);
+
 		addChild(alignLayout);
 		addChild(sidebar);
 		startEntryAnimation();
@@ -218,6 +233,7 @@ public class LevelComponent extends Container {
 			&& !autoPairingState.isActive()
 			&& countdownState.now() - lastEliminationTimeMs >= HINT_COOLDOWN_MS;
 		hintBtn.setVisible(hintReady);
+		undoBtn.setVisible(!cleared && !timedOut && gameState.canUndo());
 		int eliminated = totalPairs - gameState.remainingPairs();
 		if (eliminated != lastEliminatedCount) {
 			lastEliminatedCount = eliminated;
