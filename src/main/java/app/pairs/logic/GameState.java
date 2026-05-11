@@ -47,6 +47,8 @@ public final class GameState {
 	private int undoBarrier;
 	private int remainingTiles;
 
+	public enum OpKind { MANUAL, AUTO }
+
 	public GameState(TilemapFactory factory) {
 		this.factory = factory;
 		this.tilemap = factory.generate();
@@ -176,7 +178,9 @@ public final class GameState {
 	 * onto the history stack. Throws {@link IllegalStateException} if the
 	 * move is illegal — callers should gate on {@link #canEliminate} first.
 	 */
-	public void eliminate(int row1, int col1, int row2, int col2, int time) {
+	public void eliminate(
+		int row1, int col1, int row2, int col2, int time, OpKind kind
+	) {
 		if (!canEliminate(row1, col1, row2, col2)) {
 			throw new IllegalStateException(
 				"illegal elimination: (" + row1 + "," + col1 + ") -> (" + row2
@@ -185,19 +189,33 @@ public final class GameState {
 		}
 		int tileId = tilemap.getTile(row1, col1);
 		var path = Path.path(tilemap, row1, col1, row2, col2);
-		int deltaScore = switch (tilemap.getDifficulty()) {
-			case EASY -> OpElimination.SCORE_PER_PAIR;
-			case HARD -> OpElimination.SCORE_PER_PAIR * 2;
-			case EXTREME -> OpElimination.SCORE_PER_PAIR * 3;
-			default -> OpElimination.SCORE_PER_PAIR;
-		};
-		deltaScore *= Math.max(1, 5 - time / 1_000);
+		int deltaScore;
+		int oldCombo;
+		if (kind == OpKind.AUTO) {
+			deltaScore = 0;
+			oldCombo = gameStatus.combo;
+		} else {
+			deltaScore = switch (tilemap.getDifficulty()) {
+				case EASY -> OpElimination.SCORE_PER_PAIR;
+				case HARD -> OpElimination.SCORE_PER_PAIR * 2;
+				case EXTREME -> OpElimination.SCORE_PER_PAIR * 3;
+				default -> OpElimination.SCORE_PER_PAIR;
+			};
+			deltaScore *= Math.max(1, 5 - time / 1_000);
+			oldCombo = gameStatus.combo;
+			if (time < 1_000) {
+				gameStatus.combo++;
+			} else {
+				gameStatus.combo = 1;
+			}
+			deltaScore *= gameStatus.combo * (gameStatus.combo + 1) / 2;
+		}
 		tilemap.setTile(row1, col1, 0);
 		tilemap.setTile(row2, col2, 0);
 		remainingTiles -= 2;
 		gameStatus.changeScore(deltaScore);
 		opLogs.push(new OpElimination(
-			tileId, row1, col1, row2, col2, time, path, deltaScore
+			tileId, row1, col1, row2, col2, time, path, deltaScore, oldCombo
 		));
 	}
 
@@ -214,6 +232,7 @@ public final class GameState {
 		tilemap.setTile(op.getRow2(), op.getCol2(), op.getTileId());
 		remainingTiles += 2;
 		gameStatus.changeScore(-op.getDeltaScore());
+		gameStatus.combo = op.getComboBefore();
 	}
 
 	public void undoTo(int id) {

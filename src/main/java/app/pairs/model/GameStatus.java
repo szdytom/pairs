@@ -2,6 +2,7 @@ package app.pairs.model;
 
 public class GameStatus {
 	public int score;
+	public int combo;
 	public final ItemCountMap items = new ItemCountMap();
 
 	public GameStatus() {
@@ -16,6 +17,7 @@ public class GameStatus {
 
 	public void reset() {
 		score = 0;
+		combo = 0;
 	}
 
 	public int getCount(ItemType type) {

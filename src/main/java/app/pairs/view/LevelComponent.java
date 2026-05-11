@@ -5,6 +5,7 @@ import static app.pairs.utils.Colors.*;
 import app.pairs.asset.IconManager;
 import app.pairs.audio.AudioManager;
 import app.pairs.logic.GameState;
+import app.pairs.logic.GameState.OpKind;
 import app.pairs.model.CountdownState;
 import app.pairs.model.ItemType;
 import app.pairs.model.Tilemap;
@@ -450,7 +451,7 @@ public class LevelComponent extends Container {
 		AudioManager.instance().play(
 			"eliminate", gameState.getTileString(r1, c1)
 		);
-		gameState.eliminate(r1, c1, r2, c2, elapsed);
+		gameState.eliminate(r1, c1, r2, c2, elapsed, OpKind.MANUAL);
 		lastEliminationTimeMs = now;
 
 		gridView.reset();
@@ -462,7 +463,21 @@ public class LevelComponent extends Container {
 	}
 
 	private void performAutoElimination(int r1, int c1, int r2, int c2) {
-		eliminatePair(r1, c1, r2, c2);
+		if (timedOut || cleared)
+			return;
+		long now = countdownState.now();
+		int elapsed = (int)(now - lastEliminationTimeMs);
+		AudioManager.instance().play(
+			"eliminate", gameState.getTileString(r1, c1)
+		);
+		gameState.eliminate(r1, c1, r2, c2, elapsed, OpKind.AUTO);
+		lastEliminationTimeMs = now;
+		gridView.reset();
+		if (gameState.isCleared()) {
+			cleared = true;
+			overlayText.setVisible(true);
+		}
+		sidebar.notifyStateUpdated();
 	}
 
 	// ---- TNT ---------------------------------------------------------------
