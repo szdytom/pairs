@@ -44,12 +44,15 @@ public final class GameState {
 	public final GameStatus
 		gameStatus; // change score by directly mutating this object, not by
 	                // pushing operations
+	private int undoBarrier;
+	private int remainingTiles;
 
 	public GameState(TilemapFactory factory) {
 		this.factory = factory;
 		this.tilemap = factory.generate();
 		this.opLogs = new OpLogs();
 		this.gameStatus = new GameStatus();
+		this.remainingTiles = countTiles();
 	}
 
 	/**
@@ -59,6 +62,8 @@ public final class GameState {
 		this.tilemap = factory.generate();
 		this.opLogs.clear();
 		this.gameStatus.reset();
+		this.undoBarrier = 0;
+		this.remainingTiles = countTiles();
 	}
 
 	/** Custom dimensions and tile-type count, no group constraints. */
@@ -189,6 +194,7 @@ public final class GameState {
 		deltaScore *= Math.max(1, 5 - time / 1_000);
 		tilemap.setTile(row1, col1, 0);
 		tilemap.setTile(row2, col2, 0);
+		remainingTiles -= 2;
 		gameStatus.changeScore(deltaScore);
 		opLogs.push(new OpElimination(
 			tileId, row1, col1, row2, col2, time, path, deltaScore
@@ -200,19 +206,24 @@ public final class GameState {
 	 * {@link IllegalStateException} if the history is empty.
 	 */
 	public void undo() {
-		OpElimination op = opLogs.pop();
-		if (op == null) {
-			throw new IllegalStateException("no operation to undo");
+		if (opLogs.size() <= undoBarrier) {
+			throw new IllegalStateException("cannot undo past barrier");
 		}
+		OpElimination op = opLogs.pop();
 		tilemap.setTile(op.getRow1(), op.getCol1(), op.getTileId());
 		tilemap.setTile(op.getRow2(), op.getCol2(), op.getTileId());
+		remainingTiles += 2;
 		gameStatus.changeScore(-op.getDeltaScore());
 	}
 
 	public void undoTo(int id) {
-		while (opLogs.size() > id) {
+		while (opLogs.size() > Math.max(id, undoBarrier)) {
 			undo();
 		}
+	}
+
+	private void setUndoBarrier() {
+		undoBarrier = opLogs.size();
 	}
 
 	/** Returns the operation history in chronological order (oldest first). */
@@ -223,6 +234,63 @@ public final class GameState {
 	/** Returns the number of eliminated pairs (cheap, no allocation). */
 	public int getOpLogCount() {
 		return opLogs.size();
+	}
+
+	/** Returns the number of remaining pairs on the board. */
+	public int remainingPairs() {
+		return remainingTiles / 2;
+	}
+
+	private int countTiles() {
+		int count = 0;
+		for (int r = 0; r < tilemap.getHeight(); r++) {
+			for (int c = 0; c < tilemap.getWidth(); c++) {
+				if (tilemap.getTile(r, c) > 0) {
+					count++;
+				}
+			}
+		}
+		return count;
+	}
+
+	/**
+	 * Collect all positions of a given tile type and set the undo barrier.
+	 * Does NOT mutate the tilemap — the caller is responsible for animating
+	 * and then calling {@link #clearTile} per position.
+	 */
+	public List<Tilemap.TilePos> eliminateType(int tileId) {
+		List<Tilemap.TilePos> positions = new ArrayList<>();
+		for (int r = 0; r < tilemap.getHeight(); r++) {
+			for (int c = 0; c < tilemap.getWidth(); c++) {
+				if (tilemap.getTile(r, c) == tileId) {
+					positions.add(new Tilemap.TilePos(r, c));
+				}
+			}
+		}
+		if (positions.isEmpty()) {
+			throw new IllegalStateException(
+				"no tiles of type " + tileId + " to eliminate"
+			);
+		}
+		setUndoBarrier();
+		return positions;
+	}
+
+	/** Clear a single tile cell (used by TNT animation). */
+	public void clearTile(int row, int col) {
+		tilemap.setTile(row, col, 0);
+		remainingTiles--;
+	}
+
+	/** Score per tile for TNT: minimum base score / 2 (no time bonus). */
+	public int tntScorePerTile() {
+		int base = switch (tilemap.getDifficulty()) {
+			case EASY -> OpElimination.SCORE_PER_PAIR;
+			case HARD -> OpElimination.SCORE_PER_PAIR * 2;
+			case EXTREME -> OpElimination.SCORE_PER_PAIR * 3;
+			default -> OpElimination.SCORE_PER_PAIR;
+		};
+		return base / 2;
 	}
 
 	/** Check whether the game is in a stalled state (no more valid moves). */
@@ -240,14 +308,7 @@ public final class GameState {
 
 	/** Check whether all tiles have been eliminated. */
 	public boolean isCleared() {
-		for (int r = 0; r < tilemap.getHeight(); r++) {
-			for (int c = 0; c < tilemap.getWidth(); c++) {
-				if (tilemap.getTile(r, c) > 0) {
-					return false;
-				}
-			}
-		}
-		return true;
+		return remainingTiles == 0;
 	}
 
 	public SolverResult solve() {

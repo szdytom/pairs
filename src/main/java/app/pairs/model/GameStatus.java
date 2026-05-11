@@ -2,34 +2,27 @@ package app.pairs.model;
 
 public class GameStatus {
 	public int score;
-	public int autoSolvers;
+	public final ItemCountMap items = new ItemCountMap();
 
 	public GameStatus() {
 		this.score = 0;
-		this.autoSolvers = 1;
+		items.set(ItemType.AUTO_SOLVER, 1);
+		items.set(ItemType.TNT, 1);
 	}
 
 	public void changeScore(int delta) {
 		score += delta;
 	}
+
 	public void reset() {
 		score = 0;
 	}
 
 	public int getCount(ItemType type) {
-		return switch (type) {
-			case AUTO_SOLVER -> autoSolvers;
-		};
+		return items.get(type);
 	}
 
 	public boolean reduceItem(ItemType type) {
-		int count = getCount(type);
-		if (count <= 0) {
-			return false;
-		}
-		switch (type) {
-		case AUTO_SOLVER -> autoSolvers--;
-		}
-		return true;
+		return items.reduce(type);
 	}
 }

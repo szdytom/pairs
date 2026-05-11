@@ -1,7 +1,8 @@
 package app.pairs.model;
 
 public enum ItemType {
-	AUTO_SOLVER("Auto", "ai");
+	AUTO_SOLVER("Auto", "ai"),
+	TNT("TNT", "tnt");
 
 	private final String displayName;
 	private final String iconId;
