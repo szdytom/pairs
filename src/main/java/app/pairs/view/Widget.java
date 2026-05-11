@@ -17,6 +17,7 @@ public abstract class Widget implements ViewComponent {
 	int layoutW;
 	int layoutH;
 	boolean hovered;
+	boolean visible = true;
 
 	public void setBlackboard(Blackboard bb) {
 		this.blackboard = bb;
@@ -47,12 +48,11 @@ public abstract class Widget implements ViewComponent {
 	}
 
 	public void setVisible(boolean v) {
-		setProp("visible", v);
+		this.visible = v;
 	}
 
 	public boolean isVisible() {
-		Boolean v = getProp("visible");
-		return v != null ? v : true;
+		return visible;
 	}
 
 	public boolean isHovered() {
