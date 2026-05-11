@@ -90,6 +90,12 @@
 			"description": "Loading tile similarity groups"
 		},
 		{
+			"id": "shape/easy",
+			"type": "shape",
+			"file": "shapes/easy.png",
+			"description": "Loading easy shape"
+		},
+		{
 			"id": "tilemap/easy",
 			"type": "tilemap-preset",
 			"file": "preset-easy.json",

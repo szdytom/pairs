@@ -49,6 +49,7 @@ public class AssetManager {
 		registry.register("mapping", MappingOperation::new);
 		registry.register("bitmap-font", BitmapFontOperation::new);
 		registry.register("tilemap-preset", TilemapPresetOperation::new);
+		registry.register("shape", ShapeOperation::new);
 		registry.register("tile-groups", TileGroupsOperation::new);
 	}
 

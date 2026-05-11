@@ -1,6 +1,7 @@
 package app.pairs.asset;
 
 import app.pairs.map.PresetConfig;
+import app.pairs.map.Shape;
 import app.pairs.map.TileSelectionPolicy;
 import app.pairs.map.TilemapPreset;
 import app.pairs.model.Tilemap;
@@ -9,18 +10,17 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
 /**
  * Builds a {@link PresetConfig} from an external JSON file. Required fields
  * in the file: {@code width}, {@code height}, {@code types},
  * {@code difficulty}, {@code includeSlabs}, {@code spread}. Optional
- * {@code initial} is a 2D int array seed grid (0 = fillable, -1 = blocked);
- * when omitted an all-fillable grid of the given size is used. Optional
- * {@code pairStrategy} selects the pair-matching strategy
- * ({@code "base"}|{@code "nonAdjacent"}|{@code "distant"}); defaults to
- * {@code "base"} when absent.
+ * {@code shape} references a {@link Shape} asset ID for the seed grid
+ * (0 = fillable, -1 = blocked); when omitted an all-fillable grid of the
+ * given size is used. Optional {@code pairStrategy} selects the pair-matching
+ * strategy ({@code "base"}|{@code "nonAdjacent"}|{@code "distant"}); defaults
+ * to {@code "base"} when absent.
  */
 public class TilemapPresetOperation implements AssetOperation {
 	private String file;
@@ -58,8 +58,26 @@ public class TilemapPresetOperation implements AssetOperation {
 		);
 
 		int[][] initial = null;
-		if (root.has("initial")) {
-			initial = parseGrid(root.getAsJsonArray("initial"));
+		if (root.has("shape")) {
+			String shapeId = root.get("shape").getAsString();
+			Object raw;
+			try {
+				raw = ctx.getInput(shapeId);
+			} catch (Exception e) {
+				throw new IllegalArgumentException(
+					"Shape \"" + shapeId + "\" not found for preset \""
+						+ ctx.id() + "\"",
+					e
+				);
+			}
+			if (!(raw instanceof Shape shape)) {
+				throw new IllegalArgumentException(
+					"Asset \"" + shapeId + "\" referenced by preset \""
+					+ ctx.id() + "\" is not a Shape (got "
+					+ raw.getClass().getSimpleName() + ")"
+				);
+			}
+			initial = shape.grid();
 			validateGrid(initial, width, height);
 		}
 
@@ -81,7 +99,7 @@ public class TilemapPresetOperation implements AssetOperation {
 	private static void validateGrid(int[][] grid, int width, int height) {
 		if (grid.length != height) {
 			throw new IllegalArgumentException(
-				"initial row count (" + grid.length
+				"seed grid row count (" + grid.length
 				+ ") does not match height (" + height + ")"
 			);
 		}
@@ -89,22 +107,10 @@ public class TilemapPresetOperation implements AssetOperation {
 			if (grid[r] == null || grid[r].length != width) {
 				int len = grid[r] == null ? 0 : grid[r].length;
 				throw new IllegalArgumentException(
-					"initial row " + r + " column count (" + len
+					"seed grid row " + r + " column count (" + len
 					+ ") does not match width (" + width + ")"
 				);
 			}
 		}
-	}
-
-	private static int[][] parseGrid(JsonArray rows) {
-		int[][] grid = new int[rows.size()][];
-		for (int r = 0; r < rows.size(); r++) {
-			JsonArray row = rows.get(r).getAsJsonArray();
-			grid[r] = new int[row.size()];
-			for (int c = 0; c < row.size(); c++) {
-				grid[r][c] = row.get(c).getAsInt();
-			}
-		}
-		return grid;
 	}
 }
