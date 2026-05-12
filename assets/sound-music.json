@@ -1,0 +1,12 @@
+{
+  "LevelMusic": {
+    "minecraft": {
+      "play": "minecraft_remix.wav"
+    }
+  },
+  "MainMusic": {
+    "wet_hand": {
+      "play": "wet_hand_remix.wav"
+    }
+  }
+}
