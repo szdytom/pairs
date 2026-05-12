@@ -1,5 +1,7 @@
 package app.pairs.logic;
 
+import app.pairs.model.OperationSnapshot;
+
 import java.util.Collections;
 import java.util.List;
 
@@ -34,6 +36,23 @@ public class OpElimination {
 		this.path = Collections.unmodifiableList(path);
 		this.deltaScore = deltaScore;
 		this.comboBefore = comboBefore;
+	}
+
+	static OpElimination restored(OperationSnapshot snapshot) {
+		List<Integer> path = snapshot.path() == null
+			? List.of()
+			: snapshot.path();
+		return new OpElimination(
+			snapshot.tileId(), snapshot.row1(), snapshot.col1(),
+			snapshot.row2(), snapshot.col2(), snapshot.time(), path,
+			snapshot.deltaScore(), snapshot.comboBefore()
+		);
+	}
+
+	public OperationSnapshot snapshot() {
+		return new OperationSnapshot(
+			row1, col1, row2, col2, tileId, time, deltaScore, path, comboBefore
+		);
 	}
 
 	public int getRow1() {
