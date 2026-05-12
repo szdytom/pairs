@@ -5,6 +5,20 @@
       "objectRoot": "blocks",
       "event": "break",
       "basePath": "EliminateSound"
+    },
+    "LevelMusic": {
+      "type": "music",
+      "file": "sound-music.json",
+      "objectRoot": "LevelMusic",
+      "event": "play",
+      "basePath": "BgMusicSound"
+    },
+    "MainMusic": {
+      "type": "music",
+      "file": "sound-music.json",
+      "objectRoot": "MainMusic",
+      "event": "play",
+      "basePath": "BgMusicSound"
     }
   }
 }
