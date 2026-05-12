@@ -63,14 +63,34 @@ public final class AudioRegistry {
 		return result;
 	}
 
+	/** Returns asset paths from non-music (SFX) categories only. */
+	public Set<String> sfxPaths() {
+		Set<String> result = new HashSet<>();
+		for (Category cat : categories.values()) {
+			if (!cat.music()) {
+				for (String object : cat.objects().keySet()) {
+					result.add(cat.basePath() + "/" + cat.resolve(object));
+				}
+			}
+		}
+		return result;
+	}
+
+	public boolean isMusic(String category) {
+		Category config = categories.get(category);
+		return config != null && config.music();
+	}
+
 	private static Category loadCategory(AssetLoader loader, JsonObject config)
 		throws Exception {
 		JsonObject source = readJson(loader, config.get("file").getAsString());
 		String objectRoot = config.get("objectRoot").getAsString();
 		String event = config.get("event").getAsString();
 		String basePath = config.get("basePath").getAsString();
+		boolean music = config.has("type")
+			&& "music".equals(config.get("type").getAsString());
 		return new Category(
-			source.getAsJsonObject(objectRoot), event, basePath
+			source.getAsJsonObject(objectRoot), event, basePath, music
 		);
 	}
 
@@ -84,7 +104,9 @@ public final class AudioRegistry {
 		}
 	}
 
-	private record Category(JsonObject objects, String event, String basePath) {
+	private record Category(
+		JsonObject objects, String event, String basePath, boolean music
+	) {
 		String resolve(String object) {
 			JsonObject events = objects.getAsJsonObject(object);
 			if (events == null || !events.has(event)) {

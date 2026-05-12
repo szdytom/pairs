@@ -23,6 +23,31 @@ class AudioRegistryTest {
 	}
 
 	@Test
+	void resolvesMusicCategories() throws Exception {
+		AudioRegistry registry = AudioRegistry.load(
+			new ClspAssetLoader(getClass().getClassLoader()),
+			"audio_mapping.json"
+		);
+
+		assertThat(registry.resolve("LevelMusic", "minecraft"))
+			.isEqualTo("BgMusicSound/minecraft_remix.wav");
+		assertThat(registry.resolve("MainMusic", "wet_hand"))
+			.isEqualTo("BgMusicSound/wet_hand_remix.wav");
+	}
+
+	@Test
+	void recognizesMusicCategories() throws Exception {
+		AudioRegistry registry = AudioRegistry.load(
+			new ClspAssetLoader(getClass().getClassLoader()),
+			"audio_mapping.json"
+		);
+
+		assertThat(registry.isMusic("LevelMusic")).isTrue();
+		assertThat(registry.isMusic("MainMusic")).isTrue();
+		assertThat(registry.isMusic("eliminate")).isFalse();
+	}
+
+	@Test
 	void rejectsUnknownCategoryOrObject() throws Exception {
 		AudioRegistry registry = AudioRegistry.load(
 			new ClspAssetLoader(getClass().getClassLoader()),

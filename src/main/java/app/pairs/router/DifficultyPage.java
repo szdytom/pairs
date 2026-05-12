@@ -2,6 +2,7 @@ package app.pairs.router;
 
 import static app.pairs.utils.Colors.*;
 
+import app.pairs.audio.AudioManager;
 import app.pairs.logic.GameState;
 import app.pairs.map.TilemapFactory;
 import app.pairs.view.*;
@@ -19,6 +20,11 @@ public class DifficultyPage implements Page {
 	private final Blackboard blackboard;
 	private final Widget root;
 	private final CarouselSelector selector;
+
+	@Override
+	public void onExit() {
+		AudioManager.instance().fadeOutMusic(3000f);
+	}
 
 	public DifficultyPage() {
 		this.blackboard = new Blackboard();
