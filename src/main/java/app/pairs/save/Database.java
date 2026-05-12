@@ -58,31 +58,10 @@ public class Database implements AutoCloseable {
 				"CREATE TABLE IF NOT EXISTS saves ("
 				+ "id         INTEGER PRIMARY KEY AUTOINCREMENT, "
 				+ "user_id    INTEGER REFERENCES users(id), "
-				+ "created_at INTEGER NOT NULL, "
 				+ "updated_at INTEGER NOT NULL, "
 				+ "type       TEXT NOT NULL, "
 				+ "json_data  TEXT NOT NULL)"
 			);
-			// Migrate existing tables that predate user_id or updated_at
-			// columns.
-			try {
-				st.executeUpdate(
-					"ALTER TABLE saves ADD COLUMN user_id INTEGER REFERENCES "
-					+ "users(id)"
-				);
-			} catch (SQLException ignored) {}
-			try {
-				st.executeUpdate(
-					"ALTER TABLE saves ADD COLUMN updated_at INTEGER NOT NULL "
-					+ "DEFAULT 0"
-				);
-			} catch (SQLException ignored) {}
-			try {
-				st.executeUpdate(
-					"ALTER TABLE saves ADD COLUMN type TEXT NOT NULL DEFAULT "
-					+ "'NORMAL'"
-				);
-			} catch (SQLException ignored) {}
 			st.executeUpdate(
 				"CREATE TABLE IF NOT EXISTS scores ("
 				+ "id         INTEGER PRIMARY KEY AUTOINCREMENT, "
@@ -97,7 +76,7 @@ public class Database implements AutoCloseable {
 			);
 			st.executeUpdate(
 				"CREATE INDEX IF NOT EXISTS idx_saves_user "
-				+ "ON saves(user_id, created_at DESC)"
+				+ "ON saves(user_id, updated_at DESC)"
 			);
 		}
 	}
