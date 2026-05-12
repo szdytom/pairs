@@ -32,15 +32,14 @@ public class Save {
 		long now = System.currentTimeMillis();
 		try (
 			PreparedStatement statement = connection.prepareStatement(
-				"INSERT INTO saves (user_id, created_at, updated_at, type, "
-					+ "json_data) VALUES (NULL, ?, ?, ?, ?)",
+				"INSERT INTO saves (user_id, updated_at, type, json_data) "
+					+ "VALUES (NULL, ?, ?, ?)",
 				Statement.RETURN_GENERATED_KEYS
 			)
 		) {
 			statement.setLong(1, now);
-			statement.setLong(2, now);
-			statement.setString(3, tilemap.getDifficulty().name());
-			statement.setString(4, json);
+			statement.setString(2, tilemap.getDifficulty().name());
+			statement.setString(3, json);
 			statement.executeUpdate();
 			try (ResultSet keys = statement.getGeneratedKeys()) {
 				if (!keys.next()) {
@@ -58,14 +57,14 @@ public class Save {
 	public List<SaveEntry> list() {
 		List<SaveEntry> entries = new ArrayList<>();
 		try (PreparedStatement statement = connection.prepareStatement(
-				 "SELECT id, created_at, updated_at, type FROM saves ORDER BY "
+				 "SELECT id, updated_at, type FROM saves ORDER BY "
 				 + "updated_at DESC"
 			 );
 		     ResultSet rows = statement.executeQuery()) {
 			while (rows.next()) {
 				entries.add(new SaveEntry(
-					rows.getLong(1), rows.getLong(2), rows.getLong(3),
-					Tilemap.Difficulty.valueOf(rows.getString(4))
+					rows.getLong(1), rows.getLong(2),
+					Tilemap.Difficulty.valueOf(rows.getString(3))
 				));
 			}
 			return entries;
