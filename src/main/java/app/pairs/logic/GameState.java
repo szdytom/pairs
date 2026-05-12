@@ -7,8 +7,10 @@ import app.pairs.map.SubsetTilemapFactory;
 import app.pairs.map.TileGroupRegistry;
 import app.pairs.map.TileSelectionPolicy;
 import app.pairs.map.TilemapFactory;
+import app.pairs.model.GameSnapshot;
 import app.pairs.model.GameStatus;
 import app.pairs.model.OpLogs;
+import app.pairs.model.OperationSnapshot;
 import app.pairs.model.Tilemap;
 import app.pairs.solver.Solver;
 import app.pairs.solver.SolverResult;
@@ -54,6 +56,17 @@ public final class GameState {
 		this.tilemap = factory.generate();
 		this.opLogs = new OpLogs();
 		this.gameStatus = new GameStatus();
+		this.remainingTiles = countTiles();
+	}
+
+	private GameState(
+		TilemapFactory factory, Tilemap tilemap, OpLogs opLogs,
+		GameStatus gameStatus
+	) {
+		this.factory = factory;
+		this.tilemap = tilemap;
+		this.opLogs = opLogs;
+		this.gameStatus = gameStatus;
 		this.remainingTiles = countTiles();
 	}
 
@@ -115,6 +128,35 @@ public final class GameState {
 		return new GameState(new SubsetTilemapFactory(inner, subset));
 	}
 
+	public static GameState fromSnapshot(GameSnapshot snapshot) {
+		Tilemap tilemap = tilemapFrom(snapshot);
+		OpLogs opLogs = new OpLogs();
+		GameStatus gameStatus = new GameStatus();
+		gameStatus.score = snapshot.score();
+		gameStatus.combo = snapshot.combo();
+		GameState state = new GameState(
+			() -> tilemapFrom(snapshot), tilemap, opLogs, gameStatus
+		);
+		for (OperationSnapshot op : snapshot.operations()) {
+			opLogs.push(OpElimination.restored(op));
+		}
+		return state;
+	}
+
+	private static Tilemap tilemapFrom(GameSnapshot snapshot) {
+		Tilemap tilemap = new Tilemap(copy(snapshot.tilemap()));
+		tilemap.setDifficulty(snapshot.difficulty());
+		return tilemap;
+	}
+
+	private static int[][] copy(int[][] source) {
+		int[][] result = new int[source.length][];
+		for (int row = 0; row < source.length; row++) {
+			result[row] = source[row].clone();
+		}
+		return result;
+	}
+
 	// ---- read-only map accessors -----------------------------------------
 
 	public int getWidth() {
@@ -128,6 +170,19 @@ public final class GameState {
 	public int getTile(int row, int col) {
 		return tilemap.getTile(row, col);
 	}
+
+	public Tilemap getTilemap() {
+		return tilemap;
+	}
+
+	public OpLogs getOpLogsModel() {
+		return opLogs;
+	}
+
+	public GameStatus getGameStatus() {
+		return gameStatus;
+	}
+
 	public String getTileString(int row, int col) {
 		int id = tilemap.getTile(row, col);
 		if (id <= 0) {

@@ -40,4 +40,8 @@ public class OpLogs {
 		Collections.reverse(list);
 		return list;
 	}
+
+	public List<OperationSnapshot> snapshots() {
+		return history().stream().map(OpElimination::snapshot).toList();
+	}
 }
