@@ -1,5 +1,6 @@
 package app.pairs.router;
 
+import app.pairs.audio.AudioManager;
 import app.pairs.view.*;
 
 import io.github.libsdl4j.api.render.*;
@@ -7,6 +8,14 @@ import io.github.libsdl4j.api.render.*;
 public class MainMenuPage implements Page {
 	private final Blackboard blackboard;
 	private final Widget root;
+
+	@Override
+	public void onEnter() {
+		AudioManager.instance().playWithFadeIn("MainMusic", "wet_hand", 3000f);
+	}
+
+	@Override
+	public void onExit() {}
 
 	public MainMenuPage() {
 		this.blackboard = new Blackboard();

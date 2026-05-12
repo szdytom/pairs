@@ -9,10 +9,12 @@ import app.pairs.asset.AssetLoaderInstance;
 import app.pairs.asset.AudioRegistry;
 
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
+import java.util.Set;
 
 import com.sun.jna.Memory;
 import com.sun.jna.ptr.IntByReference;
@@ -24,26 +26,15 @@ import io.github.libsdl4j.api.rwops.SDL_RWops;
 public final class AudioManager implements AutoCloseable {
 	private static final String DEFAULT_MAPPING = "audio_mapping.json";
 	private static final int BUFFER_SAMPLES = 2_048;
-	// Limit the queue so stale sounds don't pile up if the game lags.
-	private static final int QUEUE_CAPACITY = 8;
+	private static final int SFX_PLAYER_COUNT = 7;
 	private static AudioManager INSTANCE;
 
-	// Accessed only from the audio thread after init().
 	private final Map<String, AudioClip> clips = new HashMap<>();
-	private SDL_AudioDeviceID device;
-	private int deviceFrequency;
-	private int deviceChannels;
-	private int deviceSdlFormat;
+	private final List<AudioPlayer> sfxPlayers = new ArrayList<>();
+	private MusicPlayer musicPlayer;
 
-	// Written once by init(), then read-only from both threads.
 	private AssetLoader loader;
 	private AudioRegistry mapping;
-
-	// play() drops new requests when full rather than blocking the caller.
-	private final BlockingQueue<String> pendingPaths = new ArrayBlockingQueue<>(
-		QUEUE_CAPACITY
-	);
-	private Thread audioThread;
 
 	public static AudioManager instance() {
 		if (INSTANCE == null) {
@@ -59,21 +50,28 @@ public final class AudioManager implements AutoCloseable {
 	}
 
 	public void init(String mappingPath) throws Exception {
+		if (mapping != null) {
+			throw new IllegalStateException(
+				"AudioManager is already initialized"
+			);
+		}
 		loader = AssetLoaderInstance.getInstance();
 		mapping = AudioRegistry.load(loader, mappingPath);
 
-		audioThread = new Thread(this::audioLoop, "audio-worker");
-		audioThread.setDaemon(true);
-		audioThread.start();
+		preloadClips();
+		createPlayers();
 	}
 
-	/** Called from the main thread — non-blocking. */
 	public void play(String category, String object) {
+		playWithFadeIn(category, object, 0f);
+	}
+
+	public void playWithFadeIn(String category, String object, float fadeInMs) {
 		if (mapping == null || loader == null) {
 			throw new IllegalStateException("AudioManager is not initialized");
 		}
 		if (object == null) {
-			return; // empty tile, no audio
+			return;
 		}
 		if (!mapping.has(category, object)) {
 			throw new IllegalArgumentException(
@@ -81,54 +79,96 @@ public final class AudioManager implements AutoCloseable {
 			);
 		}
 		String path = mapping.resolve(category, object);
-		pendingPaths.offer(path); // drops silently if queue is full
+		AudioClip clip = clips.get(path);
+		if (clip == null) {
+			throw new IllegalStateException(
+				"Audio clip is not loaded: " + path
+			);
+		}
+
+		if (mapping.isMusic(category)) {
+			musicPlayer.play(clip);
+			musicPlayer.fadeIn(fadeInMs, fadeInMs > 0f ? 0f : 1f);
+		} else {
+			AudioPlayer player = findIdlePlayer();
+			if (player != null) {
+				player.play(clip);
+			}
+		}
 	}
 
 	@Override
 	public void close() {
-		if (audioThread != null) {
-			audioThread.interrupt();
-			try {
-				audioThread.join(2_000);
-			} catch (InterruptedException e) {
-				Thread.currentThread().interrupt();
-			}
+		if (musicPlayer != null) {
+			musicPlayer.close();
+			musicPlayer = null;
 		}
+		closePlayers();
 		clips.clear();
+		mapping = null;
+		loader = null;
 	}
 
-	// ---- audio thread -------------------------------------------------------
+	/** Must be called every frame; drives music fade and streaming refill. */
+	public void update(long deltaMs) {
+		if (musicPlayer != null) {
+			musicPlayer.update(deltaMs);
+		}
+	}
 
-	private void audioLoop() {
-		// Pre-load every clip and open the device before waiting for requests.
-		// This moves all I/O and SDL_OpenAudioDevice overhead to startup time,
-		// so subsequent play() calls have negligible latency.
+	/** Fade out the currently playing music over {@code durationMs} ms. */
+	public void fadeOutMusic(float durationMs) {
+		if (musicPlayer != null) {
+			musicPlayer.fadeOut(durationMs);
+		}
+	}
+
+	private void preloadClips() {
 		for (String path : mapping.allPaths()) {
 			clips.computeIfAbsent(path, this::loadClip);
 		}
-		if (!clips.isEmpty()) {
-			openDeviceFor(clips.values().iterator().next());
-		}
-
-		try {
-			while (!Thread.currentThread().isInterrupted()) {
-				String path = pendingPaths.take(); // blocks until work arrives
-				AudioClip clip = clips.computeIfAbsent(path, this::loadClip);
-				openDeviceFor(clip);
-				queueAudio(clip);
-			}
-		} catch (InterruptedException e) {
-			Thread.currentThread().interrupt();
-		} finally {
-			closeDevice();
-		}
 	}
 
-	private void closeDevice() {
-		if (device != null && device.longValue() != 0) {
-			SDL_CloseAudioDevice(device);
-			device = null;
+	private void createPlayers() {
+		List<AudioFormat> sfxFmts = sfxFormats();
+		if (!sfxFmts.isEmpty()) {
+			try {
+				for (int i = 0; i < SFX_PLAYER_COUNT; i++) {
+					sfxPlayers.add(new AudioPlayer(sfxFmts));
+				}
+			} catch (RuntimeException e) {
+				closePlayers();
+				throw e;
+			}
 		}
+		musicPlayer = new MusicPlayer();
+	}
+
+	private List<AudioFormat> sfxFormats() {
+		Set<AudioFormat> formats = new LinkedHashSet<>();
+		for (String path : mapping.sfxPaths()) {
+			AudioClip clip = clips.get(path);
+			if (clip != null) {
+				formats.add(AudioFormat.from(clip));
+			}
+		}
+		return new ArrayList<>(formats);
+	}
+
+	private AudioPlayer findIdlePlayer() {
+		for (AudioPlayer player : sfxPlayers) {
+			if (player.isIdle()) {
+				return player;
+			}
+		}
+		return null;
+	}
+
+	private void closePlayers() {
+		for (AudioPlayer player : sfxPlayers) {
+			player.close();
+		}
+		sfxPlayers.clear();
 	}
 
 	private AudioClip loadClip(String path) {
@@ -162,41 +202,72 @@ public final class AudioManager implements AutoCloseable {
 		}
 	}
 
-	private void openDeviceFor(AudioClip clip) {
-		if (device != null && device.longValue() != 0
-		    && deviceFrequency == clip.frequency()
-		    && deviceChannels == clip.channels()
-		    && deviceSdlFormat == clip.sdlFormat()) {
-			return;
-		}
-		closeDevice();
+	private static final class AudioPlayer implements AutoCloseable {
+		private final Map<AudioFormat, SDL_AudioDeviceID>
+			devices = new HashMap<>();
 
-		SDL_AudioSpec desired = new SDL_AudioSpec();
-		desired.freq = clip.frequency();
-		desired.format = new SDL_AudioFormat(clip.sdlFormat());
-		desired.channels = (byte)clip.channels();
-		desired.samples = BUFFER_SAMPLES;
-
-		SDL_AudioSpec obtained = new SDL_AudioSpec();
-		device = SDL_OpenAudioDevice(null, 0, desired, obtained, 0);
-		if (device == null || device.longValue() == 0) {
-			throw new IllegalStateException(
-				"Unable to open audio device: " + SDL_GetError()
-			);
+		AudioPlayer(List<AudioFormat> formats) {
+			for (AudioFormat format : formats) {
+				devices.put(format, openDevice(format));
+			}
 		}
 
-		deviceFrequency = obtained.freq;
-		deviceChannels = obtained.channels;
-		deviceSdlFormat = obtained.format.intValue();
-		SDL_PauseAudioDevice(device, 0);
-	}
+		boolean isIdle() {
+			for (SDL_AudioDeviceID device : devices.values()) {
+				if (SDL_GetQueuedAudioSize(device) > 0) {
+					return false;
+				}
+			}
+			return true;
+		}
 
-	private void queueAudio(AudioClip clip) {
-		SDL_ClearQueuedAudio(device);
-		if (SDL_QueueAudio(device, clip.mem(), clip.length()) != 0) {
-			throw new IllegalStateException(
-				"Unable to queue audio: " + SDL_GetError()
+		void play(AudioClip clip) {
+			AudioFormat format = AudioFormat.from(clip);
+			SDL_AudioDeviceID device = devices.get(format);
+			if (device == null) {
+				throw new IllegalStateException(
+					"No audio player for clip format: " + format
+				);
+			}
+
+			SDL_ClearQueuedAudio(device);
+			if (SDL_QueueAudio(device, clip.mem(), clip.length()) != 0) {
+				throw new IllegalStateException(
+					"Unable to queue audio: " + SDL_GetError()
+				);
+			}
+		}
+
+		@Override
+		public void close() {
+			for (SDL_AudioDeviceID device : devices.values()) {
+				if (device != null && device.longValue() != 0) {
+					SDL_ClearQueuedAudio(device);
+					SDL_CloseAudioDevice(device);
+				}
+			}
+			devices.clear();
+		}
+
+		private static SDL_AudioDeviceID openDevice(AudioFormat format) {
+			SDL_AudioSpec desired = new SDL_AudioSpec();
+			desired.freq = format.frequency();
+			desired.format = new SDL_AudioFormat(format.sdlFormat());
+			desired.channels = (byte)format.channels();
+			desired.samples = BUFFER_SAMPLES;
+
+			SDL_AudioSpec obtained = new SDL_AudioSpec();
+			SDL_AudioDeviceID device = SDL_OpenAudioDevice(
+				null, 0, desired, obtained, 0
 			);
+			if (device == null || device.longValue() == 0) {
+				throw new IllegalStateException(
+					"Unable to open audio device: " + SDL_GetError()
+				);
+			}
+
+			SDL_PauseAudioDevice(device, 0);
+			return device;
 		}
 	}
 }

@@ -1,5 +1,6 @@
 package app.pairs.router;
 
+import app.pairs.audio.AudioManager;
 import app.pairs.logic.GameState;
 import app.pairs.view.Blackboard;
 import app.pairs.view.Event;
@@ -18,10 +19,16 @@ public class LevelPage implements Page {
 	}
 
 	@Override
-	public void onEnter() {}
+	public void onEnter() {
+		AudioManager.instance().playWithFadeIn(
+			"LevelMusic", "minecraft", 3000f
+		);
+	}
 
 	@Override
-	public void onExit() {}
+	public void onExit() {
+		AudioManager.instance().fadeOutMusic(1000f);
+	}
 
 	@Override
 	public void update(long deltaTimeMs) {

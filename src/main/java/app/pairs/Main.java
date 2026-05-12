@@ -140,6 +140,7 @@ public class Main {
 			lastTime = currentTime;
 
 			router.update(deltaTime);
+			AudioManager.instance().update(deltaTime);
 			router.render(renderer);
 
 			SDL_RenderPresent(renderer);

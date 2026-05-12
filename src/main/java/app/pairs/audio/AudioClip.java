@@ -37,4 +37,8 @@ final class AudioClip {
 	int sdlFormat() {
 		return sdlFormat;
 	}
+
+	void copyBytes(int srcOffset, byte[] dest, int destOffset, int len) {
+		mem.read(srcOffset, dest, destOffset, len);
+	}
 }
