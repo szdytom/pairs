@@ -1,6 +1,7 @@
 package app.pairs.save;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import app.pairs.logic.GameState;
 import app.pairs.logic.OpElimination;
@@ -77,6 +78,44 @@ class SaveTest {
 		assertThat(restored.getGameStatus().score).isZero();
 		assertThat(restored.getGameStatus().combo).isZero();
 		assertThat(restored.getOpLogs()).isEmpty();
+	}
+
+	@Test
+	void savesAreFilteredByUser() {
+		GameState state = GameState.customized(2, 2, 1);
+
+		try (Database db = new Database(dbPath())) {
+			db.users().createUser("alice", "password");
+			db.users().createUser("bob", "password");
+
+			long aliceId = db.saves("alice").save(
+				state.getTilemap(), state.getOpLogsModel(),
+				state.getGameStatus()
+			);
+			long bobId = db.saves("bob").save(
+				state.getTilemap(), state.getOpLogsModel(),
+				state.getGameStatus()
+			);
+
+			assertThat(db.saves("alice").list())
+				.extracting(SaveEntry::id)
+				.containsExactly(aliceId);
+			assertThat(db.saves("bob").list())
+				.extracting(SaveEntry::id)
+				.containsExactly(bobId);
+			assertThatThrownBy(() -> db.saves("alice").load(bobId))
+				.isInstanceOf(IllegalStateException.class);
+		}
+	}
+
+	@Test
+	void nullUsernameIsReserved() {
+		try (Database db = new Database(dbPath())) {
+			assertThatThrownBy(() -> db.users().createUser("null", "password"))
+				.isInstanceOf(IllegalArgumentException.class);
+			assertThatThrownBy(() -> db.users().createUser("NULL", "password"))
+				.isInstanceOf(IllegalArgumentException.class);
+		}
 	}
 
 	private String dbPath() {

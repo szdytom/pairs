@@ -2,6 +2,8 @@ package app.pairs.save;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
@@ -34,8 +36,13 @@ public class Database implements AutoCloseable {
 		return new Save(connection);
 	}
 
-	// users() and scores() are not yet exposed.
-	// Tables exist in the schema for future use.
+	public Save saves(String username) {
+		return new Save(connection, userId(username));
+	}
+
+	public Users users() {
+		return new Users(connection);
+	}
 
 	@Override
 	public void close() {
@@ -43,6 +50,26 @@ public class Database implements AutoCloseable {
 			connection.close();
 		} catch (SQLException e) {
 			throw new IllegalStateException("failed to close database", e);
+		}
+	}
+
+	private long userId(String username) {
+		try (
+			PreparedStatement statement = connection.prepareStatement(
+				"SELECT id FROM users WHERE name = ?"
+			)
+		) {
+			statement.setString(1, username);
+			try (ResultSet rows = statement.executeQuery()) {
+				if (!rows.next()) {
+					throw new IllegalStateException(
+						"user not found: " + username
+					);
+				}
+				return rows.getLong(1);
+			}
+		} catch (SQLException e) {
+			throw new IllegalStateException("failed to query user id", e);
 		}
 	}
 
