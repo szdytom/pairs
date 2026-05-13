@@ -20,14 +20,12 @@ public class LevelPage implements Page {
 
 	@Override
 	public void onEnter() {
-		AudioManager.instance().playWithFadeIn(
-			"LevelMusic", "minecraft", 3000f
-		);
+		AudioManager.instance().shufflePlayWithFadeIn("LevelMusic", 3000f);
 	}
 
 	@Override
 	public void onExit() {
-		AudioManager.instance().fadeOutMusic(1000f);
+		AudioManager.instance().fadeOutMusic(3000f);
 	}
 
 	@Override

@@ -16,6 +16,7 @@ public class ItemButton extends Button {
 		this.label = new TextComponent(
 			name + "(" + count + ")", 1, rgb(0, 0, 0)
 		);
+		this.setProp("no-sound", true);
 		var align = new AlignLayout();
 		align.addChild(label);
 		label.setProp("v-align", AlignLayout.VAlign.CENTER);
