@@ -27,7 +27,9 @@ public class Users {
 			)
 		) {
 			ps.setString(1, username);
-			return ps.executeQuery().next();
+			try (ResultSet rs = ps.executeQuery()) {
+				return rs.next();
+			}
 		} catch (SQLException e) {
 			throw new IllegalStateException("failed to query user", e);
 		}
@@ -35,17 +37,21 @@ public class Users {
 
 	// Returns true if the password matches the stored hash.
 	public boolean checkPassword(String username, String password) {
+		if (password == null) {
+			return false;
+		}
 		try (
 			PreparedStatement ps = connection.prepareStatement(
 				"SELECT password_hash FROM users WHERE name = ?"
 			)
 		) {
 			ps.setString(1, username);
-			ResultSet rs = ps.executeQuery();
-			if (!rs.next()) {
-				return false;
+			try (ResultSet rs = ps.executeQuery()) {
+				if (!rs.next()) {
+					return false;
+				}
+				return verifyPassword(password, rs.getString("password_hash"));
 			}
-			return verifyPassword(password, rs.getString("password_hash"));
 		} catch (SQLException | GeneralSecurityException e) {
 			throw new IllegalStateException("failed to check password", e);
 		}
@@ -53,6 +59,9 @@ public class Users {
 
 	public void createUser(String username, String password) {
 		validateUsername(username);
+		if (password == null) {
+			throw new IllegalArgumentException("password must not be null");
+		}
 		try (
 			PreparedStatement ps = connection.prepareStatement(
 				"INSERT INTO users (name, password_hash) VALUES (?, ?)"
@@ -74,12 +83,13 @@ public class Users {
 			)
 		) {
 			ps.setString(1, username);
-			ResultSet rs = ps.executeQuery();
-			if (rs.next()) {
-				int val = rs.getInt(1);
-				return rs.wasNull() ? 0 : val;
+			try (ResultSet rs = ps.executeQuery()) {
+				if (rs.next()) {
+					int val = rs.getInt(1);
+					return rs.wasNull() ? 0 : val;
+				}
+				return 0;
 			}
-			return 0;
 		} catch (SQLException e) {
 			throw new IllegalStateException("failed to get best score", e);
 		}

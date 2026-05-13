@@ -42,7 +42,7 @@ CREATE TABLE scores (
 );
 ```
 
-All three tables are active. Save records are always associated with a user ID; guest sessions do not write to the database.
+All three tables are active. In production, save rows are always user-scoped (`user_id` is set). `user_id` is nullable in the schema to support unscoped saves used by tests via `Database.saves()`; guest sessions (`NullUser`) do not write to the database at all.
 
 ### Storage path
 
@@ -120,7 +120,8 @@ Returns an empty list for guests.
 Optional<GameSnapshot> loadSave(long id)
 ```
 Deserializes the row with the given `id` that belongs to this user. Returns
-`Optional.empty()` if not found or if the user is a guest. Pass the result to
+`Optional.empty()` for guests. Throws `IllegalStateException` if the save does
+not exist or does not belong to this user. Pass the result to
 `GameState.fromSnapshot()` to get a playable game.
 
 ---
