@@ -2,8 +2,10 @@ package app.pairs.asset;
 
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -50,6 +52,14 @@ public final class AudioRegistry {
 		}
 		String file = config.resolve(object);
 		return config.basePath() + "/" + file;
+	}
+
+	public List<String> objectsIn(String category) {
+		Category config = categories.get(category);
+		if (config == null) {
+			return List.of();
+		}
+		return new ArrayList<>(config.objects().keySet());
 	}
 
 	/** Returns all unique asset paths registered across every category. */

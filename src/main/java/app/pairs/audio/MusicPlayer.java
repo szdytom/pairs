@@ -3,11 +3,13 @@ package app.pairs.audio;
 import static io.github.libsdl4j.api.audio.SdlAudio.*;
 import static io.github.libsdl4j.api.error.SdlError.*;
 
+import java.util.function.Supplier;
+
 import com.sun.jna.Memory;
 
 import io.github.libsdl4j.api.audio.*;
 
-/** Streaming music player with per-frame volume fade. Always loops the clip. */
+/** Streaming music player with per-frame volume fade. */
 final class MusicPlayer implements AutoCloseable {
 	private static final int BUFFER_SAMPLES = 2_048;
 	// ~50 ms of audio queued per refill
@@ -22,16 +24,33 @@ final class MusicPlayer implements AutoCloseable {
 	private Memory pcmMem;
 
 	private AudioClip clip;
+	private Supplier<AudioClip> nextClip;
 	private int playPos; // byte offset into clip PCM
 
 	private boolean active;
 	private float curVolume = 0f;
 	private float volumeDelta = 0f; // per ms
+	private long pauseMs;
+	private long pauseRemaining;
+	private boolean waiting;
 
-	/** Start playing clip from the beginning at volume 0. Always loops. */
+	/** Start playing clip from the beginning at volume 0. Loops seamlessly. */
 	void play(AudioClip clip) {
+		play(clip, null, 0);
+	}
+
+	/**
+	 * Start playing clip, advance on loop, pausing {@code pauseMs} ms between
+	 * tracks.
+	 */
+	void play(AudioClip clip, Supplier<AudioClip> nextClip, long pauseMs) {
+		requirePlayable(clip);
 		ensureDevice(AudioFormat.from(clip));
 		this.clip = clip;
+		this.nextClip = nextClip == null ? () -> clip : nextClip;
+		this.pauseMs = pauseMs;
+		this.pauseRemaining = 0;
+		this.waiting = false;
 		this.playPos = 0;
 		this.active = true;
 		this.curVolume = 0f;
@@ -55,6 +74,10 @@ final class MusicPlayer implements AutoCloseable {
 
 	/** Begin a fade-out over {@code durationMs} ms. Stops playback at zero. */
 	void fadeOut(float durationMs) {
+		if (waiting) {
+			stop();
+			return;
+		}
 		if (durationMs <= 0f) {
 			stop();
 		} else {
@@ -64,6 +87,16 @@ final class MusicPlayer implements AutoCloseable {
 
 	/** Must be called every frame from the main thread. */
 	void update(long deltaMs) {
+		if (waiting) {
+			pauseRemaining -= deltaMs;
+			if (pauseRemaining <= 0) {
+				waiting = false;
+				advanceClip();
+				active = true;
+			}
+			return;
+		}
+
 		if (!active || clip == null || device == null) {
 			return;
 		}
@@ -85,7 +118,10 @@ final class MusicPlayer implements AutoCloseable {
 	public void close() {
 		closeDevice();
 		clip = null;
+		nextClip = null;
 		active = false;
+		waiting = false;
+		pauseRemaining = 0;
 	}
 
 	// -------------------------------------------------------------------------
@@ -94,7 +130,11 @@ final class MusicPlayer implements AutoCloseable {
 		curVolume = 0f;
 		volumeDelta = 0f;
 		active = false;
-		SDL_ClearQueuedAudio(device);
+		waiting = false;
+		pauseRemaining = 0;
+		if (device != null) {
+			SDL_ClearQueuedAudio(device);
+		}
 	}
 
 	private int bytesPerMs() {
@@ -124,10 +164,19 @@ final class MusicPlayer implements AutoCloseable {
 			written += toCopy;
 			playPos += toCopy;
 			if (playPos >= clip.length()) {
-				playPos = 0;
+				if (pauseMs > 0) {
+					active = false;
+					waiting = true;
+					pauseRemaining = pauseMs;
+					break;
+				}
+				advanceClip();
 			}
 		}
 
+		if (written == 0) {
+			return;
+		}
 		scaleS16(out, written, curVolume);
 
 		pcmMem.write(0, out, 0, written);
@@ -135,6 +184,34 @@ final class MusicPlayer implements AutoCloseable {
 			throw new IllegalStateException(
 				"Unable to queue music audio: " + SDL_GetError()
 			);
+		}
+	}
+
+	private void advanceClip() {
+		if (nextClip == null) {
+			playPos = 0;
+			return;
+		}
+
+		AudioClip newClip = nextClip.get();
+		requirePlayable(newClip);
+		AudioFormat format = AudioFormat.from(newClip);
+		if (!format.equals(openedFormat)) {
+			throw new IllegalStateException(
+				"Looped audio clip format changed from " + openedFormat + " to "
+				+ format
+			);
+		}
+		clip = newClip;
+		playPos = 0;
+	}
+
+	private static void requirePlayable(AudioClip clip) {
+		if (clip == null) {
+			throw new IllegalStateException("Looped audio clip cannot be null");
+		}
+		if (clip.length() <= 0) {
+			throw new IllegalStateException("Looped audio clip is empty");
 		}
 	}
 
