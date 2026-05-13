@@ -8,7 +8,7 @@ import java.util.Optional;
 public class UserManager {
 	// Login if credentials match, register if new user. Returns empty on wrong
 	// password.
-	public static Optional<RealUser> loginOrRegister(
+	public static Optional<User> loginOrRegister(
 		String username, String password
 	) {
 		Users users = Database.instance().users();

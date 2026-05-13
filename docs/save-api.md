@@ -45,7 +45,9 @@ snapshot.ifPresent(s -> GameState.fromSnapshot(s));
 ```
 
 Restores a fully playable game — same board, score, and undo history.
-Returns `Optional.empty()` for guests (they have no saves).
+Returns `Optional.empty()` for guests. Throws `IllegalStateException` if the
+save does not exist or does not belong to this user (fail-fast; callers should
+only pass IDs obtained from `listSaves()`).
 
 ## Delete
 
