@@ -1,0 +1,29 @@
+{
+    "explode": {
+        "explode1": {
+            "play": "explode1.wav"
+        },
+        "explode2": {
+            "play": "explode2.wav"
+        },
+        "explode3": {
+            "play": "explode3.wav"
+        },
+        "explode4": {
+            "play": "explode4.wav"
+        }
+    },
+    "click": {
+        "click": {
+            "play": "random_click.wav"
+        }
+    },
+    "place": {
+        "wood": {
+            "play": "wood.place.wav"
+        },
+        "stone": {
+            "play": "stone.place.wav"
+        }
+    }
+}

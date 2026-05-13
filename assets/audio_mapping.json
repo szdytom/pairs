@@ -19,6 +19,31 @@
       "objectRoot": "MainMusic",
       "event": "play",
       "basePath": "BgMusicSound"
+    },
+    "RecordMusic": {
+      "type": "music",
+      "file": "sound-music.json",
+      "objectRoot": "RecordMusic",
+      "event": "play",
+      "basePath": "BgMusicSound"
+    },
+    "explode": {
+      "file": "sound-other.json",
+      "objectRoot": "explode",
+      "event": "play",
+      "basePath": "OtherSound"
+    },
+    "click": {
+      "file": "sound-other.json",
+      "objectRoot": "click",
+      "event": "play",
+      "basePath": "OtherSound"
+    },
+    "place": {
+      "file": "sound-other.json",
+      "objectRoot": "place",
+      "event": "play",
+      "basePath": "OtherSound"
     }
   }
 }

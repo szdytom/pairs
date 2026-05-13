@@ -2,11 +2,23 @@
   "LevelMusic": {
     "minecraft": {
       "play": "minecraft_remix.wav"
+    },
+    "familiar_room": {
+      "play": "familiar_room_remix.wav"
+    },
+    "subwoofer_lullaby": {
+      "play": "subwoofer_lullaby_remix.wav"
     }
   },
   "MainMusic": {
     "wet_hand": {
       "play": "wet_hand_remix.wav"
+    }
+  },
+  "RecordMusic":
+  {
+    "precipice": {
+      "play": "precipice_remix.wav"
     }
   }
 }
