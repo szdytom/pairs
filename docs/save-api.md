@@ -2,45 +2,55 @@
 
 ## Entry point
 
+All save operations go through the current `User`. The view never calls
+`Database` directly.
+
 ```java
-Save save = Database.instance().saves();
+User user = /* the logged-in RealUser or a NullUser for guests */;
 ```
 
-`Database` is a singleton. The first call opens (or creates) the local SQLite file automatically.
+`NullUser` silently ignores writes and returns empty results, so the view
+never needs to branch on login state.
 
 ## Save
 
 ```java
-long id = save.save(state.getTilemap(), state.getOpLogsModel(), state.getGameStatus());
+long id = user.saveGame(
+    state.getTilemap(), state.getOpLogsModel(), state.getGameStatus());
 ```
 
-Persists the current game state. Returns the new save's `id`.
+Persists the current game state under the current user. Returns the new
+save's `id`, or `-1` if the user is a guest.
 
 ## List
 
 ```java
-List<SaveEntry> entries = save.list();
+List<SaveEntry> entries = user.listSaves();
 ```
 
-Returns all saves, newest-played first. Each entry exposes:
+Returns the user's saves, newest first. Returns an empty list for guests.
+Each entry exposes:
 
 | Field | Type | Description |
 |---|---|---|
 | `id()` | `long` | Unique identifier |
 | `type()` | `Tilemap.Difficulty` | Difficulty of the saved game |
-| `createdAt()` | `long` | Creation time (Unix ms) |
-| `updatedAt()` | `long` | Last overwrite time (Unix ms) |
+| `updatedAt()` | `long` | Last save time (Unix ms) |
 
 ## Load
 
 ```java
-GameState restored = GameState.fromSnapshot(save.load(id));
+Optional<GameSnapshot> snapshot = user.loadSave(id);
+snapshot.ifPresent(s -> GameState.fromSnapshot(s));
 ```
 
 Restores a fully playable game — same board, score, and undo history.
+Returns `Optional.empty()` for guests (they have no saves).
 
 ## Delete
 
 ```java
-save.delete(id);
+user.deleteSave(id);
 ```
+
+No-op for guests.
