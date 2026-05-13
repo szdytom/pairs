@@ -27,8 +27,9 @@ CREATE TABLE users (
 
 CREATE TABLE saves (
     id         INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id    INTEGER REFERENCES users(id),  -- NULL until user system is wired in
-    created_at INTEGER NOT NULL,
+    user_id    INTEGER REFERENCES users(id),
+    updated_at INTEGER NOT NULL,
+    type       TEXT NOT NULL,
     json_data  TEXT NOT NULL
 );
 
@@ -41,7 +42,7 @@ CREATE TABLE scores (
 );
 ```
 
-`users` and `scores` are created but not yet exposed — the user/leaderboard system is planned for a future milestone. Only `saves` is currently accessible.
+All three tables are active. Save records are always associated with a user ID; guest sessions do not write to the database.
 
 ### Storage path
 
@@ -94,44 +95,48 @@ The solution is `OpElimination.restored(...)`, a package-private factory that:
 
 ## Available interfaces
 
+### `User` (`app.pairs.user.User`)
+
+The view layer always operates through a `User` instance. `RealUser` routes
+calls to the database; `NullUser` (guest mode) is a silent no-op.
+
+```java
+long saveGame(Tilemap tilemap, OpLogs opLogs, GameStatus gameStatus)
+```
+Serializes the current game state and inserts a new row owned by this user.
+Returns the auto-generated row `id`, or `-1` for guests.
+
+---
+
+```java
+List<SaveEntry> listSaves()
+```
+Returns the user's saves ordered by `updatedAt` descending (newest first).
+Returns an empty list for guests.
+
+---
+
+```java
+Optional<GameSnapshot> loadSave(long id)
+```
+Deserializes the row with the given `id` that belongs to this user. Returns
+`Optional.empty()` if not found or if the user is a guest. Pass the result to
+`GameState.fromSnapshot()` to get a playable game.
+
+---
+
+```java
+void deleteSave(long id)
+```
+Deletes the row with the given `id` owned by this user. No-op for guests.
+
+---
+
 ### `Database` (`app.pairs.save.Database`)
 
-```java
-Database.instance()      // returns the singleton; opens db on first call
-Save saves()             // returns the save accessor for this connection
-```
-
-The package-private `Database(String path)` constructor is reserved for tests.
-
----
-
-### `Save` (`app.pairs.save.Save`)
-
-```java
-long save(Tilemap tilemap, OpLogs opLogs, GameStatus gameStatus)
-```
-Serializes the current game state and inserts a new row. Returns the auto-generated row `id`.
-
----
-
-```java
-List<SaveEntry> list()
-```
-Returns all saves ordered by `created_at` descending (newest first). Each `SaveEntry` carries `id` and `createdAt` (Unix epoch milliseconds).
-
----
-
-```java
-GameSnapshot load(long id)
-```
-Deserializes the row with the given `id`. Throws `IllegalStateException` if not found. Pass the result to `GameState.fromSnapshot()` to get a playable game.
-
----
-
-```java
-void delete(long id)
-```
-Deletes the row with the given `id`.
+Not accessed directly by the view. The package-private `Database(String path)`
+constructor and `saves()`/`saves(String username)` methods are used internally
+by `RealUser` and in tests.
 
 ---
 
@@ -140,33 +145,37 @@ Deletes the row with the given `id`.
 ```java
 static GameState fromSnapshot(GameSnapshot snapshot)
 ```
-Reconstructs a fully playable `GameState` with the same board, score, and undo history as when the save was taken. `restart()` regenerates the board from the snapshot's tile grid.
+Reconstructs a fully playable `GameState` with the same board, score, and undo
+history as when the save was taken. `restart()` regenerates the board from the
+snapshot's tile grid.
 
 ---
 
 ### Data records (`app.pairs.model`)
 
 ```java
-record GameSnapshot(Difficulty difficulty, int score, int[][] tilemap, List<OperationSnapshot> operations)
-record OperationSnapshot(int row1, int col1, int row2, int col2, int tileId, int time, int deltaScore)
-record SaveEntry(long id, long createdAt)
+record GameSnapshot(Difficulty difficulty, int score, int combo, int[][] tilemap, List<OperationSnapshot> operations)
+record OperationSnapshot(int row1, int col1, int row2, int col2, int tileId, long time, int deltaScore, List<Integer> path, int comboBefore)
+record SaveEntry(long id, long updatedAt, Tilemap.Difficulty type)
 ```
 
 ## Typical usage
 
 ```java
-Save save = Database.instance().saves();
+User user = /* RealUser or NullUser */;
 
 // Save
-long id = save.save(state.getTilemap(), state.getOpLogsModel(), state.getGameStatus());
+long id = user.saveGame(
+    state.getTilemap(), state.getOpLogsModel(), state.getGameStatus());
 
 // List (for UI menu)
-List<SaveEntry> entries = save.list();
+List<SaveEntry> entries = user.listSaves();
 
 // Load
-GameSnapshot snapshot = save.load(entries.get(0).id());
-GameState restored = GameState.fromSnapshot(snapshot);
+user.loadSave(entries.get(0).id())
+    .map(GameState::fromSnapshot)
+    .ifPresent(restored -> /* switch to restored game */);
 
 // Delete
-save.delete(id);
+user.deleteSave(id);
 ```
