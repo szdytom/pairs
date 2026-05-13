@@ -20,6 +20,7 @@ public class LevelPage implements Page {
 
 	@Override
 	public void onEnter() {
+		AudioManager.instance().fadeOutMusic(3000f);
 		AudioManager.instance().shufflePlayWithFadeIn("LevelMusic", 3000f);
 	}
 
