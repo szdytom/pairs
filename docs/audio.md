@@ -17,7 +17,12 @@ Entry point: `AudioManager` singleton. Callers never touch `AudioPlayer` or `Mus
 AudioManager.instance().init();                            // call once at startup
 AudioManager.instance().play(category, object);            // play SFX or music instantly
 AudioManager.instance().playWithFadeIn(category, object, fadeInMs); // play music with fade-in
+AudioManager.instance().loopPlay(category, object);        // loop one object on the music player
+AudioManager.instance().loopPlay(category);                // randomly loop objects in a category
+AudioManager.instance().shufflePlay(category);             // same random category loop, explicit name
+AudioManager.instance().playRandom(category);              // play one random object from a category
 AudioManager.instance().fadeOutMusic(durationMs);          // fade out current music
+AudioManager.instance().stopMusic();                       // stop current music immediately
 AudioManager.instance().update(deltaMs);                   // call every frame
 AudioManager.instance().close();                           // call at shutdown
 ```
@@ -65,7 +70,7 @@ Resolved path: `basePath/filename` (e.g. `BgMusicSound/minecraft_remix.wav`).
 
 ## MusicPlayer Internals
 
-Streaming model: each `update()` call refills the SDL queue in `CHUNK_MS = 50 ms` chunks when the queued size drops below `REFILL_AHEAD_MS = 150 ms`. Looping is handled by wrapping `playPos` back to 0.
+Streaming model: each `update()` call refills the SDL queue in `CHUNK_MS = 50 ms` chunks when the queued size drops below `REFILL_AHEAD_MS = 150 ms`. Looping is handled by asking the current loop supplier for the next clip when `playPos` reaches the end of the current clip. The default supplier returns the same clip; shuffle playback supplies a random clip from the selected category.
 
 Volume ramp: `curVolume += volumeDelta * deltaMs` each frame. Fade-out stops and clears the queue when volume reaches 0.
 

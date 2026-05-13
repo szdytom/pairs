@@ -48,6 +48,20 @@ class AudioRegistryTest {
 	}
 
 	@Test
+	void listsObjectsInCategory() throws Exception {
+		AudioRegistry registry = AudioRegistry.load(
+			new ClspAssetLoader(getClass().getClassLoader()),
+			"audio_mapping.json"
+		);
+
+		assertThat(registry.objectsIn("LevelMusic"))
+			.containsExactlyInAnyOrder(
+				"minecraft", "familiar_room", "subwoofer_lullaby"
+			);
+		assertThat(registry.objectsIn("missing")).isEmpty();
+	}
+
+	@Test
 	void rejectsUnknownCategoryOrObject() throws Exception {
 		AudioRegistry registry = AudioRegistry.load(
 			new ClspAssetLoader(getClass().getClassLoader()),

@@ -14,6 +14,7 @@ import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 
 import com.sun.jna.Memory;
@@ -31,6 +32,7 @@ public final class AudioManager implements AutoCloseable {
 
 	private final Map<String, AudioClip> clips = new HashMap<>();
 	private final List<AudioPlayer> sfxPlayers = new ArrayList<>();
+	private final Random random = new Random();
 	private MusicPlayer musicPlayer;
 
 	private AssetLoader loader;
@@ -66,25 +68,38 @@ public final class AudioManager implements AutoCloseable {
 		playWithFadeIn(category, object, 0f);
 	}
 
+	public void shufflePlay(String category) {
+		shufflePlayWithFadeIn(category, 0f);
+	}
+
+	public void shufflePlayWithFadeIn(String category, float fadeInMs) {
+		ensureInitialized();
+		List<String> objects = objectsFor(category);
+		String object = randomObject(objects);
+		AudioClip clip = clipFor(category, object);
+		ensureLoopCompatible(category, objects, AudioFormat.from(clip));
+		musicPlayer.play(
+			clip, () -> clipFor(category, randomObject(objects)), 5_000L
+		);
+		musicPlayer.fadeIn(fadeInMs, fadeInMs > 0f ? 0f : 1f);
+	}
+
+	public void playRandom(String category) {
+		ensureInitialized();
+		List<String> objects = objectsFor(category);
+		play(category, randomObject(objects));
+	}
+
+	public void stopMusic() {
+		fadeOutMusic(3000f);
+	}
+
 	public void playWithFadeIn(String category, String object, float fadeInMs) {
-		if (mapping == null || loader == null) {
-			throw new IllegalStateException("AudioManager is not initialized");
-		}
+		ensureInitialized();
 		if (object == null) {
 			return;
 		}
-		if (!mapping.has(category, object)) {
-			throw new IllegalArgumentException(
-				"No audio mapping for " + category + "/" + object
-			);
-		}
-		String path = mapping.resolve(category, object);
-		AudioClip clip = clips.get(path);
-		if (clip == null) {
-			throw new IllegalStateException(
-				"Audio clip is not loaded: " + path
-			);
-		}
+		AudioClip clip = clipFor(category, object);
 
 		if (mapping.isMusic(category)) {
 			musicPlayer.play(clip);
@@ -120,6 +135,55 @@ public final class AudioManager implements AutoCloseable {
 	public void fadeOutMusic(float durationMs) {
 		if (musicPlayer != null) {
 			musicPlayer.fadeOut(durationMs);
+		}
+	}
+
+	private void ensureInitialized() {
+		if (mapping == null || loader == null || musicPlayer == null) {
+			throw new IllegalStateException("AudioManager is not initialized");
+		}
+	}
+
+	private AudioClip clipFor(String category, String object) {
+		if (!mapping.has(category, object)) {
+			throw new IllegalArgumentException(
+				"No audio mapping for " + category + "/" + object
+			);
+		}
+		String path = mapping.resolve(category, object);
+		AudioClip clip = clips.get(path);
+		if (clip == null) {
+			throw new IllegalStateException(
+				"Audio clip is not loaded: " + path
+			);
+		}
+		return clip;
+	}
+
+	private List<String> objectsFor(String category) {
+		List<String> objects = mapping.objectsIn(category);
+		if (objects.isEmpty()) {
+			throw new IllegalArgumentException(
+				"No audio objects for category: " + category
+			);
+		}
+		return objects;
+	}
+
+	private String randomObject(List<String> objects) {
+		return objects.get(random.nextInt(objects.size()));
+	}
+
+	private void ensureLoopCompatible(
+		String category, List<String> objects, AudioFormat expected
+	) {
+		for (String object : objects) {
+			AudioFormat format = AudioFormat.from(clipFor(category, object));
+			if (!format.equals(expected)) {
+				throw new IllegalStateException(
+					"Shuffled audio category has mixed formats: " + category
+				);
+			}
 		}
 	}
 
