@@ -11,7 +11,7 @@ public class MainMenuPage implements Page {
 
 	@Override
 	public void onEnter() {
-		AudioManager.instance().playWithFadeIn("MainMusic", "wet_hand", 3000f);
+		AudioManager.instance().shufflePlayWithFadeIn("MainMusic", 3000f);
 	}
 
 	@Override

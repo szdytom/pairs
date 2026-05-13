@@ -21,11 +21,6 @@ public class DifficultyPage implements Page {
 	private final Widget root;
 	private final CarouselSelector selector;
 
-	@Override
-	public void onExit() {
-		AudioManager.instance().fadeOutMusic(3000f);
-	}
-
 	public DifficultyPage() {
 		this.blackboard = new Blackboard();
 

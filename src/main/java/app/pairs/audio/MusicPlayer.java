@@ -30,9 +30,21 @@ final class MusicPlayer implements AutoCloseable {
 	private boolean active;
 	private float curVolume = 0f;
 	private float volumeDelta = 0f; // per ms
+	private boolean fadingOut;
 	private long pauseMs;
 	private long pauseRemaining;
 	private boolean waiting;
+
+	// Pending play queued while a fade-out is in progress.
+	private AudioClip pendingClip;
+	private Supplier<AudioClip> pendingNextClip;
+	private long pendingPauseMs;
+	private boolean pendingFadeInSet;
+	private float pendingFadeInDuration;
+	private float pendingFadeInStart;
+
+	// True when the most recent play() call was silently ignored.
+	private boolean playWasNoOp;
 
 	/** Start playing clip from the beginning at volume 0. Loops seamlessly. */
 	void play(AudioClip clip) {
@@ -44,18 +56,22 @@ final class MusicPlayer implements AutoCloseable {
 	 * tracks.
 	 */
 	void play(AudioClip clip, Supplier<AudioClip> nextClip, long pauseMs) {
-		requirePlayable(clip);
-		ensureDevice(AudioFormat.from(clip));
-		this.clip = clip;
-		this.nextClip = nextClip == null ? () -> clip : nextClip;
-		this.pauseMs = pauseMs;
-		this.pauseRemaining = 0;
-		this.waiting = false;
-		this.playPos = 0;
-		this.active = true;
-		this.curVolume = 0f;
-		this.volumeDelta = 0f;
-		SDL_ClearQueuedAudio(device);
+		if (active || waiting) {
+			if (fadingOut) {
+				// Queue for after the fade-out finishes.
+				pendingClip = clip;
+				pendingNextClip = nextClip;
+				pendingPauseMs = pauseMs;
+				pendingFadeInSet = false;
+				playWasNoOp = false;
+			} else {
+				// Already playing normally, ignore.
+				playWasNoOp = true;
+			}
+			return;
+		}
+		playWasNoOp = false;
+		startPlay(clip, nextClip, pauseMs);
 	}
 
 	/**
@@ -63,6 +79,17 @@ final class MusicPlayer implements AutoCloseable {
 	 * {@code startingVolume}.
 	 */
 	void fadeIn(float durationMs, float startingVolume) {
+		if (fadingOut && pendingClip != null) {
+			// Queue the fade-in alongside the pending play.
+			pendingFadeInSet = true;
+			pendingFadeInDuration = durationMs;
+			pendingFadeInStart = startingVolume;
+			return;
+		}
+		// play() was a no-op (already playing normally); skip to match.
+		if (playWasNoOp) {
+			return;
+		}
 		curVolume = startingVolume;
 		if (durationMs <= 0f) {
 			curVolume = 1f;
@@ -78,9 +105,10 @@ final class MusicPlayer implements AutoCloseable {
 			stop();
 			return;
 		}
-		if (durationMs <= 0f) {
+		if (durationMs <= 0f || curVolume <= 0f) {
 			stop();
 		} else {
+			fadingOut = true;
 			volumeDelta = -curVolume / durationMs;
 		}
 	}
@@ -104,7 +132,20 @@ final class MusicPlayer implements AutoCloseable {
 		curVolume = clamp(curVolume + volumeDelta * deltaMs, 0f, 1f);
 
 		if (volumeDelta < 0f && curVolume <= 0f) {
+			// Save pending before stop() clears it.
+			AudioClip pc = pendingClip;
+			Supplier<AudioClip> pnc = pendingNextClip;
+			long ppm = pendingPauseMs;
+			boolean pfi = pendingFadeInSet;
+			float pfd = pendingFadeInDuration;
+			float pfs = pendingFadeInStart;
 			stop();
+			if (pc != null) {
+				startPlay(pc, pnc, ppm);
+				if (pfi) {
+					fadeIn(pfd, pfs);
+				}
+			}
 			return;
 		}
 
@@ -120,8 +161,12 @@ final class MusicPlayer implements AutoCloseable {
 		clip = null;
 		nextClip = null;
 		active = false;
+		fadingOut = false;
 		waiting = false;
 		pauseRemaining = 0;
+		pendingClip = null;
+		pendingNextClip = null;
+		pendingFadeInSet = false;
 	}
 
 	// -------------------------------------------------------------------------
@@ -130,11 +175,36 @@ final class MusicPlayer implements AutoCloseable {
 		curVolume = 0f;
 		volumeDelta = 0f;
 		active = false;
+		fadingOut = false;
 		waiting = false;
 		pauseRemaining = 0;
+		pendingClip = null;
+		pendingNextClip = null;
+		pendingFadeInSet = false;
 		if (device != null) {
 			SDL_ClearQueuedAudio(device);
 		}
+	}
+
+	private void startPlay(
+		AudioClip clip, Supplier<AudioClip> nextClip, long pauseMs
+	) {
+		requirePlayable(clip);
+		ensureDevice(AudioFormat.from(clip));
+		this.clip = clip;
+		this.nextClip = nextClip == null ? () -> clip : nextClip;
+		this.pauseMs = pauseMs;
+		this.pauseRemaining = 0;
+		this.waiting = false;
+		this.fadingOut = false;
+		this.pendingClip = null;
+		this.pendingNextClip = null;
+		this.pendingFadeInSet = false;
+		this.playPos = 0;
+		this.active = true;
+		this.curVolume = 0f;
+		this.volumeDelta = 0f;
+		SDL_ClearQueuedAudio(device);
 	}
 
 	private int bytesPerMs() {

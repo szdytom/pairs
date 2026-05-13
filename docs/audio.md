@@ -5,7 +5,7 @@
 The audio system has two independent tracks:
 
 - **SFX pool** — 7 × `AudioPlayer` instances, fire-and-forget, picked round-robin from idle players.
-- **Music player** — 1 × `MusicPlayer`, streaming with per-frame fade-in/out. Always loops. Only one music track plays at a time.
+- **Music player** — 1 × `MusicPlayer`, streaming with per-frame fade-in/out. Only one music track plays at a time.
 
 Entry point: `AudioManager` singleton. Callers never touch `AudioPlayer` or `MusicPlayer` directly.
 
@@ -14,20 +14,23 @@ Entry point: `AudioManager` singleton. Callers never touch `AudioPlayer` or `Mus
 ## AudioManager API
 
 ```java
-AudioManager.instance().init();                            // call once at startup
-AudioManager.instance().play(category, object);            // play SFX or music instantly
+AudioManager.instance().init();                                    // call once at startup
+AudioManager.instance().play(category, object);                    // play SFX or music instantly
 AudioManager.instance().playWithFadeIn(category, object, fadeInMs); // play music with fade-in
-AudioManager.instance().loopPlay(category, object);        // loop one object on the music player
-AudioManager.instance().loopPlay(category);                // randomly loop objects in a category
-AudioManager.instance().shufflePlay(category);             // same random category loop, explicit name
-AudioManager.instance().playRandom(category);              // play one random object from a category
-AudioManager.instance().fadeOutMusic(durationMs);          // fade out current music
-AudioManager.instance().stopMusic();                       // stop current music immediately
-AudioManager.instance().update(deltaMs);                   // call every frame
-AudioManager.instance().close();                           // call at shutdown
+AudioManager.instance().shufflePlay(category);                     // shuffle-loop a category (no fade)
+AudioManager.instance().shufflePlayWithFadeIn(category, fadeInMs); // shuffle-loop with fade-in
+AudioManager.instance().playRandom(category);                      // play one random object from a category
+AudioManager.instance().fadeOutMusic(durationMs);                  // fade out current music
+AudioManager.instance().stopMusic();                               // fade out over 3 s
+AudioManager.instance().update(deltaMs);                           // call every frame
+AudioManager.instance().close();                                   // call at shutdown
 ```
 
 `update()` must be called each frame (done in `Main`). It advances volume ramps and refills the SDL audio queue for the music player.
+
+### Shuffle playback behaviour
+
+`shufflePlay` / `shufflePlayWithFadeIn` pick a random object from the category to start, then supply a new random object each time the current clip ends. A **5-second silence** is inserted between tracks. A new call while music is already playing (or waiting between tracks) is silently ignored. A new call during a fade-out is queued and starts automatically after the fade completes.
 
 ---
 
@@ -70,11 +73,15 @@ Resolved path: `basePath/filename` (e.g. `BgMusicSound/minecraft_remix.wav`).
 
 ## MusicPlayer Internals
 
-Streaming model: each `update()` call refills the SDL queue in `CHUNK_MS = 50 ms` chunks when the queued size drops below `REFILL_AHEAD_MS = 150 ms`. Looping is handled by asking the current loop supplier for the next clip when `playPos` reaches the end of the current clip. The default supplier returns the same clip; shuffle playback supplies a random clip from the selected category.
+**Streaming**: each `update()` call refills the SDL queue in `CHUNK_MS = 50 ms` chunks when the queued size drops below `REFILL_AHEAD_MS = 150 ms`. When `playPos` reaches the end of the current clip, the loop supplier is called for the next clip.
 
-Volume ramp: `curVolume += volumeDelta * deltaMs` each frame. Fade-out stops and clears the queue when volume reaches 0.
+**Volume ramp**: `curVolume += volumeDelta * deltaMs` each frame. Fade-out stops and clears the queue when `curVolume` reaches 0.
 
-The PCM byte buffer and JNA `Memory` block are preallocated on first use and reused across refill calls to avoid per-frame allocation.
+**Pause between tracks**: when a clip ends and `pauseMs > 0`, the player enters a `waiting` state for `pauseMs` ms before advancing to the next clip. `shufflePlayWithFadeIn` uses a 5-second pause.
+
+**Pending queue**: calling `play()` during a fade-out queues the new clip (and its `fadeIn` parameters) as _pending_. When the fade-out completes, the pending clip starts automatically. A `play()` call while playing normally (not fading out) is silently ignored; the paired `fadeIn()` is ignored to match.
+
+**PCM buffer**: the byte buffer and JNA `Memory` block are preallocated on first use and reused to avoid per-frame allocation.
 
 ---
 
@@ -98,11 +105,13 @@ In a `Page` implementation:
 ```java
 @Override
 public void onEnter() {
-    AudioManager.instance().playWithFadeIn("LevelMusic", "minecraft", 1000f);
+    AudioManager.instance().shufflePlayWithFadeIn("LevelMusic", 3000f);
 }
 
 @Override
 public void onExit() {
-    AudioManager.instance().fadeOutMusic(500f);
+    AudioManager.instance().fadeOutMusic(3000f);
 }
 ```
+
+The fade-out from `onExit()` will complete before the next page's music begins, thanks to the pending-play queue.

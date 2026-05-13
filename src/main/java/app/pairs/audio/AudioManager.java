@@ -28,6 +28,7 @@ public final class AudioManager implements AutoCloseable {
 	private static final String DEFAULT_MAPPING = "audio_mapping.json";
 	private static final int BUFFER_SAMPLES = 2_048;
 	private static final int SFX_PLAYER_COUNT = 7;
+	private static final long TRACK_GAP_MS = 5_000L;
 	private static AudioManager INSTANCE;
 
 	private final Map<String, AudioClip> clips = new HashMap<>();
@@ -79,7 +80,7 @@ public final class AudioManager implements AutoCloseable {
 		AudioClip clip = clipFor(category, object);
 		ensureLoopCompatible(category, objects, AudioFormat.from(clip));
 		musicPlayer.play(
-			clip, () -> clipFor(category, randomObject(objects)), 5_000L
+			clip, () -> clipFor(category, randomObject(objects)), TRACK_GAP_MS
 		);
 		musicPlayer.fadeIn(fadeInMs, fadeInMs > 0f ? 0f : 1f);
 	}
