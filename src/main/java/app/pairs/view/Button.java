@@ -1,6 +1,7 @@
 package app.pairs.view;
-
 import static app.pairs.utils.Colors.*;
+
+import app.pairs.audio.AudioManager;
 
 public class Button extends Background {
 	private final Runnable onClick;
@@ -20,6 +21,10 @@ public class Button extends Background {
 			if (me.type() == Event.Type.MOUSE_PRESSED && me.button() == 1) {
 				if (onClick != null) {
 					onClick.run();
+					Boolean mute = getProp("no-sound");
+					if (mute == null || !mute) {
+						AudioManager.instance().play("click", "click");
+					}
 				}
 				return true;
 			}

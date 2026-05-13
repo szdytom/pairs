@@ -513,6 +513,7 @@ public class LevelComponent extends Container {
 		tntSelecting = false;
 		itemList.hideAbort();
 		int score = gameState.tntScorePerTile();
+		AudioManager.instance().playRandom("explode");
 		for (Tilemap.TilePos pos : positions) {
 			gameState.clearTile(pos.row(), pos.col());
 			gameState.gameStatus.changeScore(score);
