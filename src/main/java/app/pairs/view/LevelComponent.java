@@ -2,7 +2,6 @@ package app.pairs.view;
 
 import static app.pairs.utils.Colors.*;
 
-import app.pairs.asset.IconManager;
 import app.pairs.audio.AudioManager;
 import app.pairs.logic.GameState;
 import app.pairs.logic.GameState.OpKind;
@@ -104,9 +103,7 @@ public class LevelComponent extends Container {
 
 		this.gridView = new IsometricGridView(gridWidth, gridHeight);
 
-		var hintIcon = IconManager.instance().getTexture("hint");
-		var hintImage = new ImageComponent(hintIcon, 16, 16);
-		this.hintBtn = new Button(() -> {
+		this.hintBtn = Button.fromIcon("hint", () -> {
 			if (timedOut || cleared || autoPairingState.isActive()) {
 				return;
 			}
@@ -118,12 +115,8 @@ public class LevelComponent extends Container {
 			startHint(m.r1(), m.c1(), m.r2(), m.c2());
 		});
 		hintBtn.setVisible(false);
-		hintBtn.addChild(hintImage);
 
-		var restartIcon = IconManager.instance().getTexture("restart");
-		var restartImage = new ImageComponent(restartIcon, 16, 16);
-		this.retryBtn = new Button(() -> restart());
-		retryBtn.addChild(restartImage);
+		this.retryBtn = Button.fromIcon("restart", () -> restart());
 
 		var topBar = new FlexLayout(FlexLayout.Direction.ROW, 4);
 		topBar.setProp("h-align", AlignLayout.HAlign.RIGHT);
@@ -132,16 +125,13 @@ public class LevelComponent extends Container {
 		topBar.setProp("v-padding", 4);
 		topBar.addChild(hintBtn);
 
-		var homeIcon = IconManager.instance().getTexture("home");
-		var homeImage = new ImageComponent(homeIcon, 16, 16);
-		var homeBtn = new Button(
-			() -> Router.instance().navigateTo(new MainMenuPage())
+		var homeBtn = Button.fromIcon(
+			"home", () -> Router.instance().navigateTo(new MainMenuPage())
 		);
 		homeBtn.setProp("h-align", AlignLayout.HAlign.LEFT);
 		homeBtn.setProp("v-align", AlignLayout.VAlign.TOP);
 		homeBtn.setProp("h-padding", 4);
 		homeBtn.setProp("v-padding", 4);
-		homeBtn.addChild(homeImage);
 
 		this.pairCounter = new PairCounter(totalPairs);
 		pairCounter.setProp("h-align", AlignLayout.HAlign.CENTER);
@@ -198,9 +188,7 @@ public class LevelComponent extends Container {
 
 		this.sidebar = new LevelSidebar();
 
-		var undoIcon = IconManager.instance().getTexture("revert");
-		var undoImage = new ImageComponent(undoIcon, 16, 16);
-		this.undoBtn = new Button(() -> {
+		this.undoBtn = Button.fromIcon("revert", () -> {
 			if (timedOut || cleared || autoPairingState.isActive()) {
 				return;
 			}
@@ -208,7 +196,6 @@ public class LevelComponent extends Container {
 			gridView.reset();
 			sidebar.notifyStateUpdated();
 		});
-		undoBtn.addChild(undoImage);
 		undoBtn.setVisible(false);
 		topBar.addChild(undoBtn);
 		topBar.addChild(retryBtn);
