@@ -6,7 +6,6 @@ import static io.github.libsdl4j.api.error.SdlError.*;
 import static io.github.libsdl4j.api.event.SDL_EventType.*;
 import static io.github.libsdl4j.api.event.SdlEvents.*;
 import static io.github.libsdl4j.api.hints.SdlHintsConst.*;
-import static io.github.libsdl4j.api.keycode.SDL_Keycode.*;
 import static io.github.libsdl4j.api.render.SDL_RendererFlags.*;
 import static io.github.libsdl4j.api.render.SdlRender.*;
 import static io.github.libsdl4j.api.video.SDL_WindowEventID.*;
@@ -21,6 +20,7 @@ import app.pairs.map.TilemapFactory;
 import app.pairs.router.LevelPage;
 import app.pairs.router.MainMenuPage;
 import app.pairs.router.Router;
+import app.pairs.router.TestPage;
 import app.pairs.view.Event;
 import app.pairs.view.KeyEvent;
 import app.pairs.view.MouseEvent;
@@ -78,7 +78,10 @@ public class Main {
 
 		Router router = Router.instance();
 
-		if (args == null || args.length == 0) {
+		if (args != null && args.length > 0
+		    && ("-t".equals(args[0]) || "--test".equals(args[0]))) {
+			router.navigateTo(new TestPage());
+		} else if (args == null || args.length == 0) {
 			router.navigateTo(new MainMenuPage());
 		} else {
 			GameState gameState = pickDifficulty(args);
