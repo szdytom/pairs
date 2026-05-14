@@ -19,12 +19,18 @@ public class MainMenuPage implements Page {
 
 	public MainMenuPage() {
 		this.blackboard = new Blackboard();
-		this.root = new MainMenuComponent(this::startGame, this::quitGame);
+		this.root = new MainMenuComponent(
+			this::startGame, this::goToLogin, this::quitGame
+		);
 		root.setBlackboard(blackboard);
 	}
 
 	private void startGame() {
 		Router.instance().navigateTo(new DifficultyPage());
+	}
+
+	private void goToLogin() {
+		Router.instance().navigateTo(new LoginPage());
 	}
 
 	private void quitGame() {

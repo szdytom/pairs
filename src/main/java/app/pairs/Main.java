@@ -21,6 +21,7 @@ import app.pairs.router.LevelPage;
 import app.pairs.router.MainMenuPage;
 import app.pairs.router.Router;
 import app.pairs.router.TestPage;
+import app.pairs.save.Database;
 import app.pairs.view.Event;
 import app.pairs.view.KeyEvent;
 import app.pairs.view.MouseEvent;
@@ -69,6 +70,19 @@ public class Main {
 			AudioManager.instance().init();
 		} catch (Exception e) {
 			System.err.println("Failed to load assets: " + e.getMessage());
+			e.printStackTrace();
+			SDL_DestroyRenderer(renderer);
+			SDL_DestroyWindow(window);
+			SDL_Quit();
+			System.exit(1);
+		}
+
+		try {
+			Database.instance();
+		} catch (Exception e) {
+			System.err.println(
+				"Failed to initialize database: " + e.getMessage()
+			);
 			e.printStackTrace();
 			SDL_DestroyRenderer(renderer);
 			SDL_DestroyWindow(window);
@@ -150,6 +164,7 @@ public class Main {
 		}
 
 		router.shutdown();
+		Database.instance().close();
 		AudioManager.instance().close();
 		AssetManager.instance().dispose();
 		SDL_DestroyRenderer(renderer);

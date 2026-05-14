@@ -3,6 +3,7 @@ import static app.pairs.utils.Colors.*;
 
 import static io.github.libsdl4j.api.keycode.SDL_Keycode.*;
 
+import app.pairs.asset.IconManager;
 import app.pairs.audio.AudioManager;
 
 public class Button extends Background {
@@ -47,5 +48,13 @@ public class Button extends Background {
 		if (mute == null || !mute) {
 			AudioManager.instance().play("click", "click");
 		}
+	}
+
+	public static Button fromIcon(String iconName, Runnable onClick) {
+		var icon = IconManager.instance().getTexture(iconName);
+		var image = new ImageComponent(icon, 16, 16);
+		var btn = new Button(onClick);
+		btn.addChild(image);
+		return btn;
 	}
 }
