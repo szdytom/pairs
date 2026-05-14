@@ -25,6 +25,11 @@ public class RealUser implements User {
 	}
 
 	@Override
+	public boolean isAuthorized() {
+		return true;
+	}
+
+	@Override
 	public void save(GameState st) {
 		Database.instance().users().addScore(
 			username, st.getTilemap().getDifficulty(), st.gameStatus.score
