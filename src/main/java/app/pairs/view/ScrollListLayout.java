@@ -206,6 +206,16 @@ public class ScrollListLayout extends Container {
 			}
 			return false;
 		}
+		if (event instanceof KeyEvent) {
+			for (int i = children.size() - 1; i >= 0; i--) {
+				Widget child = children.get(i);
+				if (!child.isVisible())
+					continue;
+				if (child.dispatchEvent(event, myGlobalX, myGlobalY)) {
+					return true;
+				}
+			}
+		}
 		return onEvent(event) || event.isConsumed();
 	}
 
