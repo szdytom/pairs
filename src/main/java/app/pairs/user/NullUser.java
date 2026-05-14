@@ -18,6 +18,11 @@ public class NullUser implements User {
 	}
 
 	@Override
+	public boolean isAuthorized() {
+		return false;
+	}
+
+	@Override
 	public void save(GameState st) {}
 
 	@Override

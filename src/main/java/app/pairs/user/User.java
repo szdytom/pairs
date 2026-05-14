@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface User {
+	boolean isAuthorized();
 	String getUsername();
 	void save(GameState st);
 	long saveGame(Tilemap tilemap, OpLogs opLogs, GameStatus gameStatus);
