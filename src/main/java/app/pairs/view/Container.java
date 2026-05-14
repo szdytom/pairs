@@ -101,8 +101,10 @@ public abstract class Container extends Widget {
 	 * {@link #onEvent(Event)}.
 	 *
 	 * <p>
-	 * For non-mouse events (e.g. keyboard), dispatches directly to
-	 * {@link #onEvent(Event)} without hit-testing.
+	 * For keyboard events, broadcasts to all visible children
+	 * front-to-back (topmost first). The first child that handles the
+	 * event stops dispatch. If no child handles it, it reaches this
+	 * container's {@link #onEvent(Event)}.
 	 */
 	@Override
 	public boolean dispatchEvent(
@@ -150,6 +152,16 @@ public abstract class Container extends Widget {
 					}
 					// Not handled — bubble to self, skip siblings.
 					return onEvent(event) || event.isConsumed();
+				}
+			}
+		}
+		if (event instanceof KeyEvent) {
+			for (int i = children.size() - 1; i >= 0; i--) {
+				Widget child = children.get(i);
+				if (!child.isVisible())
+					continue;
+				if (child.dispatchEvent(event, myGlobalX, myGlobalY)) {
+					return true;
 				}
 			}
 		}

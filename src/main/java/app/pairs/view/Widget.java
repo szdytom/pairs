@@ -17,6 +17,7 @@ public abstract class Widget implements ViewComponent {
 	int layoutW;
 	int layoutH;
 	boolean hovered;
+	boolean focusable;
 	boolean visible = true;
 
 	public void setBlackboard(Blackboard bb) {
@@ -64,6 +65,48 @@ public abstract class Widget implements ViewComponent {
 	 * {@link #isHovered()} reflects the new state.
 	 */
 	protected void onHoverChanged() {}
+
+	public void setFocusable(boolean v) {
+		this.focusable = v;
+		if (!v && isActive()) {
+			clearFocus();
+		}
+	}
+
+	public boolean isFocusable() {
+		return focusable;
+	}
+
+	public boolean isActive() {
+		Blackboard bb = blackboard();
+		return bb != null && bb.active == this;
+	}
+
+	public void requestFocus() {
+		if (!focusable) {
+			return;
+		}
+		Blackboard bb = blackboard();
+		if (bb == null || bb.active == this) {
+			return;
+		}
+		Widget prev = bb.active;
+		bb.active = this;
+		if (prev != null) {
+			prev.onActiveChanged();
+		}
+		onActiveChanged();
+	}
+
+	public void clearFocus() {
+		Blackboard bb = blackboard();
+		if (bb != null && bb.active == this) {
+			bb.active = null;
+			onActiveChanged();
+		}
+	}
+
+	protected void onActiveChanged() {}
 
 	/**
 	 * Handles an event dispatched to this widget.
