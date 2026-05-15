@@ -14,6 +14,7 @@ public class RogueSession {
 	public final Map<ItemType, Integer>
 		purchaseCounts = new EnumMap<>(ItemType.class);
 	public int timePurchases;
+	public long totalTimePurchasedMs;
 
 	public RogueSession() {
 		for (ItemType type : ItemType.values()) {
@@ -39,6 +40,7 @@ public class RogueSession {
 		spendableScore -= cost;
 		cumulativeSpent += cost;
 		remainingMs += 30_000;
+		totalTimePurchasedMs += 30_000;
 		timePurchases++;
 		return true;
 	}
