@@ -1,5 +1,6 @@
 package app.pairs.router;
 
+import app.pairs.audio.AudioManager;
 import app.pairs.logic.GameState;
 import app.pairs.map.TilemapFactory;
 import app.pairs.model.CountdownState;
@@ -21,6 +22,18 @@ public class RoguePlayPage implements Page {
 		this.session = session;
 		this.blackboard = new Blackboard();
 		this.levelComponent = createLevel();
+	}
+
+	@Override
+	public void onEnter() {
+		AudioManager.instance().fadeOutMusic(3000f);
+		AudioManager.instance().shufflePlayWithFadeIn("LevelMusic", 3000f);
+	}
+
+	@Override
+	public void onExit() {
+		AudioManager.instance().fadeOutMusic(3000f);
+		syncToSession();
 	}
 
 	private LevelComponent createLevel() {
@@ -52,11 +65,6 @@ public class RoguePlayPage implements Page {
 			syncToSession();
 			Router.instance().navigateTo(new RogueResultPage(session));
 		}
-	}
-
-	@Override
-	public void onExit() {
-		syncToSession();
 	}
 
 	private void syncToSession() {
