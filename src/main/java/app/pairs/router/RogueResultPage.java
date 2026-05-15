@@ -23,30 +23,21 @@ public class RogueResultPage implements Page {
 		var gameOverText = new TextComponent("Game Over", 4, rgb(40, 40, 40));
 		gameOverText.setProp("h-align", AlignLayout.HAlign.CENTER);
 
-		var scoreText = new TextComponent(
-			"Score: " + session.getTotalEarned(), 2, rgb(60, 60, 60)
-		);
-		scoreText.setProp("h-align", AlignLayout.HAlign.CENTER);
+		int labelColor = rgb(120, 120, 120);
+		int valueColor = rgb(50, 50, 50);
 
-		var roundText = new TextComponent(
-			"Round: " + (session.level - 1), 2, rgb(60, 60, 60)
-		);
-		roundText.setProp("h-align", AlignLayout.HAlign.CENTER);
-
-		var timeText = new TextComponent(
-			String.format("Time: %02d:%02d", mins, secs), 2, rgb(60, 60, 60)
-		);
-		timeText.setProp("h-align", AlignLayout.HAlign.CENTER);
+		var grid = new GridLayout(2, 8, 0, 2);
+		addRow(grid, "Round", String.valueOf(session.level - 1), labelColor, valueColor);
+		addRow(grid, "Time", String.format("%02d:%02d", mins, secs), labelColor, valueColor);
+		addRow(grid, "Score", String.valueOf(session.getTotalEarned()), labelColor, valueColor);
 
 		var menuBtn = makeButton(
 			"Main Menu", () -> Router.instance().navigateTo(new MainMenuPage())
 		);
 
-		var column = new FlexLayout(FlexLayout.Direction.COLUMN, 8);
+		var column = new FlexLayout(FlexLayout.Direction.COLUMN, 12);
 		column.addChild(gameOverText);
-		column.addChild(scoreText);
-		column.addChild(roundText);
-		column.addChild(timeText);
+		column.addChild(grid);
 		column.addChild(menuBtn);
 		column.setProp("h-align", AlignLayout.HAlign.CENTER);
 		column.setProp("v-align", AlignLayout.VAlign.CENTER);
@@ -55,6 +46,14 @@ public class RogueResultPage implements Page {
 		rootAlign.addChild(column);
 		rootAlign.setBlackboard(blackboard);
 		this.root = rootAlign;
+	}
+
+	private static void addRow(
+		GridLayout grid, String label, String value,
+		int labelColor, int valueColor
+	) {
+		grid.addChild(new TextComponent(label, 2, labelColor));
+		grid.addChild(new TextComponent(value, 2, valueColor));
 	}
 
 	private static Button makeButton(String label, Runnable onClick) {
