@@ -164,12 +164,13 @@ public class Main {
 		}
 
 		router.shutdown();
-		Database.instance().close();
 		AudioManager.instance().close();
 		AssetManager.instance().dispose();
 		SDL_DestroyRenderer(renderer);
 		SDL_DestroyWindow(window);
 		SDL_Quit();
+		Database.instance().close(); // close bd at last to ensure all pending
+		                             // operations are completed
 	}
 
 	/**

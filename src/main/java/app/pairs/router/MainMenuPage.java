@@ -1,6 +1,8 @@
 package app.pairs.router;
 
 import app.pairs.audio.AudioManager;
+import app.pairs.user.NullUser;
+import app.pairs.user.UserSession;
 import app.pairs.view.*;
 
 import io.github.libsdl4j.api.render.*;
@@ -20,9 +22,14 @@ public class MainMenuPage implements Page {
 	public MainMenuPage() {
 		this.blackboard = new Blackboard();
 		this.root = new MainMenuComponent(
-			this::startGame, this::goToLogin, this::quitGame
+			this::startGame, this::goToLogin, this::quitGame, this::logOut
 		);
 		root.setBlackboard(blackboard);
+	}
+
+	private void logOut() {
+		UserSession.instance().setUser(new NullUser());
+		Router.instance().navigateTo(new MainMenuPage());
 	}
 
 	private void startGame() {

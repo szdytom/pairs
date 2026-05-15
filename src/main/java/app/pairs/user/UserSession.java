@@ -19,4 +19,8 @@ public class UserSession {
 	public void setUser(User user) {
 		this.current = user;
 	}
+
+	public boolean isAuthorized() {
+		return current.isAuthorized();
+	}
 }

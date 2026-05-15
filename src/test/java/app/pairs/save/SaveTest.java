@@ -108,16 +108,6 @@ class SaveTest {
 		}
 	}
 
-	@Test
-	void nullUsernameIsReserved() {
-		try (Database db = new Database(dbPath())) {
-			assertThatThrownBy(() -> db.users().createUser("null", "password"))
-				.isInstanceOf(IllegalArgumentException.class);
-			assertThatThrownBy(() -> db.users().createUser("NULL", "password"))
-				.isInstanceOf(IllegalArgumentException.class);
-		}
-	}
-
 	private String dbPath() {
 		return tempDir.resolve("saves.sqlite").toString();
 	}

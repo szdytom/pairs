@@ -1,17 +1,9 @@
 package app.pairs.router;
 
-import app.pairs.audio.AudioManager;
-import app.pairs.logic.GameState;
-import app.pairs.user.NullUser;
-import app.pairs.user.User;
 import app.pairs.user.UserManager;
 import app.pairs.user.UserSession;
 import app.pairs.view.Blackboard;
-import app.pairs.view.Event;
 import app.pairs.view.LoginComponent;
-import app.pairs.view.Widget;
-
-import io.github.libsdl4j.api.render.*;
 
 public class LoginPage implements Page {
 	private final LoginComponent root;
