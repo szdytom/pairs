@@ -28,7 +28,12 @@ public class FlexLayout extends Container {
 		int totalH = 0;
 		int maxW = 0;
 		int maxH = 0;
+		int visibleCount = 0;
 		for (Widget child : children) {
+			if (!child.isVisible()) {
+				continue;
+			}
+			visibleCount++;
 			int[] size = child.measure();
 			int cw = size[0];
 			int ch = size[1];
@@ -44,7 +49,7 @@ public class FlexLayout extends Container {
 				}
 			}
 		}
-		int gaps = gap * Math.max(0, children.size() - 1);
+		int gaps = gap * Math.max(0, visibleCount - 1);
 		int p2 = padding * 2;
 		if (direction == Direction.ROW) {
 			measuredSize[0] = totalW + gaps + p2;
@@ -64,7 +69,12 @@ public class FlexLayout extends Container {
 
 		int totalNatural = 0;
 		int totalGrow = 0;
+		int visibleCount = 0;
 		for (Widget child : children) {
+			if (!child.isVisible()) {
+				continue;
+			}
+			visibleCount++;
 			int[] size = child.measure();
 			Integer grow = child.getProp("flex-grow");
 			if (grow != null && grow > 0) {
@@ -76,12 +86,20 @@ public class FlexLayout extends Container {
 				totalNatural += size[1];
 			}
 		}
-		int gaps = gap * Math.max(0, children.size() - 1);
+		int gaps = gap * Math.max(0, visibleCount - 1);
 		int avail = direction == Direction.ROW ? innerW : innerH;
 		int remaining = Math.max(0, avail - totalNatural - gaps);
 
 		int cursor = padding;
+		boolean first = true;
 		for (Widget child : children) {
+			if (!child.isVisible()) {
+				continue;
+			}
+			if (!first) {
+				cursor += gap;
+			}
+			first = false;
 			int[] size = child.measure();
 			Integer grow = child.getProp("flex-grow");
 			if (direction == Direction.ROW) {
@@ -90,14 +108,14 @@ public class FlexLayout extends Container {
 					cw += remaining * grow / totalGrow;
 				}
 				child.layout(cursor, padding, cw, innerH);
-				cursor += cw + gap;
+				cursor += cw;
 			} else {
 				int ch = size[1];
 				if (grow != null && grow > 0 && totalGrow > 0) {
 					ch += remaining * grow / totalGrow;
 				}
 				child.layout(padding, cursor, innerW, ch);
-				cursor += ch + gap;
+				cursor += ch;
 			}
 		}
 	}

@@ -38,7 +38,12 @@ public class GridLayout extends Container {
 		}
 		int cellW = 0;
 		int cellH = 0;
+		int visibleCount = 0;
 		for (Widget child : children) {
+			if (!child.isVisible()) {
+				continue;
+			}
+			visibleCount++;
 			int[] size = child.measure();
 			if (size[0] > cellW) {
 				cellW = size[0];
@@ -47,9 +52,14 @@ public class GridLayout extends Container {
 				cellH = size[1];
 			}
 		}
+		if (visibleCount == 0) {
+			measuredSize[0] = 0;
+			measuredSize[1] = 0;
+			return measuredSize;
+		}
 		cellSize[0] = cellW;
 		cellSize[1] = cellH;
-		int rows = (children.size() + fixedColumns - 1) / fixedColumns;
+		int rows = (visibleCount + fixedColumns - 1) / fixedColumns;
 		int p2 = padding * 2;
 		measuredSize[0] = fixedColumns * cellW + (fixedColumns - 1) * gapX + p2;
 		measuredSize[1] = rows * cellH + (rows - 1) * gapY + p2;
@@ -74,6 +84,9 @@ public class GridLayout extends Container {
 		}
 		int index = 0;
 		for (Widget child : children) {
+			if (!child.isVisible()) {
+				continue;
+			}
 			int col = index % fixedColumns;
 			int row = index / fixedColumns;
 			child.layout(
@@ -85,6 +98,12 @@ public class GridLayout extends Container {
 	}
 
 	private int rows() {
-		return (children.size() + fixedColumns - 1) / fixedColumns;
+		int count = 0;
+		for (Widget child : children) {
+			if (child.isVisible()) {
+				count++;
+			}
+		}
+		return (count + fixedColumns - 1) / fixedColumns;
 	}
 }
