@@ -1,0 +1,17 @@
+{
+	"title": "Auto",
+	"icon": "ai",
+	"k": 2000,
+	"alpha": 1.5,
+	"kind": "item",
+	"itemType": "AUTO_SOLVER",
+	"description": [
+		"Clear map",
+		"but no score"
+	],
+	"taglines": [
+		["Auto(v):", "  Brain→{0}"],
+		["Won't cost", "you tokens"],
+		["i9-14900KS", "(probably)"]
+	]
+}

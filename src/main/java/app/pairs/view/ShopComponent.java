@@ -2,69 +2,151 @@ package app.pairs.view;
 
 import static app.pairs.utils.Colors.*;
 
+import app.pairs.asset.AssetManager;
+import app.pairs.asset.IconManager;
 import app.pairs.model.ItemType;
 import app.pairs.model.RogueSession;
+import app.pairs.model.ShopItemConfig;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+import java.util.function.Consumer;
+
+import io.github.libsdl4j.api.render.SDL_Texture;
 
 public class ShopComponent extends AlignLayout {
+	private static final int CARD_WIDTH = 90;
+	private static final int CARD_BG = rgba(230, 230, 230, 255);
+	private static final int CARD_BG_HOVER = rgba(215, 215, 215, 255);
+	private static final int PADDING = 6;
+	private static final String[] SHOP_ITEM_IDS = {
+		"shop/auto", "shop/tnt", "shop/time"
+	};
+
 	private final RogueSession session;
 	private final TextComponent scoreText;
-	private final TextComponent autoCost;
-	private final TextComponent tntCost;
-	private final TextComponent timeCost;
+	private final List<ShopRow> rows = new ArrayList<>();
 	private int lastScore = -1;
-	private int lastAutoCost = -1;
-	private int lastTntCost = -1;
-	private int lastTimeCost = -1;
+
+	private static class ShopRow {
+		final ShopItemConfig config;
+		final TextComponent costText;
+		int lastCost = -1;
+
+		ShopRow(ShopItemConfig config, TextComponent costText) {
+			this.config = config;
+			this.costText = costText;
+		}
+	}
 
 	public ShopComponent(RogueSession session, Runnable onContinue) {
 		this.session = session;
 
-		var title = new TextComponent("Shop", 3, rgb(30, 30, 30));
+		var title = new TextComponent("Shop", 2, rgb(30, 30, 30));
 		title.setProp("h-align", AlignLayout.HAlign.CENTER);
 
-		this.scoreText = new TextComponent("Score: 0", 2, rgb(60, 60, 60));
+		this.scoreText = new TextComponent("Score: 0", 1, rgb(140, 140, 140));
 		scoreText.setProp("h-align", AlignLayout.HAlign.CENTER);
 
-		this.autoCost = new TextComponent("0", 1, rgb(80, 80, 80));
-		var autoBtn = buyButton(() -> {
-			session.purchaseItem(ItemType.AUTO_SOLVER);
-		});
-		var autoRow = new FlexLayout(FlexLayout.Direction.ROW, 6);
-		autoRow.addChild(new TextComponent("Auto Solver", 1, rgb(80, 80, 80)));
-		autoRow.addChild(autoCost);
-		autoRow.addChild(autoBtn);
+		var cardsRow = new FlexLayout(FlexLayout.Direction.ROW, 8);
 
-		this.tntCost = new TextComponent("0", 1, rgb(80, 80, 80));
-		var tntBtn = buyButton(() -> { session.purchaseItem(ItemType.TNT); });
-		var tntRow = new FlexLayout(FlexLayout.Direction.ROW, 6);
-		tntRow.addChild(new TextComponent("TNT", 1, rgb(80, 80, 80)));
-		tntRow.addChild(tntCost);
-		tntRow.addChild(tntBtn);
+		for (String id : SHOP_ITEM_IDS) {
+			ShopItemConfig config = AssetManager.instance().get(id);
+			var costText = new TextComponent("Cost: 0", 1, rgb(80, 80, 80));
+			boolean hasBought = hasBoughtAny(config);
+			cardsRow.addChild(makeCard(config, costText, hasBought));
+			rows.add(new ShopRow(config, costText));
+		}
 
-		this.timeCost = new TextComponent("0", 1, rgb(80, 80, 80));
-		var timeBtn = buyButton(() -> { session.purchaseTime(); });
-		var timeRow = new FlexLayout(FlexLayout.Direction.ROW, 6);
-		timeRow.addChild(new TextComponent("+30s Time", 1, rgb(80, 80, 80)));
-		timeRow.addChild(timeCost);
-		timeRow.addChild(timeBtn);
+		cardsRow.setProp("h-align", AlignLayout.HAlign.CENTER);
 
 		var continueBtn = makeContinueButton("Continue", onContinue);
 
-		var column = new FlexLayout(FlexLayout.Direction.COLUMN, 10);
+		var column = new FlexLayout(FlexLayout.Direction.COLUMN, 12);
 		column.addChild(title);
 		column.addChild(scoreText);
-		column.addChild(autoRow);
-		column.addChild(tntRow);
-		column.addChild(timeRow);
+		column.addChild(cardsRow);
 		column.addChild(continueBtn);
 		column.setProp("h-align", AlignLayout.HAlign.CENTER);
 		column.setProp("v-align", AlignLayout.VAlign.CENTER);
 		addChild(column);
 	}
 
-	private static Button buyButton(Runnable onClick) {
+	private boolean hasBoughtAny(ShopItemConfig config) {
+		if ("time".equals(config.kind())) {
+			return session.timePurchases > 0;
+		}
+		if ("item".equals(config.kind()) && config.itemType() != null) {
+			int count = session.purchaseCounts.get(
+				ItemType.valueOf(config.itemType())
+			);
+			return count > 0;
+		}
+		return false;
+	}
+
+	private Widget makeCard(
+		ShopItemConfig config, TextComponent costText, boolean hasBought
+	) {
+		var col = new FlexLayout(FlexLayout.Direction.COLUMN, 2);
+
+		var headerRow = new FlexLayout(FlexLayout.Direction.ROW, 4);
+		SDL_Texture iconTex = config.icon() != null
+			? IconManager.instance().getTexture(config.icon())
+			: null;
+		if (iconTex != null) {
+			headerRow.addChild(new ImageComponent(iconTex, 16, 16));
+		}
+		headerRow.addChild(
+			new TextComponent(config.title(), 1, rgb(30, 30, 30))
+		);
+		col.addChild(headerRow);
+
+		List<String> lines;
+		if (hasBought && !config.taglines().isEmpty()) {
+			int idx = new Random().nextInt(config.taglines().size());
+			lines = config.taglines().get(idx);
+		} else {
+			lines = config.description();
+		}
+		for (String line : lines) {
+			col.addChild(new TextComponent(line, 1, rgb(120, 120, 120)));
+		}
+
+		col.addChild(costText);
+		col.addChild(buyButton(config, this::purchase));
+
+		var card = new Card(
+			CARD_WIDTH, CARD_BG, CARD_BG_HOVER, PADDING, PADDING
+		);
+		card.addChild(col);
+		return card;
+	}
+
+	private void purchase(ShopItemConfig config) {
+		int cost = currentCost(config);
+		if ("time".equals(config.kind())) {
+			session.buyTime(cost);
+		} else if ("item".equals(config.kind()) && config.itemType() != null) {
+			session.buyItem(ItemType.valueOf(config.itemType()), cost);
+		}
+	}
+
+	private int currentCost(ShopItemConfig config) {
+		int count = "time".equals(config.kind())
+			? session.timePurchases
+			: session.purchaseCounts.get(ItemType.valueOf(config.itemType()));
+		return config.getCost(count);
+	}
+
+	private static Button buyButton(
+		ShopItemConfig config, Consumer<ShopItemConfig> onBuy
+	) {
 		var btn = new Button(
-			onClick, rgba(180, 200, 180, 255), rgba(140, 160, 140, 255)
+			()
+				-> onBuy.accept(config),
+			rgba(180, 200, 180, 255), rgba(140, 160, 140, 255)
 		);
 		var align = new AlignLayout();
 		var text = new TextComponent("Buy", 1, rgb(30, 60, 30));
@@ -100,25 +182,13 @@ public class ShopComponent extends AlignLayout {
 			dirty = true;
 		}
 
-		int ac = session.getItemCost(ItemType.AUTO_SOLVER);
-		if (ac != lastAutoCost) {
-			autoCost.setText(String.valueOf(ac));
-			lastAutoCost = ac;
-			dirty = true;
-		}
-
-		int tc = session.getItemCost(ItemType.TNT);
-		if (tc != lastTntCost) {
-			tntCost.setText(String.valueOf(tc));
-			lastTntCost = tc;
-			dirty = true;
-		}
-
-		int timec = session.getTimeCost();
-		if (timec != lastTimeCost) {
-			timeCost.setText(String.valueOf(timec));
-			lastTimeCost = timec;
-			dirty = true;
+		for (ShopRow row : rows) {
+			int cost = currentCost(row.config);
+			if (cost != row.lastCost) {
+				row.costText.setText("Cost: " + cost);
+				row.lastCost = cost;
+				dirty = true;
+			}
 		}
 
 		if (dirty) {

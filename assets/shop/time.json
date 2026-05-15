@@ -1,0 +1,15 @@
+{
+	"title": "+30s",
+	"icon": "sandglass",
+	"k": 5000,
+	"alpha": 1.5,
+	"kind": "time",
+	"description": [
+		"Adds 30s",
+		"to the clock"
+	],
+	"taglines": [
+		["Clock is your", "only enemy"],
+		["Time=money,", "efficiency=?"]
+	]
+}

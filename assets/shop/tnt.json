@@ -1,0 +1,17 @@
+{
+	"title": "TNT",
+	"icon": "tnt",
+	"k": 3000,
+	"alpha": 1.5,
+	"kind": "item",
+	"itemType": "TNT",
+	"description": [
+		"Bomb all tiles",
+		"of a type"
+	],
+	"taglines": [
+		["When in doubt,", "blow it up"],
+		["Favorite item", "of all steves"],
+		["Can't dup!", "(hopefully)"]
+	]
+}
