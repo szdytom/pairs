@@ -7,6 +7,7 @@ import app.pairs.logic.GameState;
 import app.pairs.logic.GameState.OpKind;
 import app.pairs.model.CountdownState;
 import app.pairs.model.ItemType;
+import app.pairs.model.RogueSession;
 import app.pairs.model.Tilemap;
 import app.pairs.router.MainMenuPage;
 import app.pairs.router.Router;
@@ -50,6 +51,7 @@ public class LevelComponent extends Container {
 
 	private long totalCountdownMs;
 	private final CountdownState countdownState;
+	private RogueSession rogueSession;
 	private long lastEliminationTimeMs;
 
 	// Layout state
@@ -205,6 +207,13 @@ public class LevelComponent extends Container {
 		startEntryAnimation();
 	}
 
+	public LevelComponent(
+		GameState gameState, RogueSession session, Blackboard blackboard
+	) {
+		this(gameState, session.remainingMs, blackboard);
+		this.rogueSession = session;
+	}
+
 	@Override
 	public void update(long deltaTimeMs) {
 		if (!cleared && !timedOut && gameStarted) {
@@ -290,6 +299,14 @@ public class LevelComponent extends Container {
 			countdownState.resume();
 			gameStarted = true;
 		}));
+	}
+
+	public boolean isCleared() {
+		return cleared;
+	}
+
+	public boolean isTimedOut() {
+		return timedOut;
 	}
 
 	/** Handle a mouse click at the current cursor position. */
