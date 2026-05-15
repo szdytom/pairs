@@ -375,4 +375,64 @@ class FlexLayoutTest {
 		assertEquals(20, a.layoutH);
 		assertEquals(60, b.layoutH); // measured size preserved
 	}
+
+	// ---- visibility -------------------------------------------------------
+
+	@Test
+	void measureIgnoresInvisibleChildren() {
+		FlexLayout l = new FlexLayout(FlexLayout.Direction.ROW, 4);
+		FixedWidget a = new FixedWidget(30, 20);
+		FixedWidget b = new FixedWidget(50, 10);
+		b.setVisible(false);
+		l.addChild(a);
+		l.addChild(b);
+		// Only 'a' visible; no gap since only one visible child
+		assertArrayEquals(new int[] {30, 20}, l.measure());
+	}
+
+	@Test
+	void measureGapCountsOnlyVisibleChildren() {
+		FlexLayout l = new FlexLayout(FlexLayout.Direction.ROW, 4);
+		FixedWidget a = new FixedWidget(10, 5);
+		FixedWidget b = new FixedWidget(20, 5);
+		FixedWidget c = new FixedWidget(30, 5);
+		b.setVisible(false);
+		l.addChild(a);
+		l.addChild(b);
+		l.addChild(c);
+		// visible: a, c — one gap between them
+		assertArrayEquals(new int[] {10 + 4 + 30, 5}, l.measure());
+	}
+
+	@Test
+	void layoutRowSkipsInvisibleChildren() {
+		FlexLayout l = new FlexLayout(FlexLayout.Direction.ROW, 4);
+		FixedWidget a = new FixedWidget(30, 20);
+		FixedWidget b = new FixedWidget(50, 10);
+		FixedWidget c = new FixedWidget(20, 15);
+		b.setVisible(false);
+		l.addChild(a);
+		l.addChild(b);
+		l.addChild(c);
+		l.layout(0, 0, 200, 50);
+
+		assertEquals(0, a.layoutX);
+		assertEquals(30 + 4, c.layoutX); // gap only between a and c
+	}
+
+	@Test
+	void layoutColumnSkipsInvisibleChildren() {
+		FlexLayout l = new FlexLayout(FlexLayout.Direction.COLUMN, 4);
+		FixedWidget a = new FixedWidget(30, 20);
+		FixedWidget b = new FixedWidget(50, 10);
+		FixedWidget c = new FixedWidget(20, 15);
+		b.setVisible(false);
+		l.addChild(a);
+		l.addChild(b);
+		l.addChild(c);
+		l.layout(0, 0, 100, 200);
+
+		assertEquals(0, a.layoutY);
+		assertEquals(20 + 4, c.layoutY); // gap only between a and c
+	}
 }
