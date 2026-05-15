@@ -1,7 +1,7 @@
 {
 	"title": "TNT",
 	"icon": "tnt",
-	"k": 3000,
+	"k": 6000,
 	"alpha": 1.5,
 	"kind": "item",
 	"itemType": "TNT",
