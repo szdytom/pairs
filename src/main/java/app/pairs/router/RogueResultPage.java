@@ -22,7 +22,7 @@ public class RogueResultPage implements Page {
 		gameOverText.setProp("h-align", AlignLayout.HAlign.CENTER);
 
 		var scoreText = new TextComponent(
-			"Score: " + session.totalScore, 2, rgb(60, 60, 60)
+			"Score: " + session.getTotalEarned(), 2, rgb(60, 60, 60)
 		);
 		scoreText.setProp("h-align", AlignLayout.HAlign.CENTER);
 

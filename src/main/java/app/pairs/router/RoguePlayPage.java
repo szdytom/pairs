@@ -75,7 +75,7 @@ public class RoguePlayPage implements Page {
 		CountdownState cs = blackboard.get(CountdownState.class);
 		GameState gs = blackboard.get(GameState.class);
 		session.remainingMs = cs.remainingMs;
-		session.totalScore += gs.gameStatus.score;
+		session.spendableScore += gs.gameStatus.score;
 		session.items.set(
 			ItemType.AUTO_SOLVER, gs.gameStatus.items.get(ItemType.AUTO_SOLVER)
 		);
