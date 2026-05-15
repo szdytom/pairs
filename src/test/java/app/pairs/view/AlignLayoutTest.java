@@ -209,4 +209,43 @@ class AlignLayoutTest {
 		AlignLayout layout = new AlignLayout();
 		layout.layout(0, 0, W, H); // should not throw
 	}
+
+	// ---- visibility -------------------------------------------------------
+
+	@Test
+	void measureIgnoresInvisibleChildren() {
+		AlignLayout layout = new AlignLayout();
+		FixedWidget a = new FixedWidget(30, 20);
+		FixedWidget b = new FixedWidget(50, 10);
+		b.setVisible(false);
+		layout.addChild(a);
+		layout.addChild(b);
+		assertArrayEquals(new int[] {30, 20}, layout.measure());
+	}
+
+	@Test
+	void measureAllInvisibleReturnsZero() {
+		AlignLayout layout = new AlignLayout();
+		FixedWidget a = new FixedWidget(30, 20);
+		a.setVisible(false);
+		layout.addChild(a);
+		assertArrayEquals(new int[] {0, 0}, layout.measure());
+	}
+
+	@Test
+	void layoutSkipsInvisibleChild() {
+		AlignLayout layout = new AlignLayout();
+		FixedWidget visible = new FixedWidget(30, 20);
+		FixedWidget invisible = new FixedWidget(50, 10);
+		invisible.setVisible(false);
+		layout.addChild(visible);
+		layout.addChild(invisible);
+		layout.layout(0, 0, W, H);
+
+		assertEquals(0, visible.layoutX);
+		assertEquals(0, visible.layoutY);
+		// invisible child bounds should be untouched (zero-initialized)
+		assertEquals(0, invisible.layoutX);
+		assertEquals(0, invisible.layoutY);
+	}
 }

@@ -244,4 +244,51 @@ class GridLayoutTest {
 			IllegalArgumentException.class, () -> new GridLayout(3, 0, -1)
 		);
 	}
+
+	// ---- visibility -------------------------------------------------------
+
+	@Test
+	void measureAllInvisibleReturnsZero() {
+		GridLayout g = new GridLayout(2, 0, 0);
+		FixedWidget a = new FixedWidget(30, 20);
+		FixedWidget b = new FixedWidget(50, 10);
+		a.setVisible(false);
+		b.setVisible(false);
+		g.addChild(a);
+		g.addChild(b);
+		assertArrayEquals(new int[] {0, 0}, g.measure());
+	}
+
+	@Test
+	void measureCountsOnlyVisibleChildren() {
+		GridLayout g = new GridLayout(2, 0, 0);
+		FixedWidget a = new FixedWidget(30, 20);
+		FixedWidget b = new FixedWidget(50, 10);
+		b.setVisible(false);
+		g.addChild(a);
+		g.addChild(b);
+		// Only 'a' visible: 1 visible child, 1 row, columns=2
+		assertArrayEquals(new int[] {2 * 30, 20}, g.measure());
+	}
+
+	@Test
+	void layoutSkipsInvisibleChildren() {
+		GridLayout g = new GridLayout(2, 0, 0);
+		FixedWidget a = new FixedWidget(30, 20);
+		FixedWidget b = new FixedWidget(50, 10);
+		FixedWidget c = new FixedWidget(40, 30);
+		b.setVisible(false);
+		g.addChild(a);
+		g.addChild(b);
+		g.addChild(c);
+		g.measure();
+		g.layout(0, 0, 0, 0);
+
+		// a at index 0 (col=0, row=0), c at index 1 (col=1, row=0)
+		// cellW = max of visible widths = max(30, 40) = 40
+		assertEquals(0, a.layoutX);
+		assertEquals(0, a.layoutY);
+		assertEquals(40, c.layoutX);
+		assertEquals(0, c.layoutY);
+	}
 }
