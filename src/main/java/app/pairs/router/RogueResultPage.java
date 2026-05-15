@@ -14,7 +14,9 @@ public class RogueResultPage implements Page {
 	public RogueResultPage(RogueSession session) {
 		this.blackboard = new Blackboard();
 
-		long timeUsed = RogueSession.TOTAL_TIME_MS - session.remainingMs;
+		long totalAvailable = RogueSession.TOTAL_TIME_MS
+			+ session.totalTimePurchasedMs;
+		long timeUsed = totalAvailable - session.remainingMs;
 		long mins = timeUsed / 60_000;
 		long secs = (timeUsed % 60_000) / 1_000;
 
