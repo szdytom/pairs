@@ -31,17 +31,20 @@ public class AlignLayout extends Container {
 
 	@Override
 	public int[] measure() {
-		if (children.isEmpty()) {
-			return Widget.ZERO_SIZE;
-		}
 		int maxW = 0;
 		int maxH = 0;
 		for (Widget child : children) {
+			if (!child.isVisible()) {
+				continue;
+			}
 			int[] s = child.measure();
 			if (s[0] > maxW)
 				maxW = s[0];
 			if (s[1] > maxH)
 				maxH = s[1];
+		}
+		if (maxW == 0 && maxH == 0) {
+			return Widget.ZERO_SIZE;
 		}
 		measuredSize[0] = maxW;
 		measuredSize[1] = maxH;
@@ -53,6 +56,9 @@ public class AlignLayout extends Container {
 		super.layout(x, y, w, h);
 
 		for (Widget child : children) {
+			if (!child.isVisible()) {
+				continue;
+			}
 			HAlign ha = child.getProp("h-align");
 			if (ha == null)
 				ha = HAlign.LEFT;
