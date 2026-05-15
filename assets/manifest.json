@@ -147,6 +147,24 @@
 			"input": "icons/cropped",
 			"mapping-id": "icons-mapping",
 			"description": "Mapping icons to string IDs"
+		},
+		{
+			"id": "shop/auto",
+			"type": "shop-item",
+			"file": "shop/auto.json",
+			"description": "Shop item: Auto Solver"
+		},
+		{
+			"id": "shop/tnt",
+			"type": "shop-item",
+			"file": "shop/tnt.json",
+			"description": "Shop item: TNT"
+		},
+		{
+			"id": "shop/time",
+			"type": "shop-item",
+			"file": "shop/time.json",
+			"description": "Shop item: +30s Time"
 		}
 	]
 }

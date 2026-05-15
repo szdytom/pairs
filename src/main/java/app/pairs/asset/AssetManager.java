@@ -51,6 +51,7 @@ public class AssetManager {
 		registry.register("tilemap-preset", TilemapPresetOperation::new);
 		registry.register("shape", ShapeOperation::new);
 		registry.register("tile-groups", TileGroupsOperation::new);
+		registry.register("shop-item", ShopItemOperation::new);
 	}
 
 	public void loadManifest(String path) throws Exception {

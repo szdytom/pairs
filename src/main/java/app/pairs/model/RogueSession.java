@@ -6,11 +6,6 @@ import java.util.Map;
 public class RogueSession {
 	public static final long TOTAL_TIME_MS = 10 * 60 * 1_000;
 
-	public static final int AUTO_SOLVER_BASE_COST = 2_000;
-	public static final int TNT_BASE_COST = 3_000;
-	public static final int TIME_BASE_COST = 5_000;
-	public static final double COST_GROWTH_RATE = 1.5;
-
 	public long remainingMs = TOTAL_TIME_MS;
 	public int spendableScore;
 	public int cumulativeSpent;
@@ -26,22 +21,7 @@ public class RogueSession {
 		}
 	}
 
-	public int getItemCost(ItemType type) {
-		int base = switch (type) {
-			case AUTO_SOLVER -> AUTO_SOLVER_BASE_COST;
-			case TNT -> TNT_BASE_COST;
-		};
-		int count = purchaseCounts.get(type);
-		return (int)(base * Math.pow(COST_GROWTH_RATE, count));
-	}
-
-	public int getTimeCost() {
-		return (int)(TIME_BASE_COST
-		             * Math.pow(COST_GROWTH_RATE, timePurchases));
-	}
-
-	public boolean purchaseItem(ItemType type) {
-		int cost = getItemCost(type);
+	public boolean buyItem(ItemType type, int cost) {
 		if (spendableScore < cost) {
 			return false;
 		}
@@ -52,8 +32,7 @@ public class RogueSession {
 		return true;
 	}
 
-	public boolean purchaseTime() {
-		int cost = getTimeCost();
+	public boolean buyTime(int cost) {
 		if (spendableScore < cost) {
 			return false;
 		}
