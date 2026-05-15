@@ -58,7 +58,6 @@ public class Users {
 	}
 
 	public void createUser(String username, String password) {
-		validateUsername(username);
 		if (password == null) {
 			throw new IllegalArgumentException("password must not be null");
 		}
@@ -111,14 +110,6 @@ public class Users {
 			ps.executeUpdate();
 		} catch (SQLException e) {
 			throw new IllegalStateException("failed to add score", e);
-		}
-	}
-
-	private static void validateUsername(String username) {
-		if (username == null || username.trim().equalsIgnoreCase("null")) {
-			throw new IllegalArgumentException(
-				"reserved username: " + username
-			);
 		}
 	}
 
