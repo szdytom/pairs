@@ -2,7 +2,8 @@ package app.pairs.router;
 
 import app.pairs.audio.AudioManager;
 import app.pairs.logic.GameState;
-import app.pairs.map.TilemapFactory;
+import app.pairs.map.DifficultyParams;
+import app.pairs.map.RogueDifficultyGenerator;
 import app.pairs.model.CountdownState;
 import app.pairs.model.ItemType;
 import app.pairs.model.RogueSession;
@@ -18,10 +19,10 @@ public class RoguePlayPage implements Page {
 	private boolean transitioning;
 	private long transitionTimer;
 
-	public RoguePlayPage(RogueSession session) {
+	public RoguePlayPage(RogueSession session, DifficultyParams params) {
 		this.session = session;
 		this.blackboard = new Blackboard();
-		this.levelComponent = createLevel();
+		this.levelComponent = createLevel(params);
 	}
 
 	@Override
@@ -36,8 +37,8 @@ public class RoguePlayPage implements Page {
 		syncToSession();
 	}
 
-	private LevelComponent createLevel() {
-		var gs = new GameState(TilemapFactory.fromPreset("tilemap/easy"));
+	private LevelComponent createLevel(DifficultyParams params) {
+		var gs = RogueDifficultyGenerator.generate(params);
 		gs.gameStatus.items.set(
 			ItemType.AUTO_SOLVER, session.items.get(ItemType.AUTO_SOLVER)
 		);
