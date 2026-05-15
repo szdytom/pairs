@@ -177,7 +177,7 @@ public class ShopComponent extends AlignLayout {
 
 		int score = session.spendableScore;
 		if (score != lastScore) {
-			scoreText.setText("Score: " + score);
+			scoreText.setText("Score: " + ScoreFormat.format(score));
 			lastScore = score;
 			dirty = true;
 		}
@@ -185,7 +185,7 @@ public class ShopComponent extends AlignLayout {
 		for (ShopRow row : rows) {
 			int cost = currentCost(row.config);
 			if (cost != row.lastCost) {
-				row.costText.setText("Cost: " + cost);
+				row.costText.setText("Cost: " + ScoreFormat.format(cost));
 				row.lastCost = cost;
 				dirty = true;
 			}
