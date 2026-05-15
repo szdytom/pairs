@@ -27,9 +27,18 @@ public class RogueResultPage implements Page {
 		int valueColor = rgb(50, 50, 50);
 
 		var grid = new GridLayout(2, 8, 0, 2);
-		addRow(grid, "Round", String.valueOf(session.level - 1), labelColor, valueColor);
-		addRow(grid, "Time", String.format("%02d:%02d", mins, secs), labelColor, valueColor);
-		addRow(grid, "Score", String.valueOf(session.getTotalEarned()), labelColor, valueColor);
+		addRow(
+			grid, "Round", String.valueOf(session.level - 1), labelColor,
+			valueColor
+		);
+		addRow(
+			grid, "Time", String.format("%02d:%02d", mins, secs), labelColor,
+			valueColor
+		);
+		addRow(
+			grid, "Score", ScoreFormat.format(session.getTotalEarned()),
+			labelColor, valueColor
+		);
 
 		var menuBtn = makeButton(
 			"Main Menu", () -> Router.instance().navigateTo(new MainMenuPage())
@@ -49,8 +58,8 @@ public class RogueResultPage implements Page {
 	}
 
 	private static void addRow(
-		GridLayout grid, String label, String value,
-		int labelColor, int valueColor
+		GridLayout grid, String label, String value, int labelColor,
+		int valueColor
 	) {
 		grid.addChild(new TextComponent(label, 2, labelColor));
 		grid.addChild(new TextComponent(value, 2, valueColor));
