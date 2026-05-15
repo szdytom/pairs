@@ -5,7 +5,7 @@ public class RogueSession {
 
 	public long remainingMs = TOTAL_TIME_MS;
 	public int totalScore;
-	public int level;
+	public int level = 1;
 	public final ItemCountMap items = new ItemCountMap();
 
 	public boolean isTimeUp() {
