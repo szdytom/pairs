@@ -36,7 +36,7 @@ public class OpLogEntry extends FlexLayout {
 		super(Direction.ROW, GAP, PADDING);
 
 		TextComponent numText = new TextComponent(
-			String.format("%3d", index), 1, rgb(160, 160, 160)
+			String.format("%2d", index), 1, rgb(160, 160, 160)
 		);
 		numText.setProp("v-align", AlignLayout.VAlign.CENTER);
 		AlignLayout numWrap = new AlignLayout();

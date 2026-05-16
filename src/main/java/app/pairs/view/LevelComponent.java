@@ -185,7 +185,7 @@ public class LevelComponent extends Container {
 		);
 		this.itemList.setProp("v-align", AlignLayout.VAlign.BOTTOM);
 		this.itemList.setProp("h-align", AlignLayout.HAlign.CENTER);
-		this.itemList.setProp("v-padding", 20);
+		this.itemList.setProp("v-padding", 10);
 		alignLayout.addChild(this.itemList);
 
 		this.sidebar = new LevelSidebar();
