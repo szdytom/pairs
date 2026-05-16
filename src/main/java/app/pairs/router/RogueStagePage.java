@@ -45,9 +45,10 @@ public class RogueStagePage implements Page {
 		);
 		var startBtn = makeButton(
 			"Let's rock\u2192",
-			() -> Router.instance().navigateTo(
-				new RoguePlayPage(session, params)
-			)
+			()
+				-> Router.instance().navigateTo(
+					new RoguePlayPage(session, params)
+				)
 		);
 		startBtn.setProp("flex-grow", 1);
 		var buttonRow = new FlexLayout(FlexLayout.Direction.ROW, 8);

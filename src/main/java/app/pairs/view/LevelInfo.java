@@ -35,10 +35,7 @@ public class LevelInfo extends GridLayout {
 		CountdownState countdown = blackboard().get(CountdownState.class);
 		GameState gameState = blackboard().get(GameState.class);
 
-		long mins = countdown.remainingMs / 60_000;
-		long secs = (countdown.remainingMs % 60_000) / 1_000;
-		long centis = (countdown.remainingMs % 1_000) / 10;
-		timeValue.setText(String.format("%02d:%02d.%02d", mins, secs, centis));
+		timeValue.setText(TimeFormat.formatWithCentis(countdown.remainingMs));
 
 		boolean changed = false;
 
