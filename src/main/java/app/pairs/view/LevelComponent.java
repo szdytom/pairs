@@ -23,7 +23,6 @@ import io.github.libsdl4j.api.render.*;
  * interaction.
  */
 public class LevelComponent extends Container {
-	private static final int SIDEBAR_WIDTH = 100;
 	private static final long HINT_COOLDOWN_MS = 5_000;
 	private static final long ENTRY_STAGGER_MS = 20;
 
@@ -352,7 +351,7 @@ public class LevelComponent extends Container {
 	@Override
 	public int[] measure() {
 		int[] gridSize = gridView.measure();
-		measuredSize[0] = gridSize[0] + SIDEBAR_WIDTH;
+		measuredSize[0] = gridSize[0] + sidebar.measure()[0];
 		measuredSize[1] = gridSize[1] + 40;
 		return measuredSize;
 	}
@@ -360,10 +359,11 @@ public class LevelComponent extends Container {
 	@Override
 	public void layout(int x, int y, int w, int h) {
 		super.layout(x, y, w, h);
+		int sidebarW = sidebar.measure()[0];
 		// alignLayout fills the left area up to the sidebar.
-		alignLayout.layout(0, 0, w - SIDEBAR_WIDTH, h);
-		// sidebar is pinned to the right edge at its natural height.
-		sidebar.layout(w - SIDEBAR_WIDTH, 0, SIDEBAR_WIDTH, h);
+		alignLayout.layout(0, 0, w - sidebarW, h);
+		// sidebar is pinned to the right edge at its natural width.
+		sidebar.layout(w - sidebarW, 0, sidebarW, h);
 	}
 
 	@Override
