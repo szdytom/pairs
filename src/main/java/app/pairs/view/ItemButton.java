@@ -14,7 +14,8 @@ public class ItemButton extends Button {
 		super(onClick);
 		this.name = name;
 		this.label = new TextComponent(
-			name + "(" + count + ")", 1, rgb(0, 0, 0)
+			name + "(" + count + ")", 1,
+			count > 0 ? rgb(0, 0, 0) : rgb(180, 180, 180)
 		);
 		this.setProp("no-sound", true);
 		var align = new AlignLayout();
