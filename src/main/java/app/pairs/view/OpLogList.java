@@ -16,7 +16,7 @@ public class OpLogList extends ScrollListLayout {
 	private int lastOpCount = -1;
 
 	public OpLogList() {
-		super(0, 0);
+		super(0, 0, HeightStrategy.FILL);
 	}
 
 	@Override

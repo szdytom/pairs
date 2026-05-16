@@ -9,8 +9,11 @@ import io.github.libsdl4j.api.rect.SDL_Rect;
 import io.github.libsdl4j.api.render.*;
 
 public class ScrollListLayout extends Container {
+	public enum HeightStrategy { CONTENT, FILL }
+
 	private final int gap;
 	private final int padding;
+	private final HeightStrategy heightStrategy;
 	private int scrollIndex;
 	private boolean snappedToBottom;
 	private final int[] measuredSize = new int[2];
@@ -18,8 +21,15 @@ public class ScrollListLayout extends Container {
 	private final SDL_Rect thumbRect = new SDL_Rect();
 
 	public ScrollListLayout(int gap, int padding) {
+		this(gap, padding, HeightStrategy.CONTENT);
+	}
+
+	public ScrollListLayout(
+		int gap, int padding, HeightStrategy heightStrategy
+	) {
 		this.gap = gap;
 		this.padding = padding;
+		this.heightStrategy = heightStrategy;
 	}
 
 	public void scrollBy(int delta) {
@@ -67,7 +77,9 @@ public class ScrollListLayout extends Container {
 		int gaps = gap * Math.max(0, children.size() - 1);
 		int p2 = padding * 2;
 		measuredSize[0] = maxW + p2;
-		measuredSize[1] = totalH + gaps + p2;
+		measuredSize[1] = heightStrategy == HeightStrategy.FILL
+			? p2
+			: totalH + gaps + p2;
 		return measuredSize;
 	}
 

@@ -14,19 +14,25 @@ import io.github.libsdl4j.api.render.SDL_Renderer;
 public class LevelSidebar extends Container {
 	private static final int BORDER_WIDTH = 1;
 
-	private final AlignLayout levelInfoWrap;
+	private final FlexLayout column;
 	private final OpLogList opLogList;
 	private final int[] measuredSize = new int[2];
 	private final SDL_Rect borderRect = new SDL_Rect();
 
 	public LevelSidebar() {
 		LevelInfo levelInfo = new LevelInfo();
-		this.levelInfoWrap = new AlignLayout();
+		var levelInfoWrap = new AlignLayout();
 		levelInfo.setProp("h-align", AlignLayout.HAlign.CENTER);
 		levelInfoWrap.addChild(levelInfo);
+
+		this.column = new FlexLayout(FlexLayout.Direction.COLUMN, 0);
+		column.addChild(levelInfoWrap);
+
 		this.opLogList = new OpLogList();
-		addChild(levelInfoWrap);
-		addChild(opLogList);
+		opLogList.setProp("flex-grow", 1);
+		column.addChild(opLogList);
+
+		addChild(column);
 	}
 
 	public void notifyStateUpdated() {
@@ -35,20 +41,16 @@ public class LevelSidebar extends Container {
 
 	@Override
 	public int[] measure() {
-		int[] infoSize = levelInfoWrap.measure();
-		int[] listSize = opLogList.measure();
-		measuredSize[0] = Math.max(infoSize[0], listSize[0]) + BORDER_WIDTH;
-		measuredSize[1] = infoSize[1] + listSize[1];
+		int[] s = column.measure();
+		measuredSize[0] = s[0] + BORDER_WIDTH;
+		measuredSize[1] = s[1];
 		return measuredSize;
 	}
 
 	@Override
 	public void layout(int x, int y, int w, int h) {
 		super.layout(x, y, w, h);
-		int innerW = w - BORDER_WIDTH;
-		int infoH = levelInfoWrap.measure()[1];
-		levelInfoWrap.layout(BORDER_WIDTH, 0, innerW, infoH);
-		opLogList.layout(BORDER_WIDTH, infoH, innerW, h - infoH);
+		column.layout(BORDER_WIDTH, 0, w - BORDER_WIDTH, h);
 	}
 
 	@Override
