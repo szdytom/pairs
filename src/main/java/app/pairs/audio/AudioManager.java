@@ -239,27 +239,36 @@ public final class AudioManager implements AutoCloseable {
 	private AudioClip loadClip(String path) {
 		try (InputStream stream = loader.load(path)) {
 			byte[] bytes = stream.readAllBytes();
+			// Keep mem in a try-finally so it stays reachable until
+			// SDL_LoadWAV_RW returns. Without this, the JIT may mark mem
+			// unreachable after SDL_RWFromMem, allowing a concurrent GC to
+			// finalize and free the native buffer while SDL is still reading
+			// it.
 			Memory mem = new Memory(bytes.length);
-			mem.write(0, bytes, 0, bytes.length);
+			try {
+				mem.write(0, bytes, 0, bytes.length);
 
-			SDL_RWops rw = SDL_RWFromMem(mem, bytes.length);
-			SDL_AudioSpec spec = new SDL_AudioSpec();
-			PointerByReference bufRef = new PointerByReference();
-			IntByReference lenRef = new IntByReference();
+				SDL_RWops rw = SDL_RWFromMem(mem, bytes.length);
+				SDL_AudioSpec spec = new SDL_AudioSpec();
+				PointerByReference bufRef = new PointerByReference();
+				IntByReference lenRef = new IntByReference();
 
-			if (SDL_LoadWAV_RW(rw, 1, spec, bufRef, lenRef) == null) {
-				throw new IllegalStateException(
-					"Unable to load WAV '" + path + "': " + SDL_GetError()
+				if (SDL_LoadWAV_RW(rw, 1, spec, bufRef, lenRef) == null) {
+					throw new IllegalStateException(
+						"Unable to load WAV '" + path + "': " + SDL_GetError()
+					);
+				}
+
+				int len = lenRef.getValue();
+				byte[] data = bufRef.getValue().getByteArray(0, len);
+				SDL_FreeWAV(bufRef.getValue());
+
+				return new AudioClip(
+					data, spec.freq, spec.channels, spec.format.intValue()
 				);
+			} finally {
+				mem.close();
 			}
-
-			int len = lenRef.getValue();
-			byte[] data = bufRef.getValue().getByteArray(0, len);
-			SDL_FreeWAV(bufRef.getValue());
-
-			return new AudioClip(
-				data, spec.freq, spec.channels, spec.format.intValue()
-			);
 		} catch (IllegalStateException e) {
 			throw e;
 		} catch (Exception e) {
