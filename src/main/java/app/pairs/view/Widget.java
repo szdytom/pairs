@@ -49,7 +49,19 @@ public abstract class Widget implements ViewComponent {
 	}
 
 	public void setVisible(boolean v) {
+		if (this.visible == v) {
+			return;
+		}
 		this.visible = v;
+		// Not yet in the widget tree: layout will handle it on first pass.
+		if (parent == null) {
+			return;
+		}
+		// Walk up only if the flag isn't already set this frame.
+		Blackboard bb = blackboard();
+		if (bb != null && !bb.layoutDirty) {
+			bb.layoutDirty = true;
+		}
 	}
 
 	public boolean isVisible() {
