@@ -13,7 +13,9 @@
 		{ "members": ["emerald_bircks", "emerald_bircks2"] },
 		{ "members": ["smooth_stone_stairs_l", "smooth_stone_stairs_r"] },
 		{ "members": ["dark_log", "log"] },
-		{ "members": ["yellow_leaves", "withered_leaves", "red_leaves"] },
+		{ "members": ["yellow_leaves", "packed_hay", "hay_block", "withered_leaves"] },
+		{ "members": ["ice", "diamond_block"] },
+		{ "members": ["fruited_leaves", "berry_leaves"] },
 		{
 			"slab": true,
 			"members": [
@@ -36,7 +38,6 @@
 				"blue_bricks_slab",
 				"snow"
 			]
-		},
-		{ "members": ["packed_hay", "hay_block"] }
+		}
 	]
 }
