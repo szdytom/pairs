@@ -373,7 +373,7 @@ ScrollListLayout
 | Grid of uniform cells | `GridLayout(columns, gapX, gapY)` |
 | Label-value data rows | `GridLayout(2, gapX, gapY)` |
 | Scrollable list | `ScrollListLayout(gap, padding)` |
-| Carousel (cycle options) | `CarouselSelector(options, onChange, width?)` |
+| Carousel (cycle options) | `CarouselSelector(count, optionFactory, onChange, width?, wrap?, prevContent, nextContent)` |
 
 ---
 
