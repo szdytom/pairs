@@ -24,22 +24,21 @@ public class DifficultyPage implements Page {
 	public DifficultyPage() {
 		this.blackboard = new Blackboard();
 
-		Widget[] optionWidgets = new Widget[LABELS.length];
 		int maxOptionW = 0;
-		for (int i = 0; i < LABELS.length; i++) {
+		for (String label : LABELS) {
+			var t = new TextComponent(label, 3, rgb(30, 30, 30));
+			int[] sz = t.measure();
+			maxOptionW = Math.max(maxOptionW, sz[0]);
+		}
+		this.selector = new CarouselSelector(LABELS.length, i -> {
 			var text = new TextComponent(LABELS[i], 3, rgb(30, 30, 30));
 			text.setProp("h-align", AlignLayout.HAlign.CENTER);
 			text.setProp("v-align", AlignLayout.VAlign.CENTER);
-			optionWidgets[i] = text;
-			int[] sz = text.measure();
-			if (sz[0] > maxOptionW)
-				maxOptionW = sz[0];
-		}
-		this.selector = new CarouselSelector(
-			optionWidgets, i -> {}, maxOptionW + 60
-		);
+			return text;
+		}, i -> {}, maxOptionW + 60);
 
 		var startBtn = makeButton("Start", this::startGame);
+		var customBtn = makeButton("Customize...", this::goCustom);
 		var backBtn = new Button(
 			this::goBack, rgba(180, 180, 180, 255), rgba(140, 140, 140, 255)
 		);
@@ -53,6 +52,7 @@ public class DifficultyPage implements Page {
 		var column = new FlexLayout(FlexLayout.Direction.COLUMN, 12);
 		column.addChild(selector);
 		column.addChild(startBtn);
+		column.addChild(customBtn);
 		column.addChild(backBtn);
 
 		var rootAlign = new AlignLayout();
@@ -68,6 +68,10 @@ public class DifficultyPage implements Page {
 			TilemapFactory.fromPreset("tilemap/" + PRESETS[selector.getIndex()])
 		);
 		Router.instance().navigateTo(new LevelPage(gameState, 180_000L));
+	}
+
+	private void goCustom() {
+		Router.instance().navigateTo(new CustomDifficultyPage());
 	}
 
 	private void goBack() {

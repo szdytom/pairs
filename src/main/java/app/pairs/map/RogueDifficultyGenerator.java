@@ -30,6 +30,41 @@ public class RogueDifficultyGenerator {
 		return buildGameState(params);
 	}
 
+	public static GameState generateCustom(
+		int width, int height, int types, boolean slabs,
+		TileSelectionPolicy.Spread spread, int strategyIndex
+	) {
+		PairingStrategy strategy = switch (strategyIndex) {
+			case 0 -> new BasePairingStrategy();
+			case 1 -> new NonAdjacentPairingStrategy();
+			case 2 -> new DistantPairingStrategy();
+			default -> new BasePairingStrategy();
+		};
+		Seed seed = Seed.deviceRandom();
+		var policy = new TileSelectionPolicy(slabs, spread);
+		var registry = AssetManager.instance().<TileRegistry>get("tiles/typed");
+		var groups = AssetManager.instance().<TileGroupRegistry>get(
+			"tile-groups/default"
+		);
+		int[] subset = policy.selectFor(
+			registry, groups, types, new Xoroshiro128PP(seed)
+		);
+		var preset = new TilemapPreset(width, height, types, null, strategy);
+		TilemapFactory inner = CustomizedTilemapFactory.fromPreset(
+			preset, seed
+		);
+		int points = computePoints(
+			width, height, types, slabs, spread, strategy
+		);
+		Tilemap.Difficulty tier = tierForPoints(points);
+		TilemapFactory factory = () -> {
+			Tilemap t = new SubsetTilemapFactory(inner, subset).generate();
+			t.setDifficulty(tier);
+			return t;
+		};
+		return new GameState(factory);
+	}
+
 	private static DifficultyParams searchParams(int level, Seed seed) {
 		int target = targetForLevel(level);
 		var rng = new Xoroshiro128PP(seed);
@@ -132,7 +167,7 @@ public class RogueDifficultyGenerator {
 		return Math.min(3 + (level - 1) * 3, 34);
 	}
 
-	static int computePoints(
+	public static int computePoints(
 		int w, int h, int types, boolean slabs,
 		TileSelectionPolicy.Spread spread, PairingStrategy strategy
 	) {
@@ -170,7 +205,7 @@ public class RogueDifficultyGenerator {
 		return 0;
 	}
 
-	private static Tilemap.Difficulty tierForPoints(int pts) {
+	public static Tilemap.Difficulty tierForPoints(int pts) {
 		if (pts <= 5)
 			return Tilemap.Difficulty.EASY;
 		if (pts <= 14)
