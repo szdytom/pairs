@@ -61,8 +61,8 @@ public class ShopItemOperation implements AssetOperation {
 				ItemType.valueOf(itemType);
 			} catch (IllegalArgumentException e) {
 				throw new IllegalArgumentException(
-					"Shop item \"" + file + "\": unknown itemType \""
-					+ itemType + "\" (expected one of: "
+					"Shop item \"" + file + "\": unknown itemType \"" + itemType
+					+ "\" (expected one of: "
 					+ java.util.Arrays.toString(ItemType.values()) + ")"
 				);
 			}

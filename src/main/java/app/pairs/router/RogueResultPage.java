@@ -17,8 +17,6 @@ public class RogueResultPage implements Page {
 		long totalAvailable = RogueSession.TOTAL_TIME_MS
 			+ session.totalTimePurchasedMs;
 		long timeUsed = totalAvailable - session.remainingMs;
-		long mins = timeUsed / 60_000;
-		long secs = (timeUsed % 60_000) / 1_000;
 
 		var gameOverText = new TextComponent("Game Over", 4, rgb(40, 40, 40));
 		gameOverText.setProp("h-align", AlignLayout.HAlign.CENTER);
@@ -32,8 +30,7 @@ public class RogueResultPage implements Page {
 			valueColor
 		);
 		addRow(
-			grid, "Time", String.format("%02d:%02d", mins, secs), labelColor,
-			valueColor
+			grid, "Time", TimeFormat.format(timeUsed), labelColor, valueColor
 		);
 		addRow(
 			grid, "Score", ScoreFormat.format(session.getTotalEarned()),

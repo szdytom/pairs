@@ -21,8 +21,10 @@ public record DifficultyParams(
 	}
 
 	public String strategyLabel() {
-		if (strategy instanceof DistantPairingStrategy) return "Mean";
-		if (strategy instanceof NonAdjacentPairingStrategy) return "Neutral";
+		if (strategy instanceof DistantPairingStrategy)
+			return "Mean";
+		if (strategy instanceof NonAdjacentPairingStrategy)
+			return "Neutral";
 		return "Kind";
 	}
 

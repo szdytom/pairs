@@ -18,8 +18,8 @@ public class RogueDifficultyGenerator {
 	private static final int TOLERANCE = 2;
 	private static final int MAX_DIM_DIFF = 2;
 
-	private static final TileSelectionPolicy.Spread[] SPREADS =
-		TileSelectionPolicy.Spread.values();
+	private static final TileSelectionPolicy
+		.Spread[] SPREADS = TileSelectionPolicy.Spread.values();
 
 	public static DifficultyParams preview(int level) {
 		Seed seed = Seed.deviceRandom();
@@ -41,8 +41,8 @@ public class RogueDifficultyGenerator {
 			int types = MIN_TYPES + rng.nextInt(MAX_TYPES - MIN_TYPES + 1);
 
 			boolean slabs = rng.nextBoolean();
-			TileSelectionPolicy.Spread spread =
-				SPREADS[rng.nextInt(SPREADS.length)];
+			TileSelectionPolicy
+				.Spread spread = SPREADS[rng.nextInt(SPREADS.length)];
 			PairingStrategy strategy = pickStrategy(rng);
 
 			int total = computePoints(w, h, types, slabs, spread, strategy);
@@ -67,7 +67,8 @@ public class RogueDifficultyGenerator {
 		int hi = Math.min(MAX_SIZE, w + MAX_DIM_DIFF);
 		for (int attempt = 0; attempt < 10; attempt++) {
 			int h = lo + rng.nextInt(hi - lo + 1);
-			if ((w * h) % 2 == 0) return h;
+			if ((w * h) % 2 == 0)
+				return h;
 		}
 		return (w * lo) % 2 == 0 ? lo : lo + 1;
 	}
@@ -75,19 +76,22 @@ public class RogueDifficultyGenerator {
 	private static DifficultyParams fallbackParams(int level, Seed seed) {
 		int w = Math.min(MIN_SIZE + (level - 1), MAX_SIZE);
 		int h = Math.min(MIN_SIZE + (level - 1), MAX_SIZE);
-		if ((w * h) % 2 != 0) h++;
-		if (h > MAX_SIZE) { w--; h--; }
+		if ((w * h) % 2 != 0)
+			h++;
+		if (h > MAX_SIZE) {
+			w--;
+			h--;
+		}
 
 		int types = Math.min(6 + (level - 1) * 2, MAX_TYPES);
 		boolean slabs = level >= 5;
 		TileSelectionPolicy.Spread spread = level >= 8
 			? TileSelectionPolicy.Spread.PREFER_DUPLICATES
 			: level >= 4 ? TileSelectionPolicy.Spread.FREE
-			: TileSelectionPolicy.Spread.NO_DUPLICATES;
-		PairingStrategy strategy = level >= 10
-			? new DistantPairingStrategy()
+						 : TileSelectionPolicy.Spread.NO_DUPLICATES;
+		PairingStrategy strategy = level >= 10 ? new DistantPairingStrategy()
 			: level >= 6 ? new NonAdjacentPairingStrategy()
-			: new BasePairingStrategy();
+						 : new BasePairingStrategy();
 		int total = computePoints(w, h, types, slabs, spread, strategy);
 		return new DifficultyParams(
 			w, h, types, slabs, spread, strategy, total, tierForPoints(total),
@@ -141,9 +145,12 @@ public class RogueDifficultyGenerator {
 	}
 
 	private static int typePoints(int types) {
-		if (types <= 8) return 0;
-		if (types <= 12) return 1;
-		if (types <= 16) return 2;
+		if (types <= 8)
+			return 0;
+		if (types <= 12)
+			return 1;
+		if (types <= 16)
+			return 2;
 		return 3;
 	}
 
@@ -156,22 +163,29 @@ public class RogueDifficultyGenerator {
 	}
 
 	private static int pairingPoints(PairingStrategy s) {
-		if (s instanceof DistantPairingStrategy) return 2;
-		if (s instanceof NonAdjacentPairingStrategy) return 1;
+		if (s instanceof DistantPairingStrategy)
+			return 2;
+		if (s instanceof NonAdjacentPairingStrategy)
+			return 1;
 		return 0;
 	}
 
 	private static Tilemap.Difficulty tierForPoints(int pts) {
-		if (pts <= 5) return Tilemap.Difficulty.EASY;
-		if (pts <= 14) return Tilemap.Difficulty.NORMAL;
-		if (pts <= 24) return Tilemap.Difficulty.HARD;
+		if (pts <= 5)
+			return Tilemap.Difficulty.EASY;
+		if (pts <= 14)
+			return Tilemap.Difficulty.NORMAL;
+		if (pts <= 24)
+			return Tilemap.Difficulty.HARD;
 		return Tilemap.Difficulty.EXTREME;
 	}
 
 	private static PairingStrategy pickStrategy(Random rng) {
 		int n = rng.nextInt(3);
-		if (n == 0) return new BasePairingStrategy();
-		if (n == 1) return new NonAdjacentPairingStrategy();
+		if (n == 0)
+			return new BasePairingStrategy();
+		if (n == 1)
+			return new NonAdjacentPairingStrategy();
 		return new DistantPairingStrategy();
 	}
 }

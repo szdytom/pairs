@@ -208,9 +208,7 @@ public class ShopComponent extends AlignLayout {
 
 		long remaining = session.remainingMs;
 		if (remaining != lastTimeMs) {
-			long mins = remaining / 60_000;
-			long secs = (remaining % 60_000) / 1_000;
-			timeText.setText(String.format("Time: %02d:%02d", mins, secs));
+			timeText.setText("Time: " + TimeFormat.format(remaining));
 			lastTimeMs = remaining;
 			dirty = true;
 		}
