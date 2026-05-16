@@ -65,7 +65,7 @@ public class OpLogEntry extends FlexLayout {
 		addChild(align);
 
 		TextComponent timeText = new TextComponent(
-			formatTime(timeMs), 1, rgb(60, 60, 255)
+			formatTime(timeMs), 1, rgb(20, 120, 150)
 		);
 		timeText.setProp("v-align", AlignLayout.VAlign.CENTER);
 		AlignLayout timeWrap = new AlignLayout();
@@ -76,7 +76,7 @@ public class OpLogEntry extends FlexLayout {
 	private static String formatTime(int timeMs) {
 		int sec = timeMs / 1_000;
 		int cs = (timeMs % 1_000) / 10;
-		return String.format("+%02d.%02ds", sec, cs);
+		return String.format("%02d.%02ds", sec, cs);
 	}
 
 	private SDL_Texture createThumbnail(

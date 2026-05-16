@@ -245,6 +245,135 @@ class GridLayoutTest {
 		);
 	}
 
+	// ---- auto-column-widths mode ------------------------------------------
+
+	@Test
+	void autoColumnMeasureSingleChild() {
+		GridLayout g = new GridLayout(3, 0, 0, 0, true);
+		g.addChild(new FixedWidget(30, 20));
+		// col0=30, col1=0, col2=0
+		assertArrayEquals(new int[] {30, 20}, g.measure());
+	}
+
+	@Test
+	void autoColumnMeasureMultipleChildrenSingleRow() {
+		GridLayout g = new GridLayout(3, 0, 0, 0, true);
+		g.addChild(new FixedWidget(30, 20));
+		g.addChild(new FixedWidget(50, 10));
+		g.addChild(new FixedWidget(40, 30));
+		// col0=30, col1=50, col2=40  →  total=120, height=30
+		assertArrayEquals(new int[] {30 + 50 + 40, 30}, g.measure());
+	}
+
+	@Test
+	void autoColumnMeasureMultipleRows() {
+		GridLayout g = new GridLayout(2, 0, 0, 0, true);
+		g.addChild(new FixedWidget(30, 20));
+		g.addChild(new FixedWidget(50, 10));
+		g.addChild(new FixedWidget(40, 30));
+		// row0: col0=30, col1=50;  row1: col0=40
+		// col0=max(30,40)=40, col1=50  →  90,  height=2*30=60
+		assertArrayEquals(new int[] {90, 60}, g.measure());
+	}
+
+	@Test
+	void autoColumnMeasureIncludesGaps() {
+		GridLayout g = new GridLayout(2, 4, 5, 0, true);
+		g.addChild(new FixedWidget(30, 20));
+		g.addChild(new FixedWidget(50, 10));
+		// col0=30, col1=50, gapX=4  →  30+4+50=84, height=20
+		assertArrayEquals(new int[] {84, 20}, g.measure());
+	}
+
+	@Test
+	void autoColumnMeasureIncludesPadding() {
+		GridLayout g = new GridLayout(2, 0, 0, 3, true);
+		g.addChild(new FixedWidget(30, 20));
+		// col0=30, col1=0, padding=3  →  30+6=36, height=20+6=26
+		assertArrayEquals(new int[] {36, 26}, g.measure());
+	}
+
+	@Test
+	void autoColumnMeasureAllInvisibleReturnsZero() {
+		GridLayout g = new GridLayout(2, 0, 0, 0, true);
+		FixedWidget a = new FixedWidget(30, 20);
+		FixedWidget b = new FixedWidget(50, 10);
+		a.setVisible(false);
+		b.setVisible(false);
+		g.addChild(a);
+		g.addChild(b);
+		assertArrayEquals(new int[] {0, 0}, g.measure());
+	}
+
+	@Test
+	void autoColumnMeasureCountsOnlyVisibleChildren() {
+		GridLayout g = new GridLayout(2, 0, 0, 0, true);
+		FixedWidget a = new FixedWidget(30, 20);
+		FixedWidget b = new FixedWidget(50, 10);
+		b.setVisible(false);
+		g.addChild(a);
+		g.addChild(b);
+		// only 'a' visible at col0 → col0=30, col1=0, rows=1
+		assertArrayEquals(new int[] {30, 20}, g.measure());
+	}
+
+	@Test
+	void autoColumnLayoutPositionsByColumnWidth() {
+		GridLayout g = new GridLayout(2, 0, 0, 0, true);
+		FixedWidget a = new FixedWidget(30, 20);
+		FixedWidget b = new FixedWidget(50, 10);
+		FixedWidget c = new FixedWidget(40, 30);
+		g.addChild(a);
+		g.addChild(b);
+		g.addChild(c);
+		g.measure();
+		g.layout(0, 0, 0, 0);
+
+		assertEquals(0, a.layoutX); // col0, cw=40
+		assertEquals(40, a.layoutW);
+		assertEquals(40, b.layoutX); // after col0 width
+		assertEquals(50, b.layoutW);
+		assertEquals(0, c.layoutX); // col0, row1
+		assertEquals(40, c.layoutW);
+		assertEquals(30, c.layoutY); // row1
+	}
+
+	@Test
+	void autoColumnLayoutWithGap() {
+		GridLayout g = new GridLayout(2, 4, 0, 0, true);
+		FixedWidget a = new FixedWidget(30, 20);
+		FixedWidget b = new FixedWidget(50, 10);
+		g.addChild(a);
+		g.addChild(b);
+		g.measure();
+		g.layout(0, 0, 0, 0);
+
+		assertEquals(0, a.layoutX);
+		assertEquals(30, a.layoutW);
+		assertEquals(30 + 4, b.layoutX);
+		assertEquals(50, b.layoutW);
+	}
+
+	@Test
+	void autoColumnLayoutSkipsInvisibleChildren() {
+		GridLayout g = new GridLayout(2, 0, 0, 0, true);
+		FixedWidget a = new FixedWidget(30, 20);
+		FixedWidget b = new FixedWidget(50, 10);
+		FixedWidget c = new FixedWidget(40, 30);
+		b.setVisible(false);
+		g.addChild(a);
+		g.addChild(b);
+		g.addChild(c);
+		g.measure();
+		g.layout(0, 0, 0, 0);
+
+		// a at index 0 (col=0), c at index 1 (col=1)
+		assertEquals(0, a.layoutX);
+		assertEquals(30, a.layoutW);
+		assertEquals(30, c.layoutX); // after col0 width
+		assertEquals(40, c.layoutW);
+	}
+
 	// ---- visibility -------------------------------------------------------
 
 	@Test
