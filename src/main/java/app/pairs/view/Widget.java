@@ -49,7 +49,13 @@ public abstract class Widget implements ViewComponent {
 	}
 
 	public void setVisible(boolean v) {
-		this.visible = v;
+		if (this.visible ^ v) {
+			this.visible = v;
+			Blackboard bb = blackboard();
+			if (bb != null) {
+				bb.layoutDirty = true;
+			}
+		}
 	}
 
 	public boolean isVisible() {
