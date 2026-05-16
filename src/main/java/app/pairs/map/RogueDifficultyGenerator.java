@@ -1,7 +1,5 @@
 package app.pairs.map;
 
-import app.pairs.asset.AssetManager;
-import app.pairs.asset.TileRegistry;
 import app.pairs.logic.GameState;
 import app.pairs.model.Tilemap;
 import app.pairs.utils.Seed;
@@ -27,42 +25,10 @@ public class RogueDifficultyGenerator {
 	}
 
 	public static GameState generate(DifficultyParams params) {
-		return buildGameState(params);
-	}
-
-	public static GameState generateCustom(
-		int width, int height, int types, boolean slabs,
-		TileSelectionPolicy.Spread spread, int strategyIndex
-	) {
-		PairingStrategy strategy = switch (strategyIndex) {
-			case 0 -> new BasePairingStrategy();
-			case 1 -> new NonAdjacentPairingStrategy();
-			case 2 -> new DistantPairingStrategy();
-			default -> new BasePairingStrategy();
-		};
-		Seed seed = Seed.deviceRandom();
-		var policy = new TileSelectionPolicy(slabs, spread);
-		var registry = AssetManager.instance().<TileRegistry>get("tiles/typed");
-		var groups = AssetManager.instance().<TileGroupRegistry>get(
-			"tile-groups/default"
+		return CustomGameBuilder.build(
+			params.width(), params.height(), params.types(), params.slabs(),
+			params.spread(), params.strategy(), params.seed(), params.tier()
 		);
-		int[] subset = policy.selectFor(
-			registry, groups, types, new Xoroshiro128PP(seed)
-		);
-		var preset = new TilemapPreset(width, height, types, null, strategy);
-		TilemapFactory inner = CustomizedTilemapFactory.fromPreset(
-			preset, seed
-		);
-		int points = computePoints(
-			width, height, types, slabs, spread, strategy
-		);
-		Tilemap.Difficulty tier = tierForPoints(points);
-		TilemapFactory factory = () -> {
-			Tilemap t = new SubsetTilemapFactory(inner, subset).generate();
-			t.setDifficulty(tier);
-			return t;
-		};
-		return new GameState(factory);
 	}
 
 	private static DifficultyParams searchParams(int level, Seed seed) {
@@ -75,17 +41,22 @@ public class RogueDifficultyGenerator {
 
 			int types = MIN_TYPES + rng.nextInt(MAX_TYPES - MIN_TYPES + 1);
 
+			if (types > w * h / 2)
+				continue;
+
 			boolean slabs = rng.nextBoolean();
 			TileSelectionPolicy
 				.Spread spread = SPREADS[rng.nextInt(SPREADS.length)];
 			PairingStrategy strategy = pickStrategy(rng);
 
-			int total = computePoints(w, h, types, slabs, spread, strategy);
+			int total = CustomGameBuilder.computePoints(
+				w, h, types, slabs, spread, strategy
+			);
 
 			if (Math.abs(total - target) <= TOLERANCE) {
 				return new DifficultyParams(
 					w, h, types, slabs, spread, strategy, total,
-					tierForPoints(total), seed
+					CustomGameBuilder.tierForPoints(total), seed
 				);
 			}
 		}
@@ -127,92 +98,17 @@ public class RogueDifficultyGenerator {
 		PairingStrategy strategy = level >= 10 ? new DistantPairingStrategy()
 			: level >= 6 ? new NonAdjacentPairingStrategy()
 						 : new BasePairingStrategy();
-		int total = computePoints(w, h, types, slabs, spread, strategy);
+		int total = CustomGameBuilder.computePoints(
+			w, h, types, slabs, spread, strategy
+		);
 		return new DifficultyParams(
-			w, h, types, slabs, spread, strategy, total, tierForPoints(total),
-			seed
+			w, h, types, slabs, spread, strategy, total,
+			CustomGameBuilder.tierForPoints(total), seed
 		);
-	}
-
-	private static GameState buildGameState(DifficultyParams params) {
-		TileSelectionPolicy policy = new TileSelectionPolicy(
-			params.slabs(), params.spread()
-		);
-		TileRegistry registry = AssetManager.instance().get("tiles/typed");
-		TileGroupRegistry groups = AssetManager.instance().get(
-			"tile-groups/default"
-		);
-		int[] subset = policy.selectFor(
-			registry, groups, params.types(), new Xoroshiro128PP(params.seed())
-		);
-
-		TilemapPreset preset = new TilemapPreset(
-			params.width(), params.height(), params.types(), null,
-			params.strategy()
-		);
-		TilemapFactory inner = CustomizedTilemapFactory.fromPreset(
-			preset, params.seed()
-		);
-
-		TilemapFactory factory = () -> {
-			Tilemap t = new SubsetTilemapFactory(inner, subset).generate();
-			t.setDifficulty(params.tier());
-			return t;
-		};
-
-		return new GameState(factory);
 	}
 
 	private static int targetForLevel(int level) {
 		return Math.min(3 + (level - 1) * 3, 34);
-	}
-
-	public static int computePoints(
-		int w, int h, int types, boolean slabs,
-		TileSelectionPolicy.Spread spread, PairingStrategy strategy
-	) {
-		int tileCount = w * h;
-		int sizePts = Math.round((float)tileCount / 10) + 1;
-		int typePts = typePoints(types);
-		int visualPts = (slabs ? 2 : 0) + spreadPoints(spread);
-		int pairingPts = pairingPoints(strategy);
-		return sizePts + typePts + visualPts + pairingPts;
-	}
-
-	private static int typePoints(int types) {
-		if (types <= 8)
-			return 0;
-		if (types <= 12)
-			return 1;
-		if (types <= 16)
-			return 2;
-		return 3;
-	}
-
-	private static int spreadPoints(TileSelectionPolicy.Spread s) {
-		return switch (s) {
-			case NO_DUPLICATES -> 0;
-			case FREE -> 3;
-			case PREFER_DUPLICATES -> 6;
-		};
-	}
-
-	private static int pairingPoints(PairingStrategy s) {
-		if (s instanceof DistantPairingStrategy)
-			return 2;
-		if (s instanceof NonAdjacentPairingStrategy)
-			return 1;
-		return 0;
-	}
-
-	public static Tilemap.Difficulty tierForPoints(int pts) {
-		if (pts <= 5)
-			return Tilemap.Difficulty.EASY;
-		if (pts <= 14)
-			return Tilemap.Difficulty.NORMAL;
-		if (pts <= 24)
-			return Tilemap.Difficulty.HARD;
-		return Tilemap.Difficulty.EXTREME;
 	}
 
 	private static PairingStrategy pickStrategy(Random rng) {

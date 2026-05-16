@@ -2,15 +2,16 @@ package app.pairs.router;
 
 import static app.pairs.utils.Colors.*;
 
-import app.pairs.logic.GameState;
-import app.pairs.map.RogueDifficultyGenerator;
+import app.pairs.map.CustomGameBuilder;
 import app.pairs.map.TileSelectionPolicy;
 import app.pairs.view.*;
+
+import java.util.function.Consumer;
 
 import io.github.libsdl4j.api.render.*;
 
 public class CustomDifficultyPage implements Page {
-	private static final int MIN_SIZE = 6;
+	private static final int MIN_SIZE = 4;
 	private static final int MAX_SIZE = 14;
 	private static final int MIN_TYPES = 3;
 	private static final int MAX_TYPES = 20;
@@ -32,20 +33,31 @@ public class CustomDifficultyPage implements Page {
 	private final CarouselSelector slabsSel;
 	private final CarouselSelector spreadSel;
 	private final CarouselSelector pairingSel;
+	private final TextComponent pointsLabel;
+	private final TextComponent pointsValue;
+	private final TextComponent errorText;
 
 	public CustomDifficultyPage() {
 		this.blackboard = new Blackboard();
 		int labelColor = rgb(120, 120, 120);
 
-		widthSel = makeNumericSelector(MIN_SIZE, MAX_SIZE);
-		heightSel = makeNumericSelector(MIN_SIZE, MAX_SIZE);
-		typesSel = makeNumericSelector(MIN_TYPES, MAX_TYPES);
-		slabsSel = makeOptionsSelector(ON_OFF);
-		spreadSel = makeOptionsSelector(TRI_TACTIC_LABELS);
-		pairingSel = makeOptionsSelector(TRI_TACTIC_LABELS);
+		Consumer<Integer> onUpdate = i -> refreshPoints();
+
+		widthSel = makeNumericSelector(MIN_SIZE, MAX_SIZE, onUpdate);
+		heightSel = makeNumericSelector(MIN_SIZE, MAX_SIZE, onUpdate);
+		typesSel = makeNumericSelector(MIN_TYPES, MAX_TYPES, onUpdate);
+		slabsSel = makeOptionsSelector(ON_OFF, onUpdate);
+		spreadSel = makeOptionsSelector(TRI_TACTIC_LABELS, onUpdate);
+		pairingSel = makeOptionsSelector(TRI_TACTIC_LABELS, onUpdate);
 
 		var title = new TextComponent("Customize Level", 2, rgb(30, 30, 30));
 		title.setProp("h-align", AlignLayout.HAlign.CENTER);
+
+		pointsLabel = new TextComponent("Points", 1, labelColor);
+		pointsValue = new TextComponent("", 1, rgb(50, 50, 50));
+		errorText = new TextComponent("", 1, rgb(200, 50, 50));
+		errorText.setVisible(false);
+		errorText.setProp("h-align", AlignLayout.HAlign.CENTER);
 
 		var grid = new GridLayout(2, 8, 4, 2);
 		addRow(grid, "Width", widthSel, labelColor);
@@ -54,6 +66,8 @@ public class CustomDifficultyPage implements Page {
 		addRow(grid, "Slabs", slabsSel, labelColor);
 		addRow(grid, "Spread", spreadSel, labelColor);
 		addRow(grid, "Pairing", pairingSel, labelColor);
+		grid.addChild(pointsLabel);
+		grid.addChild(pointsValue);
 
 		var backBtn = makeButton("Back", this::goBack);
 		var startBtn = makeButton("Start\u2192", this::startGame);
@@ -63,9 +77,11 @@ public class CustomDifficultyPage implements Page {
 		buttonRow.addChild(startBtn);
 		buttonRow.setProp("h-align", AlignLayout.HAlign.CENTER);
 
-		var column = new FlexLayout(FlexLayout.Direction.COLUMN, 10);
+		var column = new FlexLayout(FlexLayout.Direction.COLUMN, 0);
 		column.addChild(title);
+		column.addChild(new GlueWidget(0, 10));
 		column.addChild(grid);
+		column.addChild(errorText);
 		column.addChild(buttonRow);
 		column.setProp("h-align", AlignLayout.HAlign.CENTER);
 		column.setProp("v-align", AlignLayout.VAlign.CENTER);
@@ -74,9 +90,40 @@ public class CustomDifficultyPage implements Page {
 		rootAlign.addChild(column);
 		rootAlign.setBlackboard(blackboard);
 		this.root = rootAlign;
+
+		refreshPoints();
 	}
 
-	private static CarouselSelector makeNumericSelector(int min, int max) {
+	private void refreshPoints() {
+		int w = MIN_SIZE + widthSel.getIndex();
+		int h = MIN_SIZE + heightSel.getIndex();
+		int types = MIN_TYPES + typesSel.getIndex();
+		boolean slabs = slabsSel.getIndex() == 1;
+		TileSelectionPolicy.Spread spread = SPREADS[spreadSel.getIndex()];
+		int strategyIdx = pairingSel.getIndex();
+
+		String err = CustomGameBuilder.validationError(w, h, types);
+		if (err != null) {
+			pointsLabel.setVisible(false);
+			pointsValue.setVisible(false);
+			errorText.setVisible(true);
+			errorText.setText("Error: " + err);
+		} else {
+			pointsLabel.setVisible(true);
+			pointsValue.setVisible(true);
+			errorText.setVisible(false);
+			int pts = CustomGameBuilder.computePoints(
+				w, h, types, slabs, spread, strategyIdx
+			);
+			pointsValue.setText(
+				pts + " (" + CustomGameBuilder.tierForPoints(pts).name() + ")"
+			);
+		}
+	}
+
+	private static CarouselSelector makeNumericSelector(
+		int min, int max, Consumer<Integer> onChange
+	) {
 		int count = max - min + 1;
 		int maxW = 0;
 		for (int i = 0; i < count; i++) {
@@ -97,12 +144,14 @@ public class CustomDifficultyPage implements Page {
 				t.setProp("v-align", AlignLayout.VAlign.CENTER);
 				return t;
 			},
-			null, maxW + 40, false, CarouselSelector.arrow("-", 1),
+			onChange, maxW + 40, false, CarouselSelector.arrow("-", 1),
 			CarouselSelector.arrow("+", 1)
 		);
 	}
 
-	private static CarouselSelector makeOptionsSelector(String[] labels) {
+	private static CarouselSelector makeOptionsSelector(
+		String[] labels, Consumer<Integer> onChange
+	) {
 		int maxW = 0;
 		for (String l : labels) {
 			var t = new TextComponent(l, 1, rgb(50, 50, 50));
@@ -118,7 +167,7 @@ public class CustomDifficultyPage implements Page {
 				t.setProp("v-align", AlignLayout.VAlign.CENTER);
 				return t;
 			},
-			null, maxW + 40, false, CarouselSelector.arrow("<", 1),
+			onChange, maxW + 40, false, CarouselSelector.arrow("<", 1),
 			CarouselSelector.arrow(">", 1)
 		);
 	}
@@ -134,13 +183,13 @@ public class CustomDifficultyPage implements Page {
 		int w = MIN_SIZE + widthSel.getIndex();
 		int h = MIN_SIZE + heightSel.getIndex();
 		int types = MIN_TYPES + typesSel.getIndex();
+		if (CustomGameBuilder.validationError(w, h, types) != null)
+			return;
 		boolean slabs = slabsSel.getIndex() == 1;
 		TileSelectionPolicy.Spread spread = SPREADS[spreadSel.getIndex()];
 		int strategyIdx = pairingSel.getIndex();
 		Router.instance().navigateTo(new LevelPage(
-			RogueDifficultyGenerator.generateCustom(
-				w, h, types, slabs, spread, strategyIdx
-			),
+			CustomGameBuilder.build(w, h, types, slabs, spread, strategyIdx),
 			180_000L
 		));
 	}
