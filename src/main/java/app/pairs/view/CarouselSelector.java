@@ -10,12 +10,17 @@ public class CarouselSelector extends FlexLayout {
 	private final Consumer<Integer> onChange;
 
 	public CarouselSelector(Widget[] options, Consumer<Integer> onChange) {
+		this(options, onChange, 0);
+	}
+
+	public CarouselSelector(
+		Widget[] options, Consumer<Integer> onChange, int fixedWidth
+	) {
 		super(Direction.ROW, 8);
-		if (options == null || options.length == 0) {
+		if (options == null || options.length == 0)
 			throw new IllegalArgumentException(
 				"options must not be null or empty"
 			);
-		}
 		this.options = options;
 		this.currentIndex = 0;
 		this.onChange = onChange != null ? onChange : i -> {};
@@ -45,6 +50,14 @@ public class CarouselSelector extends FlexLayout {
 		nextAlign.addChild(nextText);
 		nextBtn.addChild(nextAlign);
 		addChild(nextBtn);
+
+		if (fixedWidth > 0) {
+			int[] ps = prevBtn.measure();
+			int[] ns = nextBtn.measure();
+			int target = fixedWidth - ps[0] - ns[0] - 16;
+			if (target > 0)
+				wrapper.addChild(new GlueWidget(target, 0));
+		}
 	}
 
 	public int getIndex() {
