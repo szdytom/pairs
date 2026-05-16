@@ -25,13 +25,19 @@ public class DifficultyPage implements Page {
 		this.blackboard = new Blackboard();
 
 		Widget[] optionWidgets = new Widget[LABELS.length];
+		int maxOptionW = 0;
 		for (int i = 0; i < LABELS.length; i++) {
 			var text = new TextComponent(LABELS[i], 3, rgb(30, 30, 30));
 			text.setProp("h-align", AlignLayout.HAlign.CENTER);
 			text.setProp("v-align", AlignLayout.VAlign.CENTER);
 			optionWidgets[i] = text;
+			int[] sz = text.measure();
+			if (sz[0] > maxOptionW)
+				maxOptionW = sz[0];
 		}
-		this.selector = new CarouselSelector(optionWidgets, i -> {});
+		this.selector = new CarouselSelector(
+			optionWidgets, i -> {}, maxOptionW + 60
+		);
 
 		var startBtn = makeButton("Start", this::startGame);
 		var backBtn = new Button(
