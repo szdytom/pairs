@@ -67,7 +67,9 @@ public class DifficultyPage implements Page {
 		var gameState = new GameState(
 			TilemapFactory.fromPreset("tilemap/" + PRESETS[selector.getIndex()])
 		);
-		Router.instance().navigateTo(new LevelPage(gameState, 180_000L));
+		Router.instance().navigateTo(
+			new LevelPage(gameState, LevelPage.DEFAULT_COUNTDOWN_MS)
+		);
 	}
 
 	private void goCustom() {

@@ -7,8 +7,8 @@ public class GameStatus {
 
 	public GameStatus() {
 		this.score = 0;
-		items.set(ItemType.AUTO_SOLVER, 1);
-		items.set(ItemType.TNT, 1);
+		items.set(ItemType.AUTO_SOLVER, 0);
+		items.set(ItemType.TNT, 0);
 	}
 
 	public void changeScore(int delta) {

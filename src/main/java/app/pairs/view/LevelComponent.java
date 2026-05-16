@@ -182,10 +182,11 @@ public class LevelComponent extends Container {
 				}
 			}
 		);
-		this.itemList.setProp("v-align", AlignLayout.VAlign.BOTTOM);
-		this.itemList.setProp("h-align", AlignLayout.HAlign.CENTER);
-		this.itemList.setProp("v-padding", 10);
-		alignLayout.addChild(this.itemList);
+		itemList.setVisible(!gameState.gameStatus.items.isEmpty());
+		itemList.setProp("v-align", AlignLayout.VAlign.BOTTOM);
+		itemList.setProp("h-align", AlignLayout.HAlign.CENTER);
+		itemList.setProp("v-padding", 10);
+		alignLayout.addChild(itemList);
 
 		this.sidebar = new LevelSidebar();
 
