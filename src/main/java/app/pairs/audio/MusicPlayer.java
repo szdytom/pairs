@@ -222,6 +222,9 @@ final class MusicPlayer implements AutoCloseable {
 		byte[] out = pcmBuf;
 		if (out == null || out.length < maxBytes) {
 			pcmBuf = out = new byte[maxBytes];
+			if (pcmMem != null) {
+				pcmMem.close();
+			}
 			pcmMem = new Memory(maxBytes);
 		}
 		int written = 0;
