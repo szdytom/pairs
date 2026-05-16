@@ -99,7 +99,9 @@ public class Main {
 			router.navigateTo(new MainMenuPage());
 		} else {
 			GameState gameState = pickDifficulty(args);
-			router.navigateTo(new LevelPage(gameState, 180_000L));
+			router.navigateTo(
+				new LevelPage(gameState, LevelPage.DEFAULT_COUNTDOWN_MS)
+			);
 		}
 
 		SDL_Event evt = new SDL_Event();

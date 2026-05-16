@@ -10,6 +10,8 @@ import app.pairs.view.Widget;
 import io.github.libsdl4j.api.render.*;
 
 public class LevelPage implements Page {
+	public static final long DEFAULT_COUNTDOWN_MS = 300_000L;
+
 	private final LevelComponent root;
 	private final Blackboard blackboard;
 

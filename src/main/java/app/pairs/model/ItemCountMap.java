@@ -33,6 +33,14 @@ public class ItemCountMap {
 		return true;
 	}
 
+	public boolean isEmpty() {
+		for (int c : counts.values()) {
+			if (c > 0)
+				return false;
+		}
+		return true;
+	}
+
 	public void reset() {
 		for (ItemType type : ItemType.values()) {
 			counts.put(type, 0);

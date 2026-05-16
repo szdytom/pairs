@@ -190,7 +190,7 @@ public class CustomDifficultyPage implements Page {
 		int strategyIdx = pairingSel.getIndex();
 		Router.instance().navigateTo(new LevelPage(
 			CustomGameBuilder.build(w, h, types, slabs, spread, strategyIdx),
-			180_000L
+			LevelPage.DEFAULT_COUNTDOWN_MS
 		));
 	}
 
