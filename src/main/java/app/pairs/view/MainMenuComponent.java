@@ -6,7 +6,8 @@ import app.pairs.user.UserSession;
 
 public class MainMenuComponent extends AlignLayout {
 	public MainMenuComponent(
-		Runnable onStart, Runnable onPractise, Runnable onQuit, Runnable onLogin
+		Runnable onStart, Runnable onPractise, Runnable onQuit,
+		Runnable onLogin, Runnable onUser
 	) {
 		var title = new TextComponent("Pairs", 5, rgb(30, 30, 30));
 		var titleAlign = new AlignLayout();
@@ -20,6 +21,13 @@ public class MainMenuComponent extends AlignLayout {
 		loginIcon.setProp("v-padding", 4);
 		loginIcon.setVisible(!UserSession.instance().isAuthorized());
 
+		var userIcon = Button.fromIcon("user", onUser);
+		userIcon.setProp("h-align", AlignLayout.HAlign.RIGHT);
+		userIcon.setProp("v-align", AlignLayout.VAlign.BOTTOM);
+		userIcon.setProp("h-padding", 4);
+		userIcon.setProp("v-padding", 4);
+		userIcon.setVisible(UserSession.instance().isAuthorized());
+
 		var column = new FlexLayout(FlexLayout.Direction.COLUMN, 8);
 		column.addChild(titleAlign);
 		column.addChild(makeButton("Start", onStart));
@@ -29,6 +37,7 @@ public class MainMenuComponent extends AlignLayout {
 		column.setProp("v-align", AlignLayout.VAlign.CENTER);
 		addChild(column);
 		addChild(loginIcon);
+		addChild(userIcon);
 	}
 
 	private static Button makeButton(String label, Runnable onClick) {

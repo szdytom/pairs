@@ -13,6 +13,12 @@ public class GlueWidget extends Widget {
 		sz = new int[] {w, h};
 	}
 
+	static GlueWidget flexible() {
+		var g = new GlueWidget();
+		g.setProp("flex-grow", 1);
+		return g;
+	}
+
 	@Override
 	public int[] measure() {
 		return sz;
