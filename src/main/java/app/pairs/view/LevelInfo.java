@@ -17,10 +17,10 @@ public class LevelInfo extends GridLayout {
 	private int lastScore = -1;
 
 	public LevelInfo() {
-		super(2, 0, 0, PADDING, true);
-		this.timeLabel = new TextComponent("Time ", TEXT_SIZE, COLOR);
+		super(2, 6, 0, PADDING, true);
+		this.timeLabel = new TextComponent("Time", TEXT_SIZE, COLOR);
 		this.timeValue = new TextComponent("--:--.--", TEXT_SIZE, COLOR);
-		this.scoreLabel = new TextComponent("Score ", TEXT_SIZE, COLOR);
+		this.scoreLabel = new TextComponent("Score", TEXT_SIZE, COLOR);
 		this.scoreValue = new TextComponent("0", TEXT_SIZE, COLOR);
 		addChild(timeLabel);
 		addChild(timeValue);
