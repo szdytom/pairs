@@ -7,7 +7,7 @@ import app.pairs.user.UserSession;
 public class MainMenuComponent extends AlignLayout {
 	public MainMenuComponent(
 		Runnable onStart, Runnable onPractise, Runnable onQuit,
-		Runnable onLogin, Runnable onUser
+		Runnable onLogin, Runnable onUser, Runnable onLoad
 	) {
 		var title = new TextComponent("Pairs", 5, rgb(30, 30, 30));
 		var titleAlign = new AlignLayout();
@@ -31,6 +31,7 @@ public class MainMenuComponent extends AlignLayout {
 		column.addChild(makeButton("Practise", onPractise));
 		column.addChild(loginBtn);
 		column.addChild(userBtn);
+		column.addChild(makeButton("Load", onLoad));
 		column.setProp("h-align", AlignLayout.HAlign.CENTER);
 		column.setProp("v-align", AlignLayout.VAlign.CENTER);
 		addChild(column);

@@ -21,7 +21,7 @@ public class MainMenuPage implements Page {
 		this.blackboard = new Blackboard();
 		this.root = new MainMenuComponent(
 			this::startRogue, this::startGame, this::quitGame, this::goToLogin,
-			this::goToUser
+			this::goToUser, this::goToLoad
 		);
 		root.setBlackboard(blackboard);
 	}
@@ -40,6 +40,10 @@ public class MainMenuPage implements Page {
 
 	private void goToUser() {
 		Router.instance().navigateTo(new UserPage());
+	}
+
+	private void goToLoad() {
+		Router.instance().navigateTo(new LoadPage());
 	}
 
 	private void startRogue() {
