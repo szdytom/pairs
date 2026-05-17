@@ -29,11 +29,7 @@ public class Save {
 		this.userId = userId;
 	}
 
-	public long save(Tilemap tilemap, OpLogs opLogs, GameStatus gameStatus) {
-		GameSnapshot snapshot = new GameSnapshot(
-			tilemap.getDifficulty(), gameStatus.score, gameStatus.combo,
-			copy(tilemap), opLogs.snapshots()
-		);
+	public long save(GameSnapshot snapshot) {
 		String json = gson.toJson(snapshot);
 		long now = System.currentTimeMillis();
 		try (
@@ -46,7 +42,7 @@ public class Save {
 				statement.setLong(index++, userId);
 			}
 			statement.setLong(index++, now);
-			statement.setString(index++, tilemap.getDifficulty().name());
+			statement.setString(index++, snapshot.difficulty().name());
 			statement.setString(index, json);
 			statement.executeUpdate();
 			try (ResultSet keys = statement.getGeneratedKeys()) {
@@ -60,6 +56,13 @@ public class Save {
 		} catch (SQLException e) {
 			throw new IllegalStateException("failed to write save", e);
 		}
+	}
+
+	public long save(Tilemap tilemap, OpLogs opLogs, GameStatus gameStatus) {
+		return save(new GameSnapshot(
+			tilemap.getDifficulty(), gameStatus.score, gameStatus.combo,
+			copy(tilemap), opLogs.snapshots(), null, null, null
+		));
 	}
 
 	public List<SaveEntry> list() {
