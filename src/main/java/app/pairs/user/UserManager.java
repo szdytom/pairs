@@ -6,9 +6,7 @@ import app.pairs.save.Users;
 import java.util.Optional;
 
 public class UserManager {
-	public static Optional<User> login(
-		String username, String password
-	) {
+	public static Optional<User> login(String username, String password) {
 		Users users = Database.instance().users();
 		if (!users.containsUser(username)) {
 			return Optional.empty();
@@ -18,9 +16,7 @@ public class UserManager {
 			: Optional.empty();
 	}
 
-	public static Optional<User> register(
-		String username, String password
-	) {
+	public static Optional<User> register(String username, String password) {
 		Users users = Database.instance().users();
 		if (users.containsUser(username)) {
 			return Optional.empty();

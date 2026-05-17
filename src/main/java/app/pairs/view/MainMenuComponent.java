@@ -6,37 +6,29 @@ import app.pairs.user.UserSession;
 
 public class MainMenuComponent extends AlignLayout {
 	public MainMenuComponent(
-		Runnable onStart, Runnable onLogin, Runnable onQuit, Runnable onLogout,
-		Runnable onRogue
+		Runnable onStart, Runnable onPractise, Runnable onQuit, Runnable onLogin
 	) {
 		var title = new TextComponent("Pairs", 5, rgb(30, 30, 30));
 		var titleAlign = new AlignLayout();
 		title.setProp("h-align", AlignLayout.HAlign.CENTER);
 		titleAlign.addChild(title);
 
-		var startBtn = makeButton("Start", onStart);
-		var startGuestBtn = makeButton("Guest", onStart);
-		var loginBtn = makeButton("Login", onLogin);
-		var rogueBtn = makeButton("Rogue", onRogue);
-		var quitBtn = makeButton("Quit", onQuit);
-		var logoutBtn = makeButton("Logout", onLogout);
-
-		loginBtn.setVisible(!UserSession.instance().isAuthorized());
-		startGuestBtn.setVisible(!UserSession.instance().isAuthorized());
-		logoutBtn.setVisible(UserSession.instance().isAuthorized());
-		startBtn.setVisible(UserSession.instance().isAuthorized());
+		var loginIcon = Button.fromIcon("login", onLogin);
+		loginIcon.setProp("h-align", AlignLayout.HAlign.RIGHT);
+		loginIcon.setProp("v-align", AlignLayout.VAlign.BOTTOM);
+		loginIcon.setProp("h-padding", 4);
+		loginIcon.setProp("v-padding", 4);
+		loginIcon.setVisible(!UserSession.instance().isAuthorized());
 
 		var column = new FlexLayout(FlexLayout.Direction.COLUMN, 8);
 		column.addChild(titleAlign);
-		column.addChild(startGuestBtn);
-		column.addChild(startBtn);
-		column.addChild(loginBtn);
-		column.addChild(logoutBtn);
-		column.addChild(rogueBtn);
-		column.addChild(quitBtn);
+		column.addChild(makeButton("Start", onStart));
+		column.addChild(makeButton("Practise", onPractise));
+		column.addChild(makeButton("Quit", onQuit));
 		column.setProp("h-align", AlignLayout.HAlign.CENTER);
 		column.setProp("v-align", AlignLayout.VAlign.CENTER);
 		addChild(column);
+		addChild(loginIcon);
 	}
 
 	private static Button makeButton(String label, Runnable onClick) {
