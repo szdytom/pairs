@@ -17,12 +17,15 @@ public class LoginPage implements Page {
 	private void login() {
 		String username = root.getUsername();
 		String password = root.getPassword();
-		var result = UserManager.loginOrRegister(username, password);
-		if (result.isEmpty()) {
+		var user = UserManager.login(username, password);
+		if (user.isEmpty()) {
+			user = UserManager.register(username, password);
+		}
+		if (user.isEmpty()) {
 			root.showError("Wrong password");
 			return;
 		}
-		UserSession.instance().setUser(result.get());
+		UserSession.instance().setUser(user.get());
 		Router.instance().navigateTo(new DifficultyPage());
 	}
 	@Override
