@@ -63,7 +63,6 @@ public class LevelComponent extends Container {
 	// Child text components
 	private final TextComponent overlayText;
 	private final PairCounter pairCounter;
-	private int lastEliminatedCount;
 	private final Button hintBtn;
 	private final Button undoBtn;
 	private final Button retryBtn;
@@ -231,10 +230,16 @@ public class LevelComponent extends Container {
 			&& countdownState.now() - lastEliminationTimeMs >= HINT_COOLDOWN_MS;
 		hintBtn.setVisible(hintReady);
 		undoBtn.setVisible(!cleared && !timedOut && gameState.canUndo());
-		int eliminated = totalPairs - gameState.remainingPairs();
-		if (eliminated != lastEliminatedCount) {
-			lastEliminatedCount = eliminated;
-			pairCounter.setProgress(eliminated);
+		if (!cleared && !timedOut && gameState.isStall()) {
+			pairCounter.showStall();
+		} else if (
+			!cleared && !timedOut
+			&& countdownState.now() - lastEliminationTimeMs < 1_000
+			&& gameState.gameStatus.combo >= 2
+		) {
+			pairCounter.showCombo(gameState.gameStatus.combo);
+		} else {
+			pairCounter.setProgress(totalPairs - gameState.remainingPairs());
 		}
 		autoPairingState.update(deltaTimeMs);
 		super.update(deltaTimeMs);
@@ -494,11 +499,7 @@ public class LevelComponent extends Container {
 		gameState.eliminate(r1, c1, r2, c2, elapsed, OpKind.AUTO);
 		lastEliminationTimeMs = now;
 		gridView.reset();
-		int eliminated = totalPairs - gameState.remainingPairs();
-		if (eliminated != lastEliminatedCount) {
-			lastEliminatedCount = eliminated;
-			pairCounter.setProgress(eliminated);
-		}
+		pairCounter.setProgress(totalPairs - gameState.remainingPairs());
 		if (gameState.isCleared()) {
 			cleared = true;
 			overlayText.setVisible(true);
