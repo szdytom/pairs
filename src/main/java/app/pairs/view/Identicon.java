@@ -2,8 +2,9 @@ package app.pairs.view;
 
 import static app.pairs.utils.Colors.*;
 
+import static io.github.libsdl4j.api.blendmode.SDL_BlendMode.SDL_BLENDMODE_BLEND;
 import static io.github.libsdl4j.api.pixels.SDL_PixelFormatEnum.SDL_PIXELFORMAT_ABGR8888;
-import static io.github.libsdl4j.api.render.SdlRender.SDL_CreateTextureFromSurface;
+import static io.github.libsdl4j.api.render.SdlRender.*;
 import static io.github.libsdl4j.api.surface.SdlSurface.*;
 
 import app.pairs.asset.AssetManager;
@@ -55,6 +56,7 @@ public class Identicon {
 		surface.getPixels().write(0, data, 0, data.length);
 		SDL_Renderer renderer = AssetManager.instance().renderer();
 		SDL_Texture texture = SDL_CreateTextureFromSurface(renderer, surface);
+		SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_BLEND);
 		SDL_FreeSurface(surface);
 		return texture;
 	}
