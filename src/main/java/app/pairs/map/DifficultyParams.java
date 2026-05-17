@@ -1,12 +1,12 @@
 package app.pairs.map;
 
-import app.pairs.model.TilemapType;
+import app.pairs.model.GameType;
 import app.pairs.utils.Seed;
 
 public record DifficultyParams(
 	int width, int height, int types, boolean slabs,
 	TileSelectionPolicy.Spread spread, PairingStrategy strategy,
-	int totalPoints, TilemapType tier, Seed seed
+	int totalPoints, GameType tier, Seed seed
 ) {
 	public String sizeLabel() {
 		return width + "\u00D7" + height;

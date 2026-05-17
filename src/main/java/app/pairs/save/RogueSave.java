@@ -1,11 +1,11 @@
 package app.pairs.save;
 
 import app.pairs.model.GameStatus;
+import app.pairs.model.GameType;
 import app.pairs.model.OpLogs;
 import app.pairs.model.RogueSession;
 import app.pairs.model.RogueSnapshot;
 import app.pairs.model.Tilemap;
-import app.pairs.model.TilemapType;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -18,7 +18,7 @@ import com.google.gson.Gson;
 // One rogue save slot per user — enforced by a partial unique index on
 // saves(user_id) WHERE type='ROGUE'.
 public class RogueSave {
-	public static final TilemapType TYPE = TilemapType.ROGUE;
+	public static final GameType TYPE = GameType.ROGUE;
 
 	private final Connection connection;
 	private final long userId;

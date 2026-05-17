@@ -6,8 +6,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import app.pairs.logic.GameState;
 import app.pairs.logic.OpElimination;
 import app.pairs.model.GameSnapshot;
+import app.pairs.model.GameType;
 import app.pairs.model.OperationSnapshot;
-import app.pairs.model.TilemapType;
 
 import java.nio.file.Path;
 import java.util.List;
@@ -34,7 +34,7 @@ class SaveTest {
 			assertThat(save.list())
 				.extracting(SaveEntry::id)
 				.containsExactly(id);
-			assertThat(snapshot.difficulty()).isEqualTo(TilemapType.NORMAL);
+			assertThat(snapshot.difficulty()).isEqualTo(GameType.NORMAL);
 			assertThat(snapshot.score())
 				.isEqualTo(OpElimination.SCORE_PER_PAIR);
 			assertThat(snapshot.combo()).isEqualTo(1);

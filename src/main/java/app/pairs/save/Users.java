@@ -1,6 +1,6 @@
 package app.pairs.save;
 
-import app.pairs.model.TilemapType;
+import app.pairs.model.GameType;
 
 import java.security.*;
 import java.security.spec.*;
@@ -116,7 +116,7 @@ public class Users {
 		}
 	}
 
-	public void addScore(String username, TilemapType difficulty, int score) {
+	public void addScore(String username, GameType difficulty, int score) {
 		try (
 			PreparedStatement ps = connection.prepareStatement(
 				"INSERT INTO scores (user_id, difficulty, score, played_at)"

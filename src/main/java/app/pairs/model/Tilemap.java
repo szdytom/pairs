@@ -10,7 +10,7 @@ public class Tilemap {
 	private final int width;
 	private final int height;
 	private final int[][] id;
-	private TilemapType difficulty = TilemapType.NORMAL;
+	private GameType difficulty = GameType.NORMAL;
 
 	public Tilemap(int[][] id) {
 		this.id = id;
@@ -34,11 +34,11 @@ public class Tilemap {
 		return height;
 	}
 
-	public TilemapType getDifficulty() {
+	public GameType getDifficulty() {
 		return difficulty;
 	}
 
-	public void setDifficulty(TilemapType difficulty) {
+	public void setDifficulty(GameType difficulty) {
 		this.difficulty = difficulty;
 	}
 

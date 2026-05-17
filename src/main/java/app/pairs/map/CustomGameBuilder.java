@@ -4,7 +4,7 @@ import app.pairs.asset.AssetManager;
 import app.pairs.asset.TileRegistry;
 import app.pairs.logic.GameState;
 import app.pairs.model.Tilemap;
-import app.pairs.model.TilemapType;
+import app.pairs.model.GameType;
 import app.pairs.utils.Seed;
 import app.pairs.utils.Xoroshiro128PP;
 
@@ -35,7 +35,7 @@ public class CustomGameBuilder {
 	public static GameState build(
 		int width, int height, int types, boolean slabs,
 		TileSelectionPolicy.Spread spread, PairingStrategy strategy, Seed seed,
-		TilemapType tier
+		GameType tier
 	) {
 		var policy = new TileSelectionPolicy(slabs, spread);
 		var registry = AssetManager.instance().<TileRegistry>get("tiles/typed");
@@ -99,14 +99,14 @@ public class CustomGameBuilder {
 		return computePoints(w, h, types, slabs, spread, idx);
 	}
 
-	public static TilemapType tierForPoints(int pts) {
+	public static GameType tierForPoints(int pts) {
 		if (pts <= 5)
-			return TilemapType.EASY;
+			return GameType.EASY;
 		if (pts <= 14)
-			return TilemapType.NORMAL;
+			return GameType.NORMAL;
 		if (pts <= 24)
-			return TilemapType.HARD;
-		return TilemapType.EXTREME;
+			return GameType.HARD;
+		return GameType.EXTREME;
 	}
 
 	private static int typePoints(int types) {
