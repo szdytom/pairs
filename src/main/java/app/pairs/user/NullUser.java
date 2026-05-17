@@ -2,9 +2,6 @@ package app.pairs.user;
 
 import app.pairs.logic.GameState;
 import app.pairs.model.GameSnapshot;
-import app.pairs.model.GameStatus;
-import app.pairs.model.OpLogs;
-import app.pairs.model.Tilemap;
 import app.pairs.save.SaveEntry;
 
 import java.util.List;
@@ -26,9 +23,7 @@ public class NullUser implements User {
 	public void save(GameState st) {}
 
 	@Override
-	public long saveGame(
-		Tilemap tilemap, OpLogs opLogs, GameStatus gameStatus
-	) {
+	public long saveGame(GameState state) {
 		return -1;
 	}
 
