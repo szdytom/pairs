@@ -23,13 +23,20 @@ empty for reads — the view never needs to check.
 ## Getting a User
 
 ```java
-// Authenticated (login or auto-register on first run)
-Optional<RealUser> user = UserManager.loginOrRegister(username, password);
+// Login
+Optional<RealUser> user = UserManager.login(username, password);
+
+// Register
+Optional<RealUser> user = UserManager.register(username, password);
+
+// Change password
+boolean ok = UserManager.changePassword(username, oldPassword, newPassword);
 
 // Guest
 User user = new NullUser();
 ```
 
-`loginOrRegister` returns `Optional.empty()` only when the username exists but
-the password is wrong. Any other outcome (new account, existing account with
-correct password) returns a `RealUser`.
+- `login` returns `Optional.empty()` if the user doesn't exist or the password
+  is wrong.
+- `register` returns `Optional.empty()` if the username already exists.
+- `changePassword` returns `false` if the old password doesn't match.

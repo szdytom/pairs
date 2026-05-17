@@ -35,6 +35,28 @@ public class Users {
 		}
 	}
 
+	public void changePassword(String username, String newPassword) {
+		if (newPassword == null) {
+			throw new IllegalArgumentException("password must not be null");
+		}
+		try (
+			PreparedStatement ps = connection.prepareStatement(
+				"UPDATE users SET password_hash = ? WHERE name = ?"
+			)
+		) {
+			ps.setString(1, hashPassword(newPassword));
+			ps.setString(2, username);
+			int updated = ps.executeUpdate();
+			if (updated != 1) {
+				throw new IllegalStateException(
+					"failed to update password for user: " + username
+				);
+			}
+		} catch (SQLException | GeneralSecurityException e) {
+			throw new IllegalStateException("failed to change password", e);
+		}
+	}
+
 	// Returns true if the password matches the stored hash.
 	public boolean checkPassword(String username, String password) {
 		if (password == null) {
