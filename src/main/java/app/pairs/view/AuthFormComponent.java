@@ -5,12 +5,22 @@ import static app.pairs.utils.Colors.*;
 import app.pairs.router.*;
 
 public class AuthFormComponent extends AlignLayout {
+	private static final int MAX_LENGTH = 30;
+
 	private final TextField usernameField;
 	private final TextField passwordField;
+	private final TextField confirmPasswordField;
 	private final TextComponent errorLabel;
 
 	public AuthFormComponent(
 		Runnable onSubmit, Runnable onBack, String submitLabel
+	) {
+		this(onSubmit, onBack, submitLabel, false);
+	}
+
+	public AuthFormComponent(
+		Runnable onSubmit, Runnable onBack, String submitLabel,
+		boolean hasConfirm
 	) {
 		var homeBtn = Button.fromIcon(
 			"home", () -> Router.instance().navigateTo(new MainMenuPage())
@@ -21,17 +31,26 @@ public class AuthFormComponent extends AlignLayout {
 		homeBtn.setProp("v-padding", 4);
 		addChild(homeBtn);
 
+		int grayBg = rgb(230, 230, 230);
 		usernameField = new TextField(
-			1, rgb(30, 30, 30), rgba(255, 255, 255, 240), rgb(60, 60, 60),
+			1, rgb(30, 30, 30), grayBg, rgb(60, 60, 60),
 			rgba(200, 220, 255, 240)
 		);
-		usernameField.setMaxLength(20);
+		usernameField.setMaxLength(MAX_LENGTH);
 
 		passwordField = new TextField(
-			1, rgb(30, 30, 30), rgba(255, 255, 255, 240), rgb(60, 60, 60),
-			rgba(200, 220, 255, 240)
+			1, rgb(30, 30, 30), grayBg, rgb(60, 60, 60),
+			rgba(200, 220, 255, 240),
+			TextField.InputType.PASSWORD
 		);
-		passwordField.setMaxLength(20);
+		passwordField.setMaxLength(MAX_LENGTH);
+
+		confirmPasswordField = new TextField(
+			1, rgb(30, 30, 30), grayBg, rgb(60, 60, 60),
+			rgba(200, 220, 255, 240),
+			TextField.InputType.PASSWORD
+		);
+		confirmPasswordField.setMaxLength(MAX_LENGTH);
 
 		errorLabel = new TextComponent("", 1, rgb(200, 40, 40));
 
@@ -43,6 +62,12 @@ public class AuthFormComponent extends AlignLayout {
 		column.addChild(usernameField);
 		column.addChild(new TextComponent("Password", 1, rgb(30, 30, 30)));
 		column.addChild(passwordField);
+		if (hasConfirm) {
+			column.addChild(
+				new TextComponent("Confirm Password", 1, rgb(30, 30, 30))
+			);
+			column.addChild(confirmPasswordField);
+		}
 		column.addChild(errorLabel);
 		column.addChild(submitBtn);
 		column.addChild(backBtn);
@@ -57,6 +82,10 @@ public class AuthFormComponent extends AlignLayout {
 
 	public String getPassword() {
 		return passwordField.text();
+	}
+
+	public String getConfirmPassword() {
+		return confirmPasswordField.text();
 	}
 
 	public void showError(String msg) {

@@ -15,19 +15,24 @@ public class RegisterFormPage implements Page {
 		this.blackboard = new Blackboard();
 		this.root = new AuthFormComponent(
 			this::submit,
-			() -> Router.instance().navigateTo(new LoginNavPage()), "Register"
+			() -> Router.instance().navigateTo(new LoginNavPage()), "Register",
+			true
 		);
 		root.setBlackboard(blackboard);
 	}
 
 	private void submit() {
+		if (!root.getPassword().equals(root.getConfirmPassword())) {
+			root.showError("Passwords do not match");
+			return;
+		}
 		var user = UserManager.register(root.getUsername(), root.getPassword());
 		if (user.isEmpty()) {
 			root.showError("Username already exists");
 			return;
 		}
 		UserSession.instance().setUser(user.get());
-		Router.instance().navigateTo(new DifficultyPage());
+		Router.instance().navigateTo(new MainMenuPage());
 	}
 
 	@Override

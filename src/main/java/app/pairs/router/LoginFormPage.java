@@ -27,7 +27,7 @@ public class LoginFormPage implements Page {
 			return;
 		}
 		UserSession.instance().setUser(user.get());
-		Router.instance().navigateTo(new DifficultyPage());
+		Router.instance().navigateTo(new MainMenuPage());
 	}
 
 	@Override
