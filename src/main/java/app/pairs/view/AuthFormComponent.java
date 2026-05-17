@@ -4,59 +4,48 @@ import static app.pairs.utils.Colors.*;
 
 import app.pairs.router.*;
 
-public class LoginComponent extends AlignLayout {
+public class AuthFormComponent extends AlignLayout {
 	private final TextField usernameField;
 	private final TextField passwordField;
 	private final TextComponent errorLabel;
 
-	public LoginComponent(Runnable onLogin) {
-		var title = new TextComponent("Login", 2, rgb(30, 30, 30));
-		var titleAlign = new AlignLayout();
-		title.setProp("h-align", AlignLayout.HAlign.CENTER);
-		title.setProp("v-align", AlignLayout.VAlign.TOP);
-		titleAlign.addChild(title);
+	public AuthFormComponent(
+		Runnable onSubmit, Runnable onBack, String submitLabel
+	) {
 		var homeBtn = Button.fromIcon(
 			"home", () -> Router.instance().navigateTo(new MainMenuPage())
 		);
 		homeBtn.setProp("h-align", AlignLayout.HAlign.LEFT);
 		homeBtn.setProp("v-align", AlignLayout.VAlign.TOP);
-		titleAlign.addChild(homeBtn);
+		homeBtn.setProp("h-padding", 4);
+		homeBtn.setProp("v-padding", 4);
+		addChild(homeBtn);
 
-		var loginBtn = makeButton("Login/Register", onLogin);
-		var air = new AlignLayout();
-		air.setProp("flex-grow", 1);
-		var row = new FlexLayout(FlexLayout.Direction.ROW, 0);
-		row.addChild(air);
-		row.addChild(loginBtn);
-
-		var username = new TextComponent("Username", 1, rgb(30, 30, 30));
-
-		var password = new TextComponent("Password", 1, rgb(30, 30, 30));
-
-		TextField usernameField = new TextField(
-			2, rgb(30, 30, 30), rgba(255, 255, 255, 240), rgb(60, 60, 60),
+		usernameField = new TextField(
+			1, rgb(30, 30, 30), rgba(255, 255, 255, 240), rgb(60, 60, 60),
 			rgba(200, 220, 255, 240)
 		);
 		usernameField.setMaxLength(20);
-		this.usernameField = usernameField;
 
-		TextField passwordField = new TextField(
-			2, rgb(30, 30, 30), rgba(255, 255, 255, 240), rgb(60, 60, 60),
+		passwordField = new TextField(
+			1, rgb(30, 30, 30), rgba(255, 255, 255, 240), rgb(60, 60, 60),
 			rgba(200, 220, 255, 240)
 		);
 		passwordField.setMaxLength(20);
-		this.passwordField = passwordField;
 
-		this.errorLabel = new TextComponent("", 1, rgb(200, 40, 40));
+		errorLabel = new TextComponent("", 1, rgb(200, 40, 40));
+
+		var submitBtn = makeButton(submitLabel, onSubmit);
+		var backBtn = makeButton("Back", onBack);
 
 		var column = new FlexLayout(FlexLayout.Direction.COLUMN, 8);
-		column.addChild(titleAlign);
-		column.addChild(username);
+		column.addChild(new TextComponent("Username", 1, rgb(30, 30, 30)));
 		column.addChild(usernameField);
-		column.addChild(password);
+		column.addChild(new TextComponent("Password", 1, rgb(30, 30, 30)));
 		column.addChild(passwordField);
 		column.addChild(errorLabel);
-		column.addChild(row);
+		column.addChild(submitBtn);
+		column.addChild(backBtn);
 		column.setProp("h-align", AlignLayout.HAlign.CENTER);
 		column.setProp("v-align", AlignLayout.VAlign.CENTER);
 		addChild(column);
@@ -72,7 +61,6 @@ public class LoginComponent extends AlignLayout {
 
 	public void showError(String msg) {
 		errorLabel.setText(msg);
-		errorLabel.setVisible(true);
 	}
 
 	private static Button makeButton(String label, Runnable onClick) {
@@ -80,7 +68,7 @@ public class LoginComponent extends AlignLayout {
 			onClick, rgba(200, 200, 200, 255), rgba(160, 160, 160, 255)
 		);
 		var align = new AlignLayout();
-		var text = new TextComponent(label, 1, rgb(50, 50, 50));
+		var text = new TextComponent(label, 2, rgb(50, 50, 50));
 		text.setProp("h-align", AlignLayout.HAlign.CENTER);
 		text.setProp("v-align", AlignLayout.VAlign.CENTER);
 		align.addChild(text);

@@ -2,32 +2,34 @@ package app.pairs.router;
 
 import app.pairs.user.UserManager;
 import app.pairs.user.UserSession;
+import app.pairs.view.AuthFormComponent;
 import app.pairs.view.Blackboard;
-import app.pairs.view.LoginComponent;
 
-public class LoginPage implements Page {
-	private final LoginComponent root;
+import io.github.libsdl4j.api.render.SDL_Renderer;
+
+public class LoginFormPage implements Page {
+	private final AuthFormComponent root;
 	private final Blackboard blackboard;
-	public LoginPage() {
+
+	public LoginFormPage() {
 		this.blackboard = new Blackboard();
-		this.root = new LoginComponent(this::login);
+		this.root = new AuthFormComponent(
+			this::submit,
+			() -> Router.instance().navigateTo(new LoginNavPage()), "Login"
+		);
 		root.setBlackboard(blackboard);
 	}
 
-	private void login() {
-		String username = root.getUsername();
-		String password = root.getPassword();
-		var user = UserManager.login(username, password);
+	private void submit() {
+		var user = UserManager.login(root.getUsername(), root.getPassword());
 		if (user.isEmpty()) {
-			user = UserManager.register(username, password);
-		}
-		if (user.isEmpty()) {
-			root.showError("Wrong password");
+			root.showError("Wrong credentials");
 			return;
 		}
 		UserSession.instance().setUser(user.get());
 		Router.instance().navigateTo(new DifficultyPage());
 	}
+
 	@Override
 	public void onEnter() {}
 
@@ -40,9 +42,7 @@ public class LoginPage implements Page {
 	}
 
 	@Override
-	public void render(
-		io.github.libsdl4j.api.render.SDL_Renderer renderer, int scale
-	) {
+	public void render(SDL_Renderer renderer, int scale) {
 		root.render(renderer, 0, 0, scale);
 	}
 
@@ -62,7 +62,7 @@ public class LoginPage implements Page {
 	}
 
 	@Override
-	public app.pairs.view.Blackboard getBlackboard() {
+	public Blackboard getBlackboard() {
 		return blackboard;
 	}
 }
