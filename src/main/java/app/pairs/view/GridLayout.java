@@ -1,5 +1,7 @@
 package app.pairs.view;
 
+import java.util.Arrays;
+
 /**
  * Simplified CSS-grid container that places children in a fixed-column grid
  * with uniform padding and horizontal/vertical gaps.
@@ -41,6 +43,7 @@ public class GridLayout extends Container {
 		this.gapY = gapY;
 		this.padding = padding;
 		this.autoColumnWidths = autoColumnWidths;
+		this.colWidths = new int[fixedColumns];
 	}
 
 	@Override
@@ -84,7 +87,7 @@ public class GridLayout extends Container {
 	}
 
 	private int[] measureAutoColumns() {
-		colWidths = new int[fixedColumns];
+		Arrays.fill(colWidths, 0);
 		int cellH = 0;
 		int visibleCount = 0;
 		int index = 0;
@@ -130,7 +133,7 @@ public class GridLayout extends Container {
 		int innerW = w - padding * 2;
 		int innerH = h - padding * 2;
 
-		if (autoColumnWidths && colWidths != null) {
+		if (autoColumnWidths) {
 			int cellH = innerH > 0 ? (innerH - (rows() - 1) * gapY) / rows()
 								   : cellSize[1];
 			if (cellH < 0)
