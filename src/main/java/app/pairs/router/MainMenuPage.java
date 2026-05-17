@@ -20,8 +20,8 @@ public class MainMenuPage implements Page {
 	public MainMenuPage() {
 		this.blackboard = new Blackboard();
 		this.root = new MainMenuComponent(
-			this::startRogue, this::startGame, this::quitGame,
-			this::goToLogin, this::goToUser
+			this::startRogue, this::startGame, this::quitGame, this::goToLogin,
+			this::goToUser
 		);
 		root.setBlackboard(blackboard);
 	}

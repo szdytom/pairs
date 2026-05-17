@@ -15,7 +15,9 @@ public class UserPageComponent extends AlignLayout {
 		String username = UserSession.instance().getUser().getUsername();
 		avatar = Identicon.create(username);
 
-		var avatarImg = new ImageComponent(avatar, Identicon.TEX_SIZE, Identicon.TEX_SIZE);
+		var avatarImg = new ImageComponent(
+			avatar, Identicon.TEX_SIZE, Identicon.TEX_SIZE
+		);
 		avatarImg.setProp("v-align", AlignLayout.VAlign.CENTER);
 
 		var nameText = new TextComponent(username, 2, rgb(30, 30, 30));
