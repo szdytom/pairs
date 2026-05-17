@@ -14,30 +14,27 @@ public class MainMenuComponent extends AlignLayout {
 		title.setProp("h-align", AlignLayout.HAlign.CENTER);
 		titleAlign.addChild(title);
 
-		var loginIcon = Button.fromIcon("login", onLogin);
-		loginIcon.setProp("h-align", AlignLayout.HAlign.RIGHT);
-		loginIcon.setProp("v-align", AlignLayout.VAlign.BOTTOM);
-		loginIcon.setProp("h-padding", 4);
-		loginIcon.setProp("v-padding", 4);
-		loginIcon.setVisible(!UserSession.instance().isAuthorized());
+		var loginBtn = makeButton("Login", onLogin);
+		loginBtn.setVisible(!UserSession.instance().isAuthorized());
+		var userBtn = makeButton("User", onUser);
+		userBtn.setVisible(UserSession.instance().isAuthorized());
 
-		var userIcon = Button.fromIcon("user", onUser);
-		userIcon.setProp("h-align", AlignLayout.HAlign.RIGHT);
-		userIcon.setProp("v-align", AlignLayout.VAlign.BOTTOM);
-		userIcon.setProp("h-padding", 4);
-		userIcon.setProp("v-padding", 4);
-		userIcon.setVisible(UserSession.instance().isAuthorized());
+		var quitIcon = Button.fromIcon("quit", onQuit);
+		quitIcon.setProp("h-align", AlignLayout.HAlign.RIGHT);
+		quitIcon.setProp("v-align", AlignLayout.VAlign.BOTTOM);
+		quitIcon.setProp("h-padding", 4);
+		quitIcon.setProp("v-padding", 4);
 
 		var column = new FlexLayout(FlexLayout.Direction.COLUMN, 8);
 		column.addChild(titleAlign);
 		column.addChild(makeButton("Start", onStart));
 		column.addChild(makeButton("Practise", onPractise));
-		column.addChild(makeButton("Quit", onQuit));
+		column.addChild(loginBtn);
+		column.addChild(userBtn);
 		column.setProp("h-align", AlignLayout.HAlign.CENTER);
 		column.setProp("v-align", AlignLayout.VAlign.CENTER);
 		addChild(column);
-		addChild(loginIcon);
-		addChild(userIcon);
+		addChild(quitIcon);
 	}
 
 	private static Button makeButton(String label, Runnable onClick) {
