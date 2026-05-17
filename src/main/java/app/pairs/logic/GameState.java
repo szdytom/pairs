@@ -48,6 +48,7 @@ public final class GameState {
 	                // pushing operations
 	private int undoBarrier;
 	private int remainingTiles;
+	private Boolean stallResult;
 
 	public enum OpKind { MANUAL, AUTO }
 
@@ -57,6 +58,7 @@ public final class GameState {
 		this.opLogs = new OpLogs();
 		this.gameStatus = new GameStatus();
 		this.remainingTiles = countTiles();
+		this.stallResult = null;
 	}
 
 	private GameState(
@@ -68,6 +70,7 @@ public final class GameState {
 		this.opLogs = opLogs;
 		this.gameStatus = gameStatus;
 		this.remainingTiles = countTiles();
+		this.stallResult = null;
 	}
 
 	/**
@@ -79,6 +82,7 @@ public final class GameState {
 		this.gameStatus.reset();
 		this.undoBarrier = 0;
 		this.remainingTiles = countTiles();
+		this.stallResult = null;
 	}
 
 	/** Custom dimensions and tile-type count, no group constraints. */
@@ -268,6 +272,7 @@ public final class GameState {
 		tilemap.setTile(row1, col1, 0);
 		tilemap.setTile(row2, col2, 0);
 		remainingTiles -= 2;
+		stallResult = null;
 		gameStatus.changeScore(deltaScore);
 		opLogs.push(new OpElimination(
 			tileId, row1, col1, row2, col2, time, path, deltaScore, oldCombo
@@ -286,6 +291,7 @@ public final class GameState {
 		tilemap.setTile(op.getRow1(), op.getCol1(), op.getTileId());
 		tilemap.setTile(op.getRow2(), op.getCol2(), op.getTileId());
 		remainingTiles += 2;
+		stallResult = null;
 		gameStatus.changeScore(-op.getDeltaScore());
 		gameStatus.combo = op.getComboBefore();
 	}
@@ -362,6 +368,7 @@ public final class GameState {
 	public void clearTile(int row, int col) {
 		tilemap.setTile(row, col, 0);
 		remainingTiles--;
+		stallResult = null;
 	}
 
 	/** Score per tile for TNT: minimum base score / 2 (no time bonus). */
@@ -377,7 +384,10 @@ public final class GameState {
 
 	/** Check whether the game is in a stalled state (no more valid moves). */
 	public boolean isStall() {
-		return IsStall.isStall(tilemap);
+		if (stallResult == null) {
+			stallResult = IsStall.isStall(tilemap);
+		}
+		return stallResult;
 	}
 
 	public ArrayList<Integer> path(

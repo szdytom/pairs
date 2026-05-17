@@ -9,18 +9,34 @@ import io.github.libsdl4j.api.rect.SDL_Rect;
 import io.github.libsdl4j.api.render.*;
 
 public class PairCounter extends Container {
-	private static final int H_PAD = 8;
 	private static final int V_PAD = 4;
+	private static final int FIXED_WIDTH = 80;
 
 	private final int total;
 	private final char[] buf;
 	private final int digits;
-	private final TextComponent label;
 	private float progress;
 	private int last = -1;
+
+	private final TextComponent progressLabel;
+	private final TextComponent stallLabel;
+	private final TextComponent comboLabel;
+	private final Widget progressWrap;
+	private final Widget stallWrap;
+	private final Widget comboWrap;
+	private final FlexLayout row;
+
+	private enum Mode { PROGRESS, STALL, COMBO }
+	private Mode mode = Mode.PROGRESS;
+
 	private final int textColor = rgb(200, 200, 200);
 	private final int bgColor = rgba(180, 190, 210, 30);
 	private final int fillColor = rgba(180, 190, 210, 65);
+	private final int stallTextColor = rgb(255, 255, 255);
+	private final int stallBgColor = rgb(200, 40, 40);
+	private final int comboTextColor = rgb(255, 255, 255);
+	private final int comboBgColor = rgb(180, 230, 180);
+
 	private final SDL_Rect bgRect = new SDL_Rect();
 	private final int[] measuredSize = new int[2];
 
@@ -37,36 +53,79 @@ public class PairCounter extends Container {
 			buf[i] = '0';
 		}
 
-		this.label = new TextComponent(new String(buf), 1, textColor);
-		addChild(label);
+		this.progressLabel = new TextComponent(new String(buf), 1, textColor);
+		this.stallLabel = new TextComponent("STALL", 1, stallTextColor);
+		this.comboLabel = new TextComponent("Combo 2!", 1, comboTextColor);
+
+		this.progressWrap = wrapCentered(progressLabel);
+		this.stallWrap = wrapCentered(stallLabel);
+		this.comboWrap = wrapCentered(comboLabel);
+
+		this.row = new FlexLayout(FlexLayout.Direction.ROW, 0);
+		row.addChild(progressWrap);
+		row.addChild(stallWrap);
+		row.addChild(comboWrap);
+		addChild(row);
+	}
+
+	private static Widget wrapCentered(TextComponent label) {
+		var align = new AlignLayout();
+		align.setProp("flex-grow", 1);
+		label.setProp("h-align", AlignLayout.HAlign.CENTER);
+		label.setProp("v-align", AlignLayout.VAlign.CENTER);
+		align.addChild(label);
+		return align;
 	}
 
 	public void setProgress(int eliminated) {
-		if (eliminated == last) {
+		if (mode == Mode.PROGRESS && eliminated == last) {
 			return;
 		}
+		mode = Mode.PROGRESS;
 		last = eliminated;
+		progressWrap.setVisible(true);
+		stallWrap.setVisible(false);
+		comboWrap.setVisible(false);
 		int n = eliminated;
 		for (int i = digits - 1; i >= 0; i--) {
 			buf[i] = (char)('0' + n % 10);
 			n /= 10;
 		}
-		label.setText(new String(buf));
+		progressLabel.setText(new String(buf));
 		this.progress = (float)eliminated / total;
+	}
+
+	public void showStall() {
+		if (mode == Mode.STALL) {
+			return;
+		}
+		mode = Mode.STALL;
+		progressWrap.setVisible(false);
+		stallWrap.setVisible(true);
+		comboWrap.setVisible(false);
+		progress = 0;
+	}
+
+	public void showCombo(int combo) {
+		mode = Mode.COMBO;
+		progressWrap.setVisible(false);
+		stallWrap.setVisible(false);
+		comboWrap.setVisible(true);
+		comboLabel.setText("Combo " + combo + "!");
+		progress = 0;
 	}
 
 	@Override
 	public int[] measure() {
-		int[] textSize = label.measure();
-		measuredSize[0] = textSize[0] + H_PAD * 2;
-		measuredSize[1] = textSize[1] + V_PAD * 2;
+		measuredSize[0] = FIXED_WIDTH;
+		measuredSize[1] = progressLabel.measure()[1] + V_PAD * 2;
 		return measuredSize;
 	}
 
 	@Override
 	public void layout(int x, int y, int w, int h) {
 		super.layout(x, y, w, h);
-		label.layout(H_PAD, V_PAD, 0, 0);
+		row.layout(0, 0, layoutW, layoutH);
 	}
 
 	@Override
@@ -82,15 +141,28 @@ public class PairCounter extends Container {
 		bgRect.h = layoutH * scale;
 
 		SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
-		setRenderDrawColor(renderer, bgColor);
-		SDL_RenderFillRect(renderer, bgRect);
 
-		int fillW = (int)(progress * layoutW) * scale;
-		if (fillW > 0) {
-			bgRect.w = fillW;
-			setRenderDrawColor(renderer, fillColor);
+		switch (mode) {
+		case STALL:
+			setRenderDrawColor(renderer, stallBgColor);
 			SDL_RenderFillRect(renderer, bgRect);
+			break;
+		case COMBO:
+			setRenderDrawColor(renderer, comboBgColor);
+			SDL_RenderFillRect(renderer, bgRect);
+			break;
+		case PROGRESS:
+			setRenderDrawColor(renderer, bgColor);
+			SDL_RenderFillRect(renderer, bgRect);
+			int fillW = (int)(progress * layoutW) * scale;
+			if (fillW > 0) {
+				bgRect.w = fillW;
+				setRenderDrawColor(renderer, fillColor);
+				SDL_RenderFillRect(renderer, bgRect);
+			}
+			break;
 		}
+
 		SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
 
 		super.render(renderer, parentX, parentY, scale);
