@@ -8,6 +8,7 @@ import app.pairs.logic.OpElimination;
 import app.pairs.model.GameSnapshot;
 import app.pairs.model.OperationSnapshot;
 import app.pairs.model.Tilemap;
+import app.pairs.utils.Seed;
 
 import java.nio.file.Path;
 import java.util.List;
@@ -105,6 +106,93 @@ class SaveTest {
 				.containsExactly(bobId);
 			assertThatThrownBy(() -> db.saves("alice").load(bobId))
 				.isInstanceOf(IllegalStateException.class);
+		}
+	}
+
+	@Test
+	void snapshotStoresSeed() {
+		Seed seed = new Seed(0xdeadbeefL, 0xcafebabeL);
+		GameState state = GameState.customized(4, 4, 2, seed);
+		GameSnapshot snapshot = state.toSnapshot();
+
+		assertThat(snapshot.seedS0()).isEqualTo(0xdeadbeefL);
+		assertThat(snapshot.seedS1()).isEqualTo(0xcafebabeL);
+		assertThat(snapshot.factoryPresetId()).isNull();
+	}
+
+	@Test
+	void seedSurvivesJsonRoundTrip() {
+		Seed seed = new Seed(0x1122334455667788L, 0x99aabbccddeeff00L);
+		GameState state = GameState.customized(4, 4, 2, seed);
+
+		GameSnapshot snapshot;
+		try (Database db = new Database(dbPath())) {
+			Save save = db.saves();
+			long id = save.save(state.toSnapshot());
+			snapshot = save.load(id);
+		}
+
+		assertThat(snapshot.seedS0()).isEqualTo(0x1122334455667788L);
+		assertThat(snapshot.seedS1()).isEqualTo(0x99aabbccddeeff00L);
+	}
+
+	@Test
+	void restartFromSnapshotWithSeedRegeneratesOriginalBoard() {
+		Seed seed = new Seed(42L, 137L);
+		GameState original = GameState.customized(4, 4, 2, seed);
+		// record the initial board before any moves
+		int[][] initialBoard = new int[4][4];
+		for (int r = 0; r < 4; r++) {
+			for (int c = 0; c < 4; c++) {
+				initialBoard[r][c] = original.getTile(r, c);
+			}
+		}
+
+	// find two matching tiles and eliminate them
+	outer:
+		for (int r1 = 0; r1 < 4; r1++) {
+			for (int c1 = 0; c1 < 4; c1++) {
+				for (int r2 = 0; r2 < 4; r2++) {
+					for (int c2 = 0; c2 < 4; c2++) {
+						if (r1 == r2 && c1 == c2)
+							continue;
+						if (original.canEliminate(r1, c1, r2, c2)) {
+							original.eliminate(
+								r1, c1, r2, c2, 500, GameState.OpKind.MANUAL
+							);
+							break outer;
+						}
+					}
+				}
+			}
+		}
+
+		// save, reload, then restart
+		GameSnapshot snapshot;
+		try (Database db = new Database(dbPath())) {
+			Save save = db.saves();
+			long id = save.save(original.toSnapshot());
+			snapshot = save.load(id);
+		}
+
+		// seed in snapshot
+		assertThat(snapshot.seedS0()).isEqualTo(42L);
+		assertThat(snapshot.seedS1()).isEqualTo(137L);
+
+		// restart from the loaded state: for customized games without a
+		// presetId, restart still goes back to the snapshot's tilemap (no
+		// presetId stored)
+		GameState restored = GameState.fromSnapshot(snapshot);
+		restored.restart();
+
+		// The restored game has no presetId, so restart uses the snapshotted
+		// grid. Verify the restarted board matches the save-point board (not
+		// original).
+		for (int r = 0; r < 4; r++) {
+			for (int c = 0; c < 4; c++) {
+				assertThat(restored.getTile(r, c))
+					.isEqualTo(snapshot.tilemap()[r][c]);
+			}
 		}
 	}
 

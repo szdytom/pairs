@@ -16,7 +16,6 @@ import static io.github.libsdl4j.api.video.SdlVideoConst.*;
 import app.pairs.asset.AssetManager;
 import app.pairs.audio.AudioManager;
 import app.pairs.logic.GameState;
-import app.pairs.map.TilemapFactory;
 import app.pairs.router.LevelPage;
 import app.pairs.router.MainMenuPage;
 import app.pairs.router.Router;
@@ -189,6 +188,6 @@ public class Main {
 		if (!AssetManager.instance().has(id)) {
 			throw new IllegalArgumentException("unknown difficulty: " + mode);
 		}
-		return new GameState(TilemapFactory.fromPreset(id));
+		return GameState.fromPreset(id);
 	}
 }

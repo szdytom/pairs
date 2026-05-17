@@ -49,26 +49,28 @@ public final class GameState {
 	private int undoBarrier;
 	private int remainingTiles;
 	private Boolean stallResult;
+	private final Seed seed;
+	private final String factoryPresetId;
 
 	public enum OpKind { MANUAL, AUTO }
 
 	public GameState(TilemapFactory factory) {
-		this.factory = factory;
-		this.tilemap = factory.generate();
-		this.opLogs = new OpLogs();
-		this.gameStatus = new GameStatus();
-		this.remainingTiles = countTiles();
-		this.stallResult = null;
+		this(
+			factory, factory.generate(), new OpLogs(), new GameStatus(), null,
+			null
+		);
 	}
 
 	private GameState(
 		TilemapFactory factory, Tilemap tilemap, OpLogs opLogs,
-		GameStatus gameStatus
+		GameStatus gameStatus, Seed seed, String factoryPresetId
 	) {
 		this.factory = factory;
 		this.tilemap = tilemap;
 		this.opLogs = opLogs;
 		this.gameStatus = gameStatus;
+		this.seed = seed;
+		this.factoryPresetId = factoryPresetId;
 		this.remainingTiles = countTiles();
 		this.stallResult = null;
 	}
@@ -85,6 +87,23 @@ public final class GameState {
 		this.stallResult = null;
 	}
 
+	/** Create from a preset asset ID with a fresh random seed. */
+	public static GameState fromPreset(String presetId) {
+		return fromPreset(presetId, Seed.deviceRandom());
+	}
+
+	/**
+	 * Create from a preset asset ID with a specific seed for deterministic
+	 * replay.
+	 */
+	public static GameState fromPreset(String presetId, Seed seed) {
+		TilemapFactory factory = TilemapFactory.fromPreset(presetId, seed);
+		Tilemap tilemap = factory.generate();
+		return new GameState(
+			factory, tilemap, new OpLogs(), new GameStatus(), seed, presetId
+		);
+	}
+
 	/** Custom dimensions and tile-type count, no group constraints. */
 	public static GameState customized(int width, int height, int types) {
 		return customized(width, height, types, Seed.deviceRandom());
@@ -93,10 +112,14 @@ public final class GameState {
 	public static GameState customized(
 		int width, int height, int types, Seed seed
 	) {
-		return new GameState(new CustomizedTilemapFactory(seed)
-		                         .setWidth(width)
-		                         .setHeight(height)
-		                         .setTypes(types));
+		TilemapFactory factory = new CustomizedTilemapFactory(seed)
+									 .setWidth(width)
+									 .setHeight(height)
+									 .setTypes(types);
+		return new GameState(
+			factory, factory.generate(), new OpLogs(), new GameStatus(), seed,
+			null
+		);
 	}
 
 	/**
@@ -129,7 +152,11 @@ public final class GameState {
 								   .setWidth(width)
 								   .setHeight(height)
 								   .setTypes(types);
-		return new GameState(new SubsetTilemapFactory(inner, subset));
+		TilemapFactory factory = new SubsetTilemapFactory(inner, subset);
+		return new GameState(
+			factory, factory.generate(), new OpLogs(), new GameStatus(), seed,
+			null
+		);
 	}
 
 	public static GameState fromSnapshot(GameSnapshot snapshot) {
@@ -138,13 +165,48 @@ public final class GameState {
 		GameStatus gameStatus = new GameStatus();
 		gameStatus.score = snapshot.score();
 		gameStatus.combo = snapshot.combo();
+
+		Seed seed = snapshotSeed(snapshot);
+		String presetId = snapshot.factoryPresetId();
+		TilemapFactory factory;
+		if (seed != null && presetId != null) {
+			factory = TilemapFactory.fromPreset(presetId, seed);
+		} else {
+			factory = () -> tilemapFrom(snapshot);
+		}
+
 		GameState state = new GameState(
-			() -> tilemapFrom(snapshot), tilemap, opLogs, gameStatus
+			factory, tilemap, opLogs, gameStatus, seed, presetId
 		);
 		for (OperationSnapshot op : snapshot.operations()) {
 			opLogs.push(OpElimination.restored(op));
 		}
 		return state;
+	}
+
+	private static Seed snapshotSeed(GameSnapshot snapshot) {
+		if (snapshot.seedS0() == null || snapshot.seedS1() == null) {
+			return null;
+		}
+		return new Seed(snapshot.seedS0(), snapshot.seedS1());
+	}
+
+	/**
+	 * Snapshot the current game state including seed info for restart support.
+	 */
+	public GameSnapshot toSnapshot() {
+		Long s0 = seed != null ? seed.s0() : null;
+		Long s1 = seed != null ? seed.s1() : null;
+		int[][] grid = new int[tilemap.getHeight()][tilemap.getWidth()];
+		for (int r = 0; r < tilemap.getHeight(); r++) {
+			for (int c = 0; c < tilemap.getWidth(); c++) {
+				grid[r][c] = tilemap.getTile(r, c);
+			}
+		}
+		return new GameSnapshot(
+			tilemap.getDifficulty(), gameStatus.score, gameStatus.combo, grid,
+			opLogs.snapshots(), s0, s1, factoryPresetId
+		);
 	}
 
 	private static Tilemap tilemapFrom(GameSnapshot snapshot) {

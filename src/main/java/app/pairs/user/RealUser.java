@@ -2,9 +2,6 @@ package app.pairs.user;
 
 import app.pairs.logic.GameState;
 import app.pairs.model.GameSnapshot;
-import app.pairs.model.GameStatus;
-import app.pairs.model.OpLogs;
-import app.pairs.model.Tilemap;
 import app.pairs.save.Database;
 import app.pairs.save.Save;
 import app.pairs.save.SaveEntry;
@@ -37,10 +34,8 @@ public class RealUser implements User {
 	}
 
 	@Override
-	public long saveGame(
-		Tilemap tilemap, OpLogs opLogs, GameStatus gameStatus
-	) {
-		return saves().save(tilemap, opLogs, gameStatus);
+	public long saveGame(GameState state) {
+		return saves().save(state.toSnapshot());
 	}
 
 	@Override
