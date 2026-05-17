@@ -83,10 +83,10 @@ public class Identicon {
 			data[idx + 2] = 0;
 			data[idx + 3] = 0;
 		} else {
-			data[idx] = (byte) b(color);
-			data[idx + 1] = (byte) g(color);
-			data[idx + 2] = (byte) r(color);
-			data[idx + 3] = (byte) 255;
+			data[idx] = (byte)b(color);
+			data[idx + 1] = (byte)g(color);
+			data[idx + 2] = (byte)r(color);
+			data[idx + 3] = (byte)255;
 		}
 	}
 }

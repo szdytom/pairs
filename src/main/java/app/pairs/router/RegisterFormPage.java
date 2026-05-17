@@ -15,8 +15,9 @@ public class RegisterFormPage implements Page {
 		this.blackboard = new Blackboard();
 		this.root = new AuthFormComponent(
 			this::submit,
-			() -> Router.instance().navigateTo(new LoginNavPage()), "Register",
-			true
+			()
+				-> Router.instance().navigateTo(new LoginNavPage()),
+			"Register", true
 		);
 		root.setBlackboard(blackboard);
 	}

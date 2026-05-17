@@ -40,15 +40,13 @@ public class AuthFormComponent extends AlignLayout {
 
 		passwordField = new TextField(
 			1, rgb(30, 30, 30), grayBg, rgb(60, 60, 60),
-			rgba(200, 220, 255, 240),
-			TextField.InputType.PASSWORD
+			rgba(200, 220, 255, 240), TextField.InputType.PASSWORD
 		);
 		passwordField.setMaxLength(MAX_LENGTH);
 
 		confirmPasswordField = new TextField(
 			1, rgb(30, 30, 30), grayBg, rgb(60, 60, 60),
-			rgba(200, 220, 255, 240),
-			TextField.InputType.PASSWORD
+			rgba(200, 220, 255, 240), TextField.InputType.PASSWORD
 		);
 		confirmPasswordField.setMaxLength(MAX_LENGTH);
 
@@ -57,19 +55,24 @@ public class AuthFormComponent extends AlignLayout {
 		var submitBtn = makeButton(submitLabel, onSubmit);
 		var backBtn = makeButton("Back", onBack);
 
-		var column = new FlexLayout(FlexLayout.Direction.COLUMN, 8);
+		var column = new FlexLayout(FlexLayout.Direction.COLUMN, 2);
 		column.addChild(new TextComponent("Username", 1, rgb(30, 30, 30)));
 		column.addChild(usernameField);
+		column.addChild(new GlueWidget(0, 4));
 		column.addChild(new TextComponent("Password", 1, rgb(30, 30, 30)));
 		column.addChild(passwordField);
 		if (hasConfirm) {
+			column.addChild(new GlueWidget(0, 4));
 			column.addChild(
 				new TextComponent("Confirm Password", 1, rgb(30, 30, 30))
 			);
 			column.addChild(confirmPasswordField);
 		}
+		column.addChild(new GlueWidget(0, 4));
 		column.addChild(errorLabel);
+		column.addChild(new GlueWidget(0, 4));
 		column.addChild(submitBtn);
+		column.addChild(new GlueWidget(0, 0));
 		column.addChild(backBtn);
 		column.setProp("h-align", AlignLayout.HAlign.CENTER);
 		column.setProp("v-align", AlignLayout.VAlign.CENTER);
