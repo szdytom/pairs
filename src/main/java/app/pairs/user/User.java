@@ -4,6 +4,8 @@ import app.pairs.logic.GameState;
 import app.pairs.model.GameSnapshot;
 import app.pairs.model.GameStatus;
 import app.pairs.model.OpLogs;
+import app.pairs.model.RogueSession;
+import app.pairs.model.RogueSnapshot;
 import app.pairs.model.Tilemap;
 import app.pairs.save.SaveEntry;
 
@@ -18,4 +20,10 @@ public interface User {
 	List<SaveEntry> listSaves();
 	Optional<GameSnapshot> loadSave(long id);
 	void deleteSave(long id);
+	void saveRogue(
+		RogueSession session, Tilemap tilemap, OpLogs opLogs,
+		GameStatus gameStatus
+	);
+	Optional<RogueSnapshot> loadRogue();
+	void deleteRogue();
 }

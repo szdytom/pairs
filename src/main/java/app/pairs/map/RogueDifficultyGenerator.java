@@ -1,7 +1,6 @@
 package app.pairs.map;
 
 import app.pairs.logic.GameState;
-import app.pairs.model.Tilemap;
 import app.pairs.utils.Seed;
 import app.pairs.utils.Xoroshiro128PP;
 

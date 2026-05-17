@@ -1,10 +1,9 @@
 package app.pairs.map;
 
-import app.pairs.model.Tilemap;
+import app.pairs.model.TilemapType;
 
 public record PresetConfig(
-	TilemapPreset preset, Tilemap.Difficulty difficulty,
-	TileSelectionPolicy policy
+	TilemapPreset preset, TilemapType difficulty, TileSelectionPolicy policy
 ) {
 	public int types() {
 		return preset.types();

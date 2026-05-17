@@ -7,12 +7,10 @@ import java.util.List;
 import java.util.Map;
 
 public class Tilemap {
-	public enum Difficulty { EASY, HARD, EXTREME, NORMAL }
-
 	private final int width;
 	private final int height;
 	private final int[][] id;
-	private Difficulty difficulty = Difficulty.NORMAL;
+	private TilemapType difficulty = TilemapType.NORMAL;
 
 	public Tilemap(int[][] id) {
 		this.id = id;
@@ -36,11 +34,11 @@ public class Tilemap {
 		return height;
 	}
 
-	public Difficulty getDifficulty() {
+	public TilemapType getDifficulty() {
 		return difficulty;
 	}
 
-	public void setDifficulty(Difficulty difficulty) {
+	public void setDifficulty(TilemapType difficulty) {
 		this.difficulty = difficulty;
 	}
 

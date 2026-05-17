@@ -4,6 +4,7 @@ import app.pairs.model.GameSnapshot;
 import app.pairs.model.GameStatus;
 import app.pairs.model.OpLogs;
 import app.pairs.model.Tilemap;
+import app.pairs.model.TilemapType;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -74,7 +75,7 @@ public class Save {
 				while (rows.next()) {
 					entries.add(new SaveEntry(
 						rows.getLong(1), rows.getLong(2),
-						Tilemap.Difficulty.valueOf(rows.getString(3))
+						TilemapType.valueOf(rows.getString(3))
 					));
 				}
 				return entries;

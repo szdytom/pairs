@@ -4,8 +4,11 @@ import app.pairs.logic.GameState;
 import app.pairs.model.GameSnapshot;
 import app.pairs.model.GameStatus;
 import app.pairs.model.OpLogs;
+import app.pairs.model.RogueSession;
+import app.pairs.model.RogueSnapshot;
 import app.pairs.model.Tilemap;
 import app.pairs.save.Database;
+import app.pairs.save.RogueSave;
 import app.pairs.save.Save;
 import app.pairs.save.SaveEntry;
 
@@ -58,7 +61,29 @@ public class RealUser implements User {
 		saves().delete(id);
 	}
 
+	@Override
+	public void saveRogue(
+		RogueSession session, Tilemap tilemap, OpLogs opLogs,
+		GameStatus gameStatus
+	) {
+		rogueSave().save(session, tilemap, opLogs, gameStatus);
+	}
+
+	@Override
+	public Optional<RogueSnapshot> loadRogue() {
+		return rogueSave().load();
+	}
+
+	@Override
+	public void deleteRogue() {
+		rogueSave().delete();
+	}
+
 	private Save saves() {
 		return Database.instance().saves(username);
+	}
+
+	private RogueSave rogueSave() {
+		return Database.instance().rogueSave(username);
 	}
 }

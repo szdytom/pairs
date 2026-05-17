@@ -40,6 +40,10 @@ public class Database implements AutoCloseable {
 		return new Save(connection, userId(username));
 	}
 
+	public RogueSave rogueSave(String username) {
+		return new RogueSave(connection, userId(username));
+	}
+
 	public Users users() {
 		return new Users(connection);
 	}
@@ -104,6 +108,11 @@ public class Database implements AutoCloseable {
 			st.executeUpdate(
 				"CREATE INDEX IF NOT EXISTS idx_saves_user "
 				+ "ON saves(user_id, updated_at DESC)"
+			);
+			// Enforce one rogue save per user without a separate table.
+			st.executeUpdate(
+				"CREATE UNIQUE INDEX IF NOT EXISTS idx_rogue_save "
+				+ "ON saves(user_id) WHERE type = 'ROGUE'"
 			);
 		}
 	}

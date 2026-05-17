@@ -4,6 +4,8 @@ import app.pairs.logic.GameState;
 import app.pairs.model.GameSnapshot;
 import app.pairs.model.GameStatus;
 import app.pairs.model.OpLogs;
+import app.pairs.model.RogueSession;
+import app.pairs.model.RogueSnapshot;
 import app.pairs.model.Tilemap;
 import app.pairs.save.SaveEntry;
 
@@ -44,4 +46,18 @@ public class NullUser implements User {
 
 	@Override
 	public void deleteSave(long id) {}
+
+	@Override
+	public void saveRogue(
+		RogueSession session, Tilemap tilemap, OpLogs opLogs,
+		GameStatus gameStatus
+	) {}
+
+	@Override
+	public Optional<RogueSnapshot> loadRogue() {
+		return Optional.empty();
+	}
+
+	@Override
+	public void deleteRogue() {}
 }
