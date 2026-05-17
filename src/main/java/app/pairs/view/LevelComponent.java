@@ -494,6 +494,11 @@ public class LevelComponent extends Container {
 		gameState.eliminate(r1, c1, r2, c2, elapsed, OpKind.AUTO);
 		lastEliminationTimeMs = now;
 		gridView.reset();
+		int eliminated = totalPairs - gameState.remainingPairs();
+		if (eliminated != lastEliminatedCount) {
+			lastEliminatedCount = eliminated;
+			pairCounter.setProgress(eliminated);
+		}
 		if (gameState.isCleared()) {
 			cleared = true;
 			overlayText.setVisible(true);
