@@ -18,7 +18,8 @@ public class ScaleManager {
 			Math.min(
 				MAX_SCALE,
 				Math.min(
-					windowWidth / (TARGET_WIDTH * 19 / 20),
+					windowWidth / TARGET_WIDTH,
+					// Allow height insufficiency
 					windowHeight / (TARGET_HEIGHT * 19 / 20)
 				)
 			)
