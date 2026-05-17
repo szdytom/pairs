@@ -13,11 +13,14 @@ import io.github.libsdl4j.api.rect.SDL_Rect;
 import io.github.libsdl4j.api.render.*;
 
 public class TextField extends Widget {
+	public enum InputType { TEXT, PASSWORD }
+
 	private static final long BLINK_INTERVAL = 530;
 	private static final int PAD = 2;
 
 	private final BitmapFont font;
 	private final int size;
+	private final InputType inputType;
 	private final int textColor;
 	private final int bgColor;
 	private final int cursorColor;
@@ -31,9 +34,18 @@ public class TextField extends Widget {
 	private final int[] measuredSize = new int[2];
 	private final SDL_Rect bgRect = new SDL_Rect();
 	private final SDL_Rect cursorRect = new SDL_Rect();
+	private String cachedDisplay;
+	private boolean displayDirty = true;
 
 	public TextField(
 		int size, int textColor, int bgColor, int cursorColor, int focusColor
+	) {
+		this(size, textColor, bgColor, cursorColor, focusColor, InputType.TEXT);
+	}
+
+	public TextField(
+		int size, int textColor, int bgColor, int cursorColor, int focusColor,
+		InputType inputType
 	) {
 		this.font = AssetManager.instance().get("monogram/font");
 		this.size = size;
@@ -41,6 +53,7 @@ public class TextField extends Widget {
 		this.bgColor = bgColor;
 		this.cursorColor = cursorColor;
 		this.focusColor = focusColor;
+		this.inputType = inputType;
 		setFocusable(true);
 	}
 
@@ -60,10 +73,28 @@ public class TextField extends Widget {
 			text.setLength(maxLength);
 		}
 		cursorPos = text.length();
+		displayDirty = true;
 	}
 
 	public String text() {
 		return text.toString();
+	}
+
+	private String displayText() {
+		if (!displayDirty) {
+			return cachedDisplay;
+		}
+		if (inputType == InputType.PASSWORD) {
+			cachedDisplay = "*".repeat(text.length());
+		} else {
+			cachedDisplay = text.toString();
+		}
+		displayDirty = false;
+		return cachedDisplay;
+	}
+
+	private void markDisplayDirty() {
+		displayDirty = true;
 	}
 
 	@Override
@@ -71,7 +102,7 @@ public class TextField extends Widget {
 		int charW = maxLength > 0
 			? maxLength * BitmapFont.DEFAULT_ADVANCE * size
 			: 0;
-		int tw = BitmapFontRenderer.measureText(font, text.toString(), size);
+		int tw = BitmapFontRenderer.measureText(font, displayText(), size);
 		if (tw < 0) {
 			tw = 0;
 		}
@@ -116,7 +147,7 @@ public class TextField extends Widget {
 		int ty = parentY + layoutY + PAD * size;
 
 		BitmapFontRenderer.renderText(
-			renderer, font, text.toString(), tx, ty, size, scale, textColor
+			renderer, font, displayText(), tx, ty, size, scale, textColor
 		);
 
 		if (cursorVisible) {
@@ -172,12 +203,14 @@ public class TextField extends Widget {
 				if (cursorPos > 0) {
 					text.deleteCharAt(cursorPos - 1);
 					cursorPos--;
+					markDisplayDirty();
 				}
 				return true;
 			}
 			if (kc == SDLK_DELETE) {
 				if (cursorPos < text.length()) {
 					text.deleteCharAt(cursorPos);
+					markDisplayDirty();
 				}
 				return true;
 			}
@@ -188,16 +221,19 @@ public class TextField extends Widget {
 				char c = (char)('A' + (kc - SDLK_A));
 				text.insert(cursorPos, c);
 				cursorPos++;
+				markDisplayDirty();
 				return true;
 			}
 			if (kc >= SDLK_0 && kc <= SDLK_9) {
 				text.insert(cursorPos, (char)kc);
 				cursorPos++;
+				markDisplayDirty();
 				return true;
 			}
 			if (kc == SDLK_SPACE) {
 				text.insert(cursorPos, ' ');
 				cursorPos++;
+				markDisplayDirty();
 				return true;
 			}
 			return false;
@@ -206,20 +242,21 @@ public class TextField extends Widget {
 	}
 
 	private int xToCursor(int globalX) {
+		String d = displayText();
 		int tx = globalX() + PAD * size;
 		if (globalX <= tx) {
 			return 0;
 		}
 		int rel = globalX - tx;
 		int acc = 0;
-		for (int i = 0; i < text.length(); i++) {
-			int w = font.getGlyphWidth(text.charAt(i)) * size;
+		for (int i = 0; i < d.length(); i++) {
+			int w = font.getGlyphWidth(d.charAt(i)) * size;
 			if (rel < acc + w / 2) {
 				return i;
 			}
 			acc += w;
 		}
-		return text.length();
+		return d.length();
 	}
 
 	private int globalX() {
