@@ -3,6 +3,7 @@ package app.pairs.model;
 public class GameStatus {
 	public int score;
 	public int combo;
+	public long remainingMs;
 	public final ItemCountMap items = new ItemCountMap();
 
 	public GameStatus() {

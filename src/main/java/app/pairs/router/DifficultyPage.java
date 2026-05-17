@@ -5,6 +5,7 @@ import static app.pairs.utils.Colors.*;
 import app.pairs.audio.AudioManager;
 import app.pairs.logic.GameState;
 import app.pairs.map.TilemapFactory;
+import app.pairs.user.UserSession;
 import app.pairs.view.*;
 
 import io.github.libsdl4j.api.render.*;
@@ -67,6 +68,7 @@ public class DifficultyPage implements Page {
 		var gameState = new GameState(
 			TilemapFactory.fromPreset("tilemap/" + PRESETS[selector.getIndex()])
 		);
+		UserSession.instance().setActiveSaveId(null);
 		Router.instance().navigateTo(
 			new LevelPage(gameState, LevelPage.DEFAULT_COUNTDOWN_MS)
 		);

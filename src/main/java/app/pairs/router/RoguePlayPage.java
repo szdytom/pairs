@@ -7,6 +7,8 @@ import app.pairs.map.RogueDifficultyGenerator;
 import app.pairs.model.CountdownState;
 import app.pairs.model.ItemType;
 import app.pairs.model.RogueSession;
+import app.pairs.user.User;
+import app.pairs.user.UserSession;
 import app.pairs.view.*;
 
 import io.github.libsdl4j.api.render.*;
@@ -15,14 +17,27 @@ public class RoguePlayPage implements Page {
 	private final RogueSession session;
 	private final Blackboard blackboard;
 	private final LevelComponent levelComponent;
+	private Long relatedMapId;
 	private boolean synced;
 	private boolean transitioning;
 	private long transitionTimer;
 
 	public RoguePlayPage(RogueSession session, DifficultyParams params) {
 		this.session = session;
+		this.relatedMapId = null;
 		this.blackboard = new Blackboard();
 		this.levelComponent = createLevel(params);
+	}
+
+	public RoguePlayPage(
+		RogueSession session, GameState gameState, Long relatedMapId
+	) {
+		this.session = session;
+		this.relatedMapId = relatedMapId;
+		this.blackboard = new Blackboard();
+		this.levelComponent = new LevelComponent(
+			gameState, session, blackboard
+		);
 	}
 
 	@Override
@@ -35,6 +50,34 @@ public class RoguePlayPage implements Page {
 	public void onExit() {
 		AudioManager.instance().fadeOutMusic(3000f);
 		syncToSession();
+		User user = UserSession.instance().getUser();
+		if (!user.isAuthorized()) {
+			return;
+		}
+		GameState gs = blackboard.get(GameState.class);
+		if (levelComponent.isTimedOut()) {
+			softDeleteLinkedMapSave(user);
+			user.deleteRogue();
+		} else if (levelComponent.isCleared()) {
+			softDeleteLinkedMapSave(user);
+			user.saveRogue(session, null, null);
+		} else {
+			// mid-game: subtract the score already added by syncToSession() so
+			// the rogue snapshot stores the pre-level spendable score
+			session.spendableScore -= gs.gameStatus.score;
+			softDeleteLinkedMapSave(user);
+			long newId = user.saveRogueLinkedGame(
+				gs.getTilemap(), gs.getOpLogsModel(), gs.getGameStatus()
+			);
+			user.saveRogue(session, newId, gs.getGameStatus());
+		}
+	}
+
+	private void softDeleteLinkedMapSave(User user) {
+		if (relatedMapId != null) {
+			user.discardSave(relatedMapId);
+			relatedMapId = null;
+		}
 	}
 
 	private LevelComponent createLevel(DifficultyParams params) {

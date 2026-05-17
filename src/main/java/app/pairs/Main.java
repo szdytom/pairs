@@ -17,11 +17,17 @@ import app.pairs.asset.AssetManager;
 import app.pairs.audio.AudioManager;
 import app.pairs.logic.GameState;
 import app.pairs.map.TilemapFactory;
+import app.pairs.model.GameStatus;
+import app.pairs.model.OpLogs;
 import app.pairs.router.LevelPage;
+import app.pairs.router.LoadPage;
 import app.pairs.router.MainMenuPage;
 import app.pairs.router.Router;
 import app.pairs.router.TestPage;
 import app.pairs.save.Database;
+import app.pairs.user.User;
+import app.pairs.user.UserManager;
+import app.pairs.user.UserSession;
 import app.pairs.view.Event;
 import app.pairs.view.KeyEvent;
 import app.pairs.view.MouseEvent;
@@ -97,6 +103,8 @@ public class Main {
 			router.navigateTo(new TestPage());
 		} else if (args == null || args.length == 0) {
 			router.navigateTo(new MainMenuPage());
+		} else if ("load".equals(args[0])) {
+			seedAndNavigateToLoadPage();
 		} else {
 			GameState gameState = pickDifficulty(args);
 			router.navigateTo(
@@ -174,6 +182,32 @@ public class Main {
 		SDL_Quit();
 		Database.instance().close(); // close bd at last to ensure all pending
 		                             // operations are completed
+	}
+
+	// Login as "abc" (creating the user on first run), seed a few saves if
+	// the account has none yet, then jump straight to LoadPage.
+	private static void seedAndNavigateToLoadPage() {
+		User user = UserManager.login("abc", "abc")
+						.or(() -> UserManager.register("abc", "abc"))
+						.orElseThrow(
+							()
+								-> new IllegalStateException(
+									"wrong password for user abc"
+								)
+						);
+		UserSession.instance().setUser(user);
+
+		String[] presets = {"easy", "medium", "hard", "extreme"};
+		for (int i = 0; i < 10; i++) {
+			var tilemap = TilemapFactory
+							  .fromPreset(
+								  "tilemap/" + presets[i % presets.length]
+							  )
+							  .generate();
+			user.saveGame(tilemap, new OpLogs(), new GameStatus());
+		}
+
+		Router.instance().navigateTo(new LoadPage());
 	}
 
 	/**

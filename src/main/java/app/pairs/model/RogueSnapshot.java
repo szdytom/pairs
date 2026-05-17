@@ -7,17 +7,26 @@ import java.util.Map;
  * Serialization record for a rogue-mode save. All enum-keyed maps are stored
  * as {@code Map<String, Integer>} (keyed by {@link ItemType#name()}) so Gson
  * can round-trip them without needing to reconstruct {@code EnumMap}.
+ *
+ * {@code relatedMapId} is the id of the linked non-rogue save that holds the
+ * current level state, or {@code null} when the session is between levels
+ * (shop state).  {@code gameItems} captures in-level item counts so they can
+ * be restored when resuming a mid-level save.
  */
 public record RogueSnapshot(
 	long remainingMs, int spendableScore, int cumulativeSpent, int level,
 	Map<String, Integer> sessionItems, Map<String, Integer> purchaseCounts,
 	int timePurchases, long totalTimePurchasedMs,
-	Map<String, Integer> gameItems, GameSnapshot game
+	Map<String, Integer> gameItems, Long relatedMapId
 ) {
-	/** Build a snapshot from the live rogue state. */
+	/**
+	 * Build a snapshot from the live rogue state.
+	 *
+	 * @param relatedMapId id of the linked map save, or {@code null} for shop
+	 * @param gameStatus   current level status, or {@code null} for shop state
+	 */
 	public static RogueSnapshot from(
-		RogueSession session, Tilemap tilemap, OpLogs opLogs,
-		GameStatus gameStatus
+		RogueSession session, Long relatedMapId, GameStatus gameStatus
 	) {
 		Map<String, Integer> sessionItems = new HashMap<>();
 		Map<String, Integer> purchaseCounts = new HashMap<>();
@@ -27,25 +36,16 @@ public record RogueSnapshot(
 			purchaseCounts.put(
 				type.name(), session.purchaseCounts.getOrDefault(type, 0)
 			);
-			gameItems.put(type.name(), gameStatus.items.get(type));
-		}
-
-		int[][] grid = new int[tilemap.getHeight()][tilemap.getWidth()];
-		for (int r = 0; r < tilemap.getHeight(); r++) {
-			for (int c = 0; c < tilemap.getWidth(); c++) {
-				grid[r][c] = tilemap.getTile(r, c);
+			if (gameStatus != null) {
+				gameItems.put(type.name(), gameStatus.items.get(type));
 			}
 		}
-		GameSnapshot game = new GameSnapshot(
-			tilemap.getDifficulty(), gameStatus.score, gameStatus.combo, grid,
-			opLogs.snapshots()
-		);
 
 		return new RogueSnapshot(
 			session.remainingMs, session.spendableScore,
 			session.cumulativeSpent, session.level, sessionItems,
 			purchaseCounts, session.timePurchases, session.totalTimePurchasedMs,
-			gameItems, game
+			gameItems, relatedMapId
 		);
 	}
 

@@ -3,8 +3,8 @@ package app.pairs.map;
 import app.pairs.asset.AssetManager;
 import app.pairs.asset.TileRegistry;
 import app.pairs.logic.GameState;
-import app.pairs.model.Tilemap;
 import app.pairs.model.GameType;
+import app.pairs.model.Tilemap;
 import app.pairs.utils.Seed;
 import app.pairs.utils.Xoroshiro128PP;
 

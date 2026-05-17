@@ -35,6 +35,18 @@ public class NullUser implements User {
 	}
 
 	@Override
+	public long saveRogueLinkedGame(
+		Tilemap tilemap, OpLogs opLogs, GameStatus gameStatus
+	) {
+		return -1;
+	}
+
+	@Override
+	public void updateSave(
+		long id, Tilemap tilemap, OpLogs opLogs, GameStatus gameStatus
+	) {}
+
+	@Override
 	public List<SaveEntry> listSaves() {
 		return List.of();
 	}
@@ -48,9 +60,11 @@ public class NullUser implements User {
 	public void deleteSave(long id) {}
 
 	@Override
+	public void discardSave(long id) {}
+
+	@Override
 	public void saveRogue(
-		RogueSession session, Tilemap tilemap, OpLogs opLogs,
-		GameStatus gameStatus
+		RogueSession session, Long relatedMapId, GameStatus gameStatus
 	) {}
 
 	@Override

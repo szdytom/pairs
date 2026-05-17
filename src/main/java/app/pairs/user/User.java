@@ -17,13 +17,25 @@ public interface User {
 	String getUsername();
 	void save(GameState st);
 	long saveGame(Tilemap tilemap, OpLogs opLogs, GameStatus gameStatus);
+	/** Saves a rogue-linked map (hidden from the normal save list). */
+	long saveRogueLinkedGame(
+		Tilemap tilemap, OpLogs opLogs, GameStatus gameStatus
+	);
+	void updateSave(
+		long id, Tilemap tilemap, OpLogs opLogs, GameStatus gameStatus
+	);
 	List<SaveEntry> listSaves();
 	Optional<GameSnapshot> loadSave(long id);
+	/** Soft-delete and record the save's score into the rankings. */
 	void deleteSave(long id);
+	/**
+	 * Soft-delete without recording score (used for rogue linked-map cleanup).
+	 */
+	void discardSave(long id);
 	void saveRogue(
-		RogueSession session, Tilemap tilemap, OpLogs opLogs,
-		GameStatus gameStatus
+		RogueSession session, Long relatedMapId, GameStatus gameStatus
 	);
 	Optional<RogueSnapshot> loadRogue();
+	/** Soft-delete and record the rogue session score into the rankings. */
 	void deleteRogue();
 }

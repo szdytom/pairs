@@ -115,5 +115,23 @@ public class Database implements AutoCloseable {
 				+ "ON saves(user_id) WHERE type = 'ROGUE'"
 			);
 		}
+		// Idempotent migration: add soft-delete column if not already present.
+		try (Statement ms = connection.createStatement()) {
+			ms.executeUpdate(
+				"ALTER TABLE saves ADD COLUMN is_deleted INTEGER NOT NULL "
+				+ "DEFAULT 0"
+			);
+		} catch (SQLException ignored) {
+			// Column already exists — safe to ignore.
+		}
+		// Idempotent migration: add is_rogue column if not already present.
+		try (Statement ms = connection.createStatement()) {
+			ms.executeUpdate(
+				"ALTER TABLE saves ADD COLUMN is_rogue INTEGER NOT NULL "
+				+ "DEFAULT 0"
+			);
+		} catch (SQLException ignored) {
+			// Column already exists — safe to ignore.
+		}
 	}
 }

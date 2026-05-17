@@ -2,10 +2,8 @@ package app.pairs.save;
 
 import app.pairs.model.GameStatus;
 import app.pairs.model.GameType;
-import app.pairs.model.OpLogs;
 import app.pairs.model.RogueSession;
 import app.pairs.model.RogueSnapshot;
-import app.pairs.model.Tilemap;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -29,19 +27,23 @@ public class RogueSave {
 		this.userId = userId;
 	}
 
+	/**
+	 * @param relatedMapId id of the linked map save, or {@code null} for shop
+	 * @param gameStatus   current level status, or {@code null} for shop state
+	 */
 	public void save(
-		RogueSession session, Tilemap tilemap, OpLogs opLogs,
-		GameStatus gameStatus
+		RogueSession session, Long relatedMapId, GameStatus gameStatus
 	) {
 		RogueSnapshot snapshot = RogueSnapshot.from(
-			session, tilemap, opLogs, gameStatus
+			session, relatedMapId, gameStatus
 		);
 		String json = gson.toJson(snapshot);
 		long now = System.currentTimeMillis();
 		try (
 			PreparedStatement st = connection.prepareStatement(
 				"INSERT OR REPLACE INTO saves "
-				+ "(user_id, updated_at, type, json_data) VALUES (?, ?, ?, ?)"
+				+ "(user_id, updated_at, type, json_data, is_deleted) VALUES "
+				+ "(?, ?, ?, ?, 0)"
 			)
 		) {
 			st.setLong(1, userId);
@@ -57,7 +59,8 @@ public class RogueSave {
 	public Optional<RogueSnapshot> load() {
 		try (
 			PreparedStatement st = connection.prepareStatement(
-				"SELECT json_data FROM saves WHERE user_id = ? AND type = ?"
+				"SELECT json_data FROM saves"
+				+ " WHERE user_id = ? AND type = ? AND is_deleted = 0"
 			)
 		) {
 			st.setLong(1, userId);
@@ -75,17 +78,19 @@ public class RogueSave {
 		}
 	}
 
-	public void delete() {
+	public void softDelete() {
 		try (
 			PreparedStatement st = connection.prepareStatement(
-				"DELETE FROM saves WHERE user_id = ? AND type = ?"
+				"UPDATE saves SET is_deleted = 1 WHERE user_id = ? AND type = ?"
 			)
 		) {
 			st.setLong(1, userId);
 			st.setString(2, TYPE.name());
 			st.executeUpdate();
 		} catch (SQLException e) {
-			throw new IllegalStateException("failed to delete rogue save", e);
+			throw new IllegalStateException(
+				"failed to soft-delete rogue save", e
+			);
 		}
 	}
 }

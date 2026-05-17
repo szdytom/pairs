@@ -31,9 +31,22 @@ public class Save {
 	}
 
 	public long save(Tilemap tilemap, OpLogs opLogs, GameStatus gameStatus) {
+		return insert(tilemap, opLogs, gameStatus, false);
+	}
+
+	/** Saves a rogue-linked map; hidden from the normal save list. */
+	public long saveLinked(
+		Tilemap tilemap, OpLogs opLogs, GameStatus gameStatus
+	) {
+		return insert(tilemap, opLogs, gameStatus, true);
+	}
+
+	private long insert(
+		Tilemap tilemap, OpLogs opLogs, GameStatus gameStatus, boolean isLinked
+	) {
 		GameSnapshot snapshot = new GameSnapshot(
 			tilemap.getDifficulty(), gameStatus.score, gameStatus.combo,
-			copy(tilemap), opLogs.snapshots()
+			gameStatus.remainingMs, copy(tilemap), opLogs.snapshots()
 		);
 		String json = gson.toJson(snapshot);
 		long now = System.currentTimeMillis();
@@ -48,7 +61,8 @@ public class Save {
 			}
 			statement.setLong(index++, now);
 			statement.setString(index++, tilemap.getDifficulty().name());
-			statement.setString(index, json);
+			statement.setString(index++, json);
+			statement.setInt(index, isLinked ? 1 : 0);
 			statement.executeUpdate();
 			try (ResultSet keys = statement.getGeneratedKeys()) {
 				if (!keys.next()) {
@@ -104,10 +118,10 @@ public class Save {
 		}
 	}
 
-	public void delete(long id) {
+	public void softDelete(long id) {
 		try (
 			PreparedStatement statement = connection.prepareStatement(
-				deleteSql()
+				softDeleteSql()
 			)
 		) {
 			statement.setLong(1, id);
@@ -116,29 +130,63 @@ public class Save {
 			}
 			statement.executeUpdate();
 		} catch (SQLException e) {
-			throw new IllegalStateException("failed to delete save", e);
+			throw new IllegalStateException("failed to soft-delete save", e);
+		}
+	}
+
+	public void update(
+		long id, Tilemap tilemap, OpLogs opLogs, GameStatus gameStatus
+	) {
+		GameSnapshot snapshot = new GameSnapshot(
+			tilemap.getDifficulty(), gameStatus.score, gameStatus.combo,
+			gameStatus.remainingMs, copy(tilemap), opLogs.snapshots()
+		);
+		String json = gson.toJson(snapshot);
+		long now = System.currentTimeMillis();
+		try (
+			PreparedStatement statement = connection.prepareStatement(
+				updateSql()
+			)
+		) {
+			statement.setString(1, json);
+			statement.setLong(2, now);
+			statement.setLong(3, id);
+			if (userId != null) {
+				statement.setLong(4, userId);
+			}
+			statement.executeUpdate();
+		} catch (SQLException e) {
+			throw new IllegalStateException("failed to update save", e);
 		}
 	}
 
 	private String insertSql() {
-		return "INSERT INTO saves (user_id, updated_at, type, json_data) "
-			+ (userId == null ? "VALUES (NULL, ?, ?, ?)"
-		                      : "VALUES (?, ?, ?, ?)");
+		return "INSERT INTO saves (user_id, updated_at, type, json_data, "
+			+ "is_rogue) "
+			+ (userId == null ? "VALUES (NULL, ?, ?, ?, ?)"
+		                      : "VALUES (?, ?, ?, ?, ?)");
 	}
 
 	private String listSql() {
 		return "SELECT id, updated_at, type FROM saves"
-			+ (userId == null ? "" : " WHERE user_id = ?")
+			+ (userId == null
+		           ? " WHERE is_deleted = 0 AND is_rogue = 0"
+		           : " WHERE user_id = ? AND is_deleted = 0 AND is_rogue = 0")
 			+ " ORDER BY updated_at DESC";
 	}
 
 	private String loadSql() {
-		return "SELECT json_data FROM saves WHERE id = ?"
+		return "SELECT json_data FROM saves WHERE id = ? AND is_deleted = 0"
 			+ (userId == null ? "" : " AND user_id = ?");
 	}
 
-	private String deleteSql() {
-		return "DELETE FROM saves WHERE id = ?"
+	private String softDeleteSql() {
+		return "UPDATE saves SET is_deleted = 1 WHERE id = ?"
+			+ (userId == null ? "" : " AND user_id = ?");
+	}
+
+	private String updateSql() {
+		return "UPDATE saves SET json_data = ?, updated_at = ? WHERE id = ?"
 			+ (userId == null ? "" : " AND user_id = ?");
 	}
 
