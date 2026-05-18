@@ -3,6 +3,7 @@ package app.pairs.router;
 import static app.pairs.utils.Colors.*;
 
 import static io.github.libsdl4j.api.keycode.SDL_Keycode.*;
+import static io.github.libsdl4j.api.keycode.SDL_Keymod.*;
 import static io.github.libsdl4j.api.render.SdlRender.*;
 
 import app.pairs.view.Blackboard;
@@ -103,8 +104,8 @@ public class Router {
 				}
 			}
 		}
-		if (event instanceof KeyEvent ke
-		    && ke.type() == Event.Type.KEY_PRESSED) {
+		if (event instanceof KeyEvent ke && ke.type() == Event.Type.KEY_PRESSED
+		    && (ke.modifiers() & KMOD_CTRL) != 0) {
 			switch (ke.keycode()) {
 			case SDLK_EQUALS -> {
 				zoomIn();

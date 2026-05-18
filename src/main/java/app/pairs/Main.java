@@ -115,9 +115,10 @@ public class Main {
 					shouldRun = false;
 					break;
 				case SDL_KEYDOWN:
-					router.onEvent(
-						new KeyEvent(Event.Type.KEY_PRESSED, evt.key.keysym.sym)
-					);
+					router.onEvent(new KeyEvent(
+						Event.Type.KEY_PRESSED, evt.key.keysym.sym,
+						evt.key.keysym.mod
+					));
 					break;
 				case SDL_MOUSEMOTION:
 					router.onEvent(new MouseEvent(
