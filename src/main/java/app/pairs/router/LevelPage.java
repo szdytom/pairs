@@ -44,6 +44,9 @@ public class LevelPage implements Page {
 		Long id = UserSession.instance().getActiveSaveId();
 		if (root.isCleared()) {
 			if (id != null) {
+				user.updateSave(
+					id, gs.getTilemap(), gs.getOpLogsModel(), gs.getGameStatus()
+				);
 				user.deleteSave(id);
 				UserSession.instance().setActiveSaveId(null);
 			}

@@ -7,6 +7,7 @@ import app.pairs.map.RogueDifficultyGenerator;
 import app.pairs.model.CountdownState;
 import app.pairs.model.ItemType;
 import app.pairs.model.RogueSession;
+import app.pairs.save.Save;
 import app.pairs.user.User;
 import app.pairs.user.UserSession;
 import app.pairs.view.*;
@@ -56,6 +57,7 @@ public class RoguePlayPage implements Page {
 		}
 		GameState gs = blackboard.get(GameState.class);
 		if (levelComponent.isTimedOut()) {
+			user.saveRogue(session, null, null);
 			softDeleteLinkedMapSave(user);
 			user.deleteRogue();
 		} else if (levelComponent.isCleared()) {
