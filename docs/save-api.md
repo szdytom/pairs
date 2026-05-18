@@ -15,8 +15,7 @@ never needs to branch on login state.
 ## Save
 
 ```java
-long id = user.saveGame(
-    state.getTilemap(), state.getOpLogsModel(), state.getGameStatus());
+long id = user.saveGame(state);
 ```
 
 Persists the current game state under the current user. Returns the new
@@ -44,7 +43,8 @@ Optional<GameSnapshot> snapshot = user.loadSave(id);
 snapshot.ifPresent(s -> GameState.fromSnapshot(s));
 ```
 
-Restores a fully playable game — same board, score, and undo history.
+Restores a fully playable game — same board, score, undo history, and restart
+factory.
 Returns `Optional.empty()` for guests. Throws `IllegalStateException` if the
 save does not exist or does not belong to this user (fail-fast; callers should
 only pass IDs obtained from `listSaves()`).

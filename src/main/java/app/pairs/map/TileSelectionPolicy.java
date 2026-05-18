@@ -31,7 +31,7 @@ import java.util.Random;
  * </ul>
  *
  * The result is a 1-based array {@code subset[1..count]} of registry numeric
- * IDs, suitable for {@link SubsetTilemapFactory}.
+ * IDs, suitable for remapping generated tile types to registry IDs.
  */
 public final class TileSelectionPolicy {
 	public enum Spread { NO_DUPLICATES, FREE, PREFER_DUPLICATES }

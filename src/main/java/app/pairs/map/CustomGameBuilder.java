@@ -1,11 +1,8 @@
 package app.pairs.map;
 
-import app.pairs.asset.AssetManager;
-import app.pairs.asset.TileRegistry;
 import app.pairs.logic.GameState;
 import app.pairs.model.Tilemap;
 import app.pairs.utils.Seed;
-import app.pairs.utils.Xoroshiro128PP;
 
 public class CustomGameBuilder {
 	private CustomGameBuilder() {}
@@ -15,12 +12,7 @@ public class CustomGameBuilder {
 		TileSelectionPolicy.Spread spread, int strategyIndex
 	) {
 		validate(width, height, types);
-		PairingStrategy strategy = switch (strategyIndex) {
-			case 0 -> new BasePairingStrategy();
-			case 1 -> new NonAdjacentPairingStrategy();
-			case 2 -> new DistantPairingStrategy();
-			default -> new BasePairingStrategy();
-		};
+		PairingStrategy strategy = PairingStrategy.fromIndex(strategyIndex);
 		Seed seed = Seed.deviceRandom();
 		int points = computePoints(
 			width, height, types, slabs, spread, strategyIndex
@@ -36,24 +28,9 @@ public class CustomGameBuilder {
 		TileSelectionPolicy.Spread spread, PairingStrategy strategy, Seed seed,
 		Tilemap.Difficulty tier
 	) {
-		var policy = new TileSelectionPolicy(slabs, spread);
-		var registry = AssetManager.instance().<TileRegistry>get("tiles/typed");
-		var groups = AssetManager.instance().<TileGroupRegistry>get(
-			"tile-groups/default"
-		);
-		int[] subset = policy.selectFor(
-			registry, groups, types, new Xoroshiro128PP(seed)
-		);
-		var preset = new TilemapPreset(width, height, types, null, strategy);
-		TilemapFactory inner = CustomizedTilemapFactory.fromPreset(
-			preset, seed
-		);
-		TilemapFactory factory = () -> {
-			Tilemap t = new SubsetTilemapFactory(inner, subset).generate();
-			t.setDifficulty(tier);
-			return t;
-		};
-		return new GameState(factory);
+		return new GameState(TilemapFactory.customized(
+			width, height, types, slabs, spread, strategy, seed, tier
+		));
 	}
 
 	public static String validationError(int width, int height, int types) {
@@ -91,11 +68,7 @@ public class CustomGameBuilder {
 		int w, int h, int types, boolean slabs,
 		TileSelectionPolicy.Spread spread, PairingStrategy strategy
 	) {
-		int idx = strategy instanceof DistantPairingStrategy ? 2
-			: strategy instanceof NonAdjacentPairingStrategy
-			? 1
-			: 0;
-		return computePoints(w, h, types, slabs, spread, idx);
+		return computePoints(w, h, types, slabs, spread, strategy.index());
 	}
 
 	public static Tilemap.Difficulty tierForPoints(int pts) {
