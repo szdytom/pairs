@@ -7,7 +7,6 @@ import app.pairs.map.RogueDifficultyGenerator;
 import app.pairs.model.CountdownState;
 import app.pairs.model.ItemType;
 import app.pairs.model.RogueSession;
-import app.pairs.save.Save;
 import app.pairs.user.User;
 import app.pairs.user.UserSession;
 import app.pairs.view.*;
@@ -68,9 +67,7 @@ public class RoguePlayPage implements Page {
 			// the rogue snapshot stores the pre-level spendable score
 			session.spendableScore -= gs.gameStatus.score;
 			softDeleteLinkedMapSave(user);
-			long newId = user.saveRogueLinkedGame(
-				gs.getTilemap(), gs.getOpLogsModel(), gs.getGameStatus()
-			);
+			long newId = user.saveRogueLinkedGame(gs);
 			user.saveRogue(session, newId, gs.getGameStatus());
 		}
 	}

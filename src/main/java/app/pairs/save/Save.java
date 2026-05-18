@@ -1,10 +1,7 @@
 package app.pairs.save;
 
 import app.pairs.model.GameSnapshot;
-import app.pairs.model.GameStatus;
 import app.pairs.model.GameType;
-import app.pairs.model.OpLogs;
-import app.pairs.model.Tilemap;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -30,24 +27,16 @@ public class Save {
 		this.userId = userId;
 	}
 
-	public long save(Tilemap tilemap, OpLogs opLogs, GameStatus gameStatus) {
-		return insert(tilemap, opLogs, gameStatus, false);
+	public long save(GameSnapshot snapshot) {
+		return insert(snapshot, false);
 	}
 
 	/** Saves a rogue-linked map; hidden from the normal save list. */
-	public long saveLinked(
-		Tilemap tilemap, OpLogs opLogs, GameStatus gameStatus
-	) {
-		return insert(tilemap, opLogs, gameStatus, true);
+	public long saveLinked(GameSnapshot snapshot) {
+		return insert(snapshot, true);
 	}
 
-	private long insert(
-		Tilemap tilemap, OpLogs opLogs, GameStatus gameStatus, boolean isLinked
-	) {
-		GameSnapshot snapshot = new GameSnapshot(
-			tilemap.getDifficulty(), gameStatus.score, gameStatus.combo,
-			gameStatus.remainingMs, copy(tilemap), opLogs.snapshots()
-		);
+	private long insert(GameSnapshot snapshot, boolean isLinked) {
 		String json = gson.toJson(snapshot);
 		long now = System.currentTimeMillis();
 		try (
@@ -60,7 +49,7 @@ public class Save {
 				statement.setLong(index++, userId);
 			}
 			statement.setLong(index++, now);
-			statement.setString(index++, tilemap.getDifficulty().name());
+			statement.setString(index++, snapshot.type().name());
 			statement.setString(index++, json);
 			statement.setInt(index, isLinked ? 1 : 0);
 			statement.executeUpdate();
@@ -134,13 +123,7 @@ public class Save {
 		}
 	}
 
-	public void update(
-		long id, Tilemap tilemap, OpLogs opLogs, GameStatus gameStatus
-	) {
-		GameSnapshot snapshot = new GameSnapshot(
-			tilemap.getDifficulty(), gameStatus.score, gameStatus.combo,
-			gameStatus.remainingMs, copy(tilemap), opLogs.snapshots()
-		);
+	public void update(long id, GameSnapshot snapshot) {
 		String json = gson.toJson(snapshot);
 		long now = System.currentTimeMillis();
 		try (
@@ -188,15 +171,5 @@ public class Save {
 	private String updateSql() {
 		return "UPDATE saves SET json_data = ?, updated_at = ? WHERE id = ?"
 			+ (userId == null ? "" : " AND user_id = ?");
-	}
-
-	private int[][] copy(Tilemap tilemap) {
-		int[][] result = new int[tilemap.getHeight()][tilemap.getWidth()];
-		for (int row = 0; row < tilemap.getHeight(); row++) {
-			for (int col = 0; col < tilemap.getWidth(); col++) {
-				result[row][col] = tilemap.getTile(row, col);
-			}
-		}
-		return result;
 	}
 }

@@ -3,10 +3,8 @@ package app.pairs.user;
 import app.pairs.logic.GameState;
 import app.pairs.model.GameSnapshot;
 import app.pairs.model.GameStatus;
-import app.pairs.model.OpLogs;
 import app.pairs.model.RogueSession;
 import app.pairs.model.RogueSnapshot;
-import app.pairs.model.Tilemap;
 import app.pairs.save.SaveEntry;
 
 import java.util.List;
@@ -16,14 +14,10 @@ public interface User {
 	boolean isAuthorized();
 	String getUsername();
 	void save(GameState st);
-	long saveGame(Tilemap tilemap, OpLogs opLogs, GameStatus gameStatus);
+	long saveGame(GameState state);
 	/** Saves a rogue-linked map (hidden from the normal save list). */
-	long saveRogueLinkedGame(
-		Tilemap tilemap, OpLogs opLogs, GameStatus gameStatus
-	);
-	void updateSave(
-		long id, Tilemap tilemap, OpLogs opLogs, GameStatus gameStatus
-	);
+	long saveRogueLinkedGame(GameState state);
+	void updateSave(long id, GameState state);
 	List<SaveEntry> listSaves();
 	Optional<GameSnapshot> loadSave(long id);
 	/** Soft-delete and record the save's score into the rankings. */

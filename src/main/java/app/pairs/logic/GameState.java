@@ -2,9 +2,7 @@ package app.pairs.logic;
 
 import app.pairs.asset.AssetManager;
 import app.pairs.asset.TileRegistry;
-import app.pairs.map.CustomizedTilemapFactory;
-import app.pairs.map.SubsetTilemapFactory;
-import app.pairs.map.TileGroupRegistry;
+import app.pairs.map.PairingStrategy;
 import app.pairs.map.TileSelectionPolicy;
 import app.pairs.map.TilemapFactory;
 import app.pairs.model.GameSnapshot;
@@ -15,7 +13,6 @@ import app.pairs.model.Tilemap;
 import app.pairs.solver.Solver;
 import app.pairs.solver.SolverResult;
 import app.pairs.utils.Seed;
-import app.pairs.utils.Xoroshiro128PP;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,7 +35,6 @@ import java.util.List;
  */
 public final class GameState {
 	private static final String TILE_REGISTRY = "tiles/typed";
-	private static final String TILE_GROUPS = "tile-groups/default";
 
 	private final TilemapFactory factory;
 	private Tilemap tilemap;
@@ -53,12 +49,7 @@ public final class GameState {
 	public enum OpKind { MANUAL, AUTO }
 
 	public GameState(TilemapFactory factory) {
-		this.factory = factory;
-		this.tilemap = factory.generate();
-		this.opLogs = new OpLogs();
-		this.gameStatus = new GameStatus();
-		this.remainingTiles = countTiles();
-		this.stallResult = null;
+		this(factory, factory.generate(), new OpLogs(), new GameStatus());
 	}
 
 	private GameState(
@@ -85,6 +76,20 @@ public final class GameState {
 		this.stallResult = null;
 	}
 
+	/** Create from a preset asset ID with a fresh random seed. */
+	public static GameState fromPreset(String presetId) {
+		return fromPreset(presetId, Seed.deviceRandom());
+	}
+
+	/**
+	 * Create from a preset asset ID with a specific seed for deterministic
+	 * replay.
+	 */
+	public static GameState fromPreset(String presetId, Seed seed) {
+		TilemapFactory factory = TilemapFactory.fromPreset(presetId, seed);
+		return new GameState(factory);
+	}
+
 	/** Custom dimensions and tile-type count, no group constraints. */
 	public static GameState customized(int width, int height, int types) {
 		return customized(width, height, types, Seed.deviceRandom());
@@ -93,10 +98,9 @@ public final class GameState {
 	public static GameState customized(
 		int width, int height, int types, Seed seed
 	) {
-		return new GameState(new CustomizedTilemapFactory(seed)
-		                         .setWidth(width)
-		                         .setHeight(height)
-		                         .setTypes(types));
+		return new GameState(
+			TilemapFactory.customized(width, height, types, seed)
+		);
 	}
 
 	/**
@@ -117,48 +121,35 @@ public final class GameState {
 		int width, int height, int types, boolean includeSlabs,
 		TileSelectionPolicy.Spread spread, Seed seed
 	) {
-		TileSelectionPolicy policy = new TileSelectionPolicy(
-			includeSlabs, spread
-		);
-		TileRegistry registry = AssetManager.instance().get(TILE_REGISTRY);
-		TileGroupRegistry groups = AssetManager.instance().get(TILE_GROUPS);
-		int[] subset = policy.selectFor(
-			registry, groups, types, new Xoroshiro128PP(seed)
-		);
-		TilemapFactory inner = new CustomizedTilemapFactory(seed)
-								   .setWidth(width)
-								   .setHeight(height)
-								   .setTypes(types);
-		return new GameState(new SubsetTilemapFactory(inner, subset));
+		return new GameState(TilemapFactory.customized(
+			width, height, types, includeSlabs, spread, PairingStrategy.BASE,
+			seed, Tilemap.Difficulty.NORMAL
+		));
 	}
 
 	public static GameState fromSnapshot(GameSnapshot snapshot) {
-		Tilemap tilemap = tilemapFrom(snapshot);
+		Tilemap tilemap = Tilemap.fromSnapshot(snapshot.tilemap());
 		OpLogs opLogs = new OpLogs();
-		GameStatus gameStatus = new GameStatus();
-		gameStatus.score = snapshot.score();
-		gameStatus.combo = snapshot.combo();
-		GameState state = new GameState(
-			() -> tilemapFrom(snapshot), tilemap, opLogs, gameStatus
-		);
+		GameStatus gameStatus = GameStatus.fromSnapshot(snapshot.status());
+		TilemapFactory factory = snapshot.factory() == null
+			? TilemapFactory.fixed(snapshot.tilemap())
+			: TilemapFactory.fromSnapshot(snapshot.factory());
+
+		GameState state = new GameState(factory, tilemap, opLogs, gameStatus);
 		for (OperationSnapshot op : snapshot.operations()) {
 			opLogs.push(OpElimination.restored(op));
 		}
 		return state;
 	}
 
-	private static Tilemap tilemapFrom(GameSnapshot snapshot) {
-		Tilemap tilemap = new Tilemap(copy(snapshot.tilemap()));
-		tilemap.setDifficulty(snapshot.difficulty());
-		return tilemap;
-	}
-
-	private static int[][] copy(int[][] source) {
-		int[][] result = new int[source.length][];
-		for (int row = 0; row < source.length; row++) {
-			result[row] = source[row].clone();
-		}
-		return result;
+	/**
+	 * Snapshot the current game state with component-owned state fragments.
+	 */
+	public GameSnapshot toSnapshot() {
+		return new GameSnapshot(
+			tilemap.toSnapshot(), factory.toSnapshot(), gameStatus.toSnapshot(),
+			opLogs.snapshots()
+		);
 	}
 
 	// ---- read-only map accessors -----------------------------------------

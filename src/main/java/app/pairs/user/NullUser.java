@@ -3,10 +3,8 @@ package app.pairs.user;
 import app.pairs.logic.GameState;
 import app.pairs.model.GameSnapshot;
 import app.pairs.model.GameStatus;
-import app.pairs.model.OpLogs;
 import app.pairs.model.RogueSession;
 import app.pairs.model.RogueSnapshot;
-import app.pairs.model.Tilemap;
 import app.pairs.save.SaveEntry;
 
 import java.util.List;
@@ -28,23 +26,17 @@ public class NullUser implements User {
 	public void save(GameState st) {}
 
 	@Override
-	public long saveGame(
-		Tilemap tilemap, OpLogs opLogs, GameStatus gameStatus
-	) {
+	public long saveGame(GameState state) {
 		return -1;
 	}
 
 	@Override
-	public long saveRogueLinkedGame(
-		Tilemap tilemap, OpLogs opLogs, GameStatus gameStatus
-	) {
+	public long saveRogueLinkedGame(GameState state) {
 		return -1;
 	}
 
 	@Override
-	public void updateSave(
-		long id, Tilemap tilemap, OpLogs opLogs, GameStatus gameStatus
-	) {}
+	public void updateSave(long id, GameState state) {}
 
 	@Override
 	public List<SaveEntry> listSaves() {

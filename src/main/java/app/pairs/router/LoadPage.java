@@ -63,8 +63,8 @@ public class LoadPage implements Page {
 			user.loadSave(entry.id()).ifPresent(snapshot -> {
 				GameState gameState = GameState.fromSnapshot(snapshot);
 				UserSession.instance().setActiveSaveId(entry.id());
-				long remaining = snapshot.remainingMs() > 0
-					? snapshot.remainingMs()
+				long remaining = snapshot.status().remainingMs() > 0
+					? snapshot.status().remainingMs()
 					: LevelPage.DEFAULT_COUNTDOWN_MS;
 				Router.instance().navigateTo(
 					new LevelPage(gameState, remaining)

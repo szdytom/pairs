@@ -4,10 +4,8 @@ import app.pairs.logic.GameState;
 import app.pairs.model.GameSnapshot;
 import app.pairs.model.GameStatus;
 import app.pairs.model.GameType;
-import app.pairs.model.OpLogs;
 import app.pairs.model.RogueSession;
 import app.pairs.model.RogueSnapshot;
-import app.pairs.model.Tilemap;
 import app.pairs.save.Database;
 import app.pairs.save.RogueSave;
 import app.pairs.save.Save;
@@ -36,29 +34,24 @@ public class RealUser implements User {
 	@Override
 	public void save(GameState st) {
 		Database.instance().users().addScore(
-			username, st.getTilemap().getDifficulty(), st.gameStatus.score
+			username, GameType.from(st.getTilemap().getDifficulty()),
+			st.gameStatus.score
 		);
 	}
 
 	@Override
-	public long saveGame(
-		Tilemap tilemap, OpLogs opLogs, GameStatus gameStatus
-	) {
-		return saves().save(tilemap, opLogs, gameStatus);
+	public long saveGame(GameState state) {
+		return saves().save(state.toSnapshot());
 	}
 
 	@Override
-	public long saveRogueLinkedGame(
-		Tilemap tilemap, OpLogs opLogs, GameStatus gameStatus
-	) {
-		return saves().saveLinked(tilemap, opLogs, gameStatus);
+	public long saveRogueLinkedGame(GameState state) {
+		return saves().saveLinked(state.toSnapshot());
 	}
 
 	@Override
-	public void updateSave(
-		long id, Tilemap tilemap, OpLogs opLogs, GameStatus gameStatus
-	) {
-		saves().update(id, tilemap, opLogs, gameStatus);
+	public void updateSave(long id, GameState state) {
+		saves().update(id, state.toSnapshot());
 	}
 
 	@Override
@@ -76,7 +69,7 @@ public class RealUser implements User {
 		GameSnapshot snap = saves().load(id);
 		saves().softDelete(id);
 		Database.instance().users().addScore(
-			username, snap.difficulty(), snap.score()
+			username, snap.type(), snap.status().score()
 		);
 	}
 

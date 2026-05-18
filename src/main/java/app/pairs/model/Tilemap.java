@@ -7,10 +7,12 @@ import java.util.List;
 import java.util.Map;
 
 public class Tilemap {
+	public enum Difficulty { EASY, HARD, EXTREME, NORMAL }
+
 	private final int width;
 	private final int height;
 	private final int[][] id;
-	private GameType difficulty = GameType.NORMAL;
+	private Difficulty difficulty = Difficulty.NORMAL;
 
 	public Tilemap(int[][] id) {
 		this.id = id;
@@ -34,12 +36,22 @@ public class Tilemap {
 		return height;
 	}
 
-	public GameType getDifficulty() {
+	public Difficulty getDifficulty() {
 		return difficulty;
 	}
 
-	public void setDifficulty(GameType difficulty) {
+	public void setDifficulty(Difficulty difficulty) {
 		this.difficulty = difficulty;
+	}
+
+	public TilemapSnapshot toSnapshot() {
+		return new TilemapSnapshot(difficulty, copy(id));
+	}
+
+	public static Tilemap fromSnapshot(TilemapSnapshot snapshot) {
+		Tilemap tilemap = new Tilemap(copy(snapshot.grid()));
+		tilemap.setDifficulty(snapshot.difficulty());
+		return tilemap;
 	}
 
 	/** A tile position on the map. */
@@ -63,5 +75,13 @@ public class Tilemap {
 		}
 		result.replaceAll((k, v) -> Collections.unmodifiableList(v));
 		return Collections.unmodifiableMap(result);
+	}
+
+	private static int[][] copy(int[][] source) {
+		int[][] result = new int[source.length][];
+		for (int row = 0; row < source.length; row++) {
+			result[row] = source[row].clone();
+		}
+		return result;
 	}
 }

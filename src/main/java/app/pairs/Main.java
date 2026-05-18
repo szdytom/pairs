@@ -16,9 +16,6 @@ import static io.github.libsdl4j.api.video.SdlVideoConst.*;
 import app.pairs.asset.AssetManager;
 import app.pairs.audio.AudioManager;
 import app.pairs.logic.GameState;
-import app.pairs.map.TilemapFactory;
-import app.pairs.model.GameStatus;
-import app.pairs.model.OpLogs;
 import app.pairs.router.LevelPage;
 import app.pairs.router.LoadPage;
 import app.pairs.router.MainMenuPage;
@@ -199,12 +196,9 @@ public class Main {
 
 		String[] presets = {"easy", "medium", "hard", "extreme"};
 		for (int i = 0; i < 10; i++) {
-			var tilemap = TilemapFactory
-							  .fromPreset(
-								  "tilemap/" + presets[i % presets.length]
-							  )
-							  .generate();
-			user.saveGame(tilemap, new OpLogs(), new GameStatus());
+			user.saveGame(
+				GameState.fromPreset("tilemap/" + presets[i % presets.length])
+			);
 		}
 
 		Router.instance().navigateTo(new LoadPage());
@@ -224,6 +218,6 @@ public class Main {
 		if (!AssetManager.instance().has(id)) {
 			throw new IllegalArgumentException("unknown difficulty: " + mode);
 		}
-		return new GameState(TilemapFactory.fromPreset(id));
+		return GameState.fromPreset(id);
 	}
 }

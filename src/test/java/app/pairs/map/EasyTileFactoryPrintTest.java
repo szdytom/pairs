@@ -27,8 +27,7 @@ class EasyTileFactoryPrintTest {
 			}
 		}
 		TilemapPreset preset = new TilemapPreset(9, 9, 6, initial, null);
-		Tilemap tilemap = CustomizedTilemapFactory
-							  .fromPreset(preset, Seed.deviceRandom())
+		Tilemap tilemap = TilemapFactory.fromPreset(preset, Seed.deviceRandom())
 							  .generate();
 
 		System.out.println("===== EASY ID (tile type) =====");

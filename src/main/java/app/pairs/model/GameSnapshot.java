@@ -1,8 +1,30 @@
 package app.pairs.model;
 
+import app.pairs.map.TilemapFactorySnapshot;
+
 import java.util.List;
 
 public record GameSnapshot(
-	GameType difficulty, int score, int combo, long remainingMs,
-	int[][] tilemap, List<OperationSnapshot> operations
-) {}
+	TilemapSnapshot tilemap, TilemapFactorySnapshot factory,
+	GameStatusSnapshot status, List<OperationSnapshot> operations
+) {
+	public Tilemap.Difficulty difficulty() {
+		return tilemap.difficulty();
+	}
+
+	public GameType type() {
+		return GameType.from(difficulty());
+	}
+
+	public int score() {
+		return status.score();
+	}
+
+	public int combo() {
+		return status.combo();
+	}
+
+	public long remainingMs() {
+		return status.remainingMs();
+	}
+}

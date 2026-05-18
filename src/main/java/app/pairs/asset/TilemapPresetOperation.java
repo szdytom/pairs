@@ -4,7 +4,7 @@ import app.pairs.map.PresetConfig;
 import app.pairs.map.Shape;
 import app.pairs.map.TileSelectionPolicy;
 import app.pairs.map.TilemapPreset;
-import app.pairs.model.GameType;
+import app.pairs.model.Tilemap;
 
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -49,7 +49,7 @@ public class TilemapPresetOperation implements AssetOperation {
 		int width = root.get("width").getAsInt();
 		int height = root.get("height").getAsInt();
 		int types = root.get("types").getAsInt();
-		GameType difficulty = GameType.valueOf(
+		Tilemap.Difficulty difficulty = Tilemap.Difficulty.valueOf(
 			root.get("difficulty").getAsString()
 		);
 		boolean includeSlabs = root.get("includeSlabs").getAsBoolean();

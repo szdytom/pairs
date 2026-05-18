@@ -44,22 +44,16 @@ public class LevelPage implements Page {
 		Long id = UserSession.instance().getActiveSaveId();
 		if (root.isCleared()) {
 			if (id != null) {
-				user.updateSave(
-					id, gs.getTilemap(), gs.getOpLogsModel(), gs.getGameStatus()
-				);
+				user.updateSave(id, gs);
 				user.deleteSave(id);
 				UserSession.instance().setActiveSaveId(null);
 			}
 		} else if (!root.isTimedOut()) {
 			// mid-game: overwrite existing save or create a new one
 			if (id != null) {
-				user.updateSave(
-					id, gs.getTilemap(), gs.getOpLogsModel(), gs.getGameStatus()
-				);
+				user.updateSave(id, gs);
 			} else {
-				long newId = user.saveGame(
-					gs.getTilemap(), gs.getOpLogsModel(), gs.getGameStatus()
-				);
+				long newId = user.saveGame(gs);
 				UserSession.instance().setActiveSaveId(newId);
 			}
 		}

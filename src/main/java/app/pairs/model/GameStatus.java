@@ -28,4 +28,22 @@ public class GameStatus {
 	public boolean reduceItem(ItemType type) {
 		return items.reduce(type);
 	}
+
+	public GameStatusSnapshot toSnapshot() {
+		return new GameStatusSnapshot(
+			score, combo, remainingMs, items.toSnapshot()
+		);
+	}
+
+	public static GameStatus fromSnapshot(GameStatusSnapshot snapshot) {
+		GameStatus status = new GameStatus();
+		if (snapshot == null) {
+			return status;
+		}
+		status.score = snapshot.score();
+		status.combo = snapshot.combo();
+		status.remainingMs = snapshot.remainingMs();
+		status.items.restore(snapshot.items());
+		return status;
+	}
 }

@@ -1,6 +1,7 @@
 package app.pairs.model;
 
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.Map;
 
 public class ItemCountMap {
@@ -44,6 +45,27 @@ public class ItemCountMap {
 	public void reset() {
 		for (ItemType type : ItemType.values()) {
 			counts.put(type, 0);
+		}
+	}
+
+	public Map<String, Integer> toSnapshot() {
+		Map<String, Integer> snapshot = new HashMap<>();
+		for (ItemType type : ItemType.values()) {
+			snapshot.put(type.name(), get(type));
+		}
+		return snapshot;
+	}
+
+	public void restore(Map<String, Integer> snapshot) {
+		reset();
+		if (snapshot == null) {
+			return;
+		}
+		for (ItemType type : ItemType.values()) {
+			Integer count = snapshot.get(type.name());
+			if (count != null) {
+				set(type, count);
+			}
 		}
 	}
 }
