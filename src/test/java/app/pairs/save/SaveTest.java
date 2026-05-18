@@ -26,22 +26,20 @@ class SaveTest {
 
 		try (Database db = new Database(dbPath())) {
 			Save save = db.saves();
-			long id = save.save(
-				state.getTilemap(), state.getOpLogsModel(),
-				state.getGameStatus()
-			);
+			long id = save.save(state.toSnapshot());
 
 			GameSnapshot snapshot = save.load(id);
 			assertThat(save.list())
 				.extracting(SaveEntry::id)
 				.containsExactly(id);
-			assertThat(snapshot.difficulty())
+			assertThat(snapshot.tilemap().difficulty())
 				.isEqualTo(Tilemap.Difficulty.NORMAL);
-			assertThat(snapshot.score())
+			assertThat(snapshot.status().score())
 				.isEqualTo(OpElimination.SCORE_PER_PAIR);
-			assertThat(snapshot.combo()).isEqualTo(1);
-			assertThat(snapshot.tilemap())
+			assertThat(snapshot.status().combo()).isEqualTo(1);
+			assertThat(snapshot.tilemap().grid())
 				.isDeepEqualTo(new int[][] {{0, 0}, {1, 1}});
+			assertThat(snapshot.factory()).isNotNull();
 			assertThat(snapshot.operations())
 				.containsExactly(new OperationSnapshot(
 					0, 0, 0, 1, 1, 5_000, OpElimination.SCORE_PER_PAIR,
@@ -58,10 +56,7 @@ class SaveTest {
 		GameSnapshot snapshot;
 		try (Database db = new Database(dbPath())) {
 			Save save = db.saves();
-			long id = save.save(
-				state.getTilemap(), state.getOpLogsModel(),
-				state.getGameStatus()
-			);
+			long id = save.save(state.toSnapshot());
 			snapshot = save.load(id);
 		}
 
@@ -89,14 +84,8 @@ class SaveTest {
 			db.users().createUser("alice", "password");
 			db.users().createUser("bob", "password");
 
-			long aliceId = db.saves("alice").save(
-				state.getTilemap(), state.getOpLogsModel(),
-				state.getGameStatus()
-			);
-			long bobId = db.saves("bob").save(
-				state.getTilemap(), state.getOpLogsModel(),
-				state.getGameStatus()
-			);
+			long aliceId = db.saves("alice").save(state.toSnapshot());
+			long bobId = db.saves("bob").save(state.toSnapshot());
 
 			assertThat(db.saves("alice").list())
 				.extracting(SaveEntry::id)
@@ -115,9 +104,9 @@ class SaveTest {
 		GameState state = GameState.customized(4, 4, 2, seed);
 		GameSnapshot snapshot = state.toSnapshot();
 
-		assertThat(snapshot.seedS0()).isEqualTo(0xdeadbeefL);
-		assertThat(snapshot.seedS1()).isEqualTo(0xcafebabeL);
-		assertThat(snapshot.factoryPresetId()).isNull();
+		assertThat(snapshot.factory().seedS0()).isEqualTo(0xdeadbeefL);
+		assertThat(snapshot.factory().seedS1()).isEqualTo(0xcafebabeL);
+		assertThat(snapshot.factory().registryPalette()).isFalse();
 	}
 
 	@Test
@@ -132,8 +121,8 @@ class SaveTest {
 			snapshot = save.load(id);
 		}
 
-		assertThat(snapshot.seedS0()).isEqualTo(0x1122334455667788L);
-		assertThat(snapshot.seedS1()).isEqualTo(0x99aabbccddeeff00L);
+		assertThat(snapshot.factory().seedS0()).isEqualTo(0x1122334455667788L);
+		assertThat(snapshot.factory().seedS1()).isEqualTo(0x99aabbccddeeff00L);
 	}
 
 	@Test
@@ -148,7 +137,7 @@ class SaveTest {
 			}
 		}
 
-	// find two matching tiles and eliminate them
+		// find two matching tiles and eliminate them
 	outer:
 		for (int r1 = 0; r1 < 4; r1++) {
 			for (int c1 = 0; c1 < 4; c1++) {
@@ -175,23 +164,16 @@ class SaveTest {
 			snapshot = save.load(id);
 		}
 
-		// seed in snapshot
-		assertThat(snapshot.seedS0()).isEqualTo(42L);
-		assertThat(snapshot.seedS1()).isEqualTo(137L);
+		assertThat(snapshot.factory().seedS0()).isEqualTo(42L);
+		assertThat(snapshot.factory().seedS1()).isEqualTo(137L);
 
-		// restart from the loaded state: for customized games without a
-		// presetId, restart still goes back to the snapshot's tilemap (no
-		// presetId stored)
 		GameState restored = GameState.fromSnapshot(snapshot);
 		restored.restart();
 
-		// The restored game has no presetId, so restart uses the snapshotted
-		// grid. Verify the restarted board matches the save-point board (not
-		// original).
 		for (int r = 0; r < 4; r++) {
 			for (int c = 0; c < 4; c++) {
 				assertThat(restored.getTile(r, c))
-					.isEqualTo(snapshot.tilemap()[r][c]);
+					.isEqualTo(initialBoard[r][c]);
 			}
 		}
 	}

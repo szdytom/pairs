@@ -13,12 +13,10 @@ class TilemapGeneratorCoreTest {
 		assertThatIllegalArgumentException()
 			.isThrownBy(
 				()
-					-> new CustomizedTilemapFactory(
-						   app.pairs.utils.Seed.deviceRandom()
-					)
-						   .setWidth(4)
-						   .setHeight(4)
-						   .setTypes(0)
+					-> TilemapFactory
+						   .customized(
+							   4, 4, 0, app.pairs.utils.Seed.deviceRandom()
+						   )
 						   .generate()
 			)
 			.withMessageContaining("types must be >= 1");
@@ -29,12 +27,10 @@ class TilemapGeneratorCoreTest {
 		assertThatIllegalArgumentException()
 			.isThrownBy(
 				()
-					-> new CustomizedTilemapFactory(
-						   app.pairs.utils.Seed.deviceRandom()
-					)
-						   .setWidth(4)
-						   .setHeight(4)
-						   .setTypes(-3)
+					-> TilemapFactory
+						   .customized(
+							   4, 4, -3, app.pairs.utils.Seed.deviceRandom()
+						   )
 						   .generate()
 			)
 			.withMessageContaining("types must be >= 1");
@@ -46,12 +42,10 @@ class TilemapGeneratorCoreTest {
 		assertThatIllegalArgumentException()
 			.isThrownBy(
 				()
-					-> new CustomizedTilemapFactory(
-						   app.pairs.utils.Seed.deviceRandom()
-					)
-						   .setWidth(3)
-						   .setHeight(3)
-						   .setTypes(1)
+					-> TilemapFactory
+						   .customized(
+							   3, 3, 1, app.pairs.utils.Seed.deviceRandom()
+						   )
 						   .generate()
 			)
 			.withMessageContaining("Fillable tile count must be even");
@@ -63,12 +57,10 @@ class TilemapGeneratorCoreTest {
 		assertThatIllegalArgumentException()
 			.isThrownBy(
 				()
-					-> new CustomizedTilemapFactory(
-						   app.pairs.utils.Seed.deviceRandom()
-					)
-						   .setWidth(2)
-						   .setHeight(2)
-						   .setTypes(3)
+					-> TilemapFactory
+						   .customized(
+							   2, 2, 3, app.pairs.utils.Seed.deviceRandom()
+						   )
 						   .generate()
 			)
 			.withMessageContaining("Not enough fillable tiles");
@@ -76,21 +68,21 @@ class TilemapGeneratorCoreTest {
 
 	@Test
 	void baseStrategyProducesSolvableMap() {
-		var map = generateWithStrategy(new BasePairingStrategy());
+		var map = generateWithStrategy(PairingStrategy.BASE);
 		assertThat(map).isNotNull();
 		assertThat(map.getHeight()).isEqualTo(6);
 	}
 
 	@Test
 	void nonAdjacentStrategyProducesSolvableMap() {
-		var map = generateWithStrategy(new NonAdjacentPairingStrategy());
+		var map = generateWithStrategy(PairingStrategy.NON_ADJACENT);
 		assertThat(map).isNotNull();
 		assertThat(map.getHeight()).isEqualTo(6);
 	}
 
 	@Test
 	void distantStrategyProducesSolvableMap() {
-		var map = generateWithStrategy(new DistantPairingStrategy());
+		var map = generateWithStrategy(PairingStrategy.DISTANT);
 		assertThat(map).isNotNull();
 		assertThat(map.getHeight()).isEqualTo(6);
 	}

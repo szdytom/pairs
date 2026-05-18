@@ -60,8 +60,8 @@ public class Save {
 
 	public long save(Tilemap tilemap, OpLogs opLogs, GameStatus gameStatus) {
 		return save(new GameSnapshot(
-			tilemap.getDifficulty(), gameStatus.score, gameStatus.combo,
-			copy(tilemap), opLogs.snapshots(), null, null, null
+			tilemap.toSnapshot(), null, gameStatus.toSnapshot(),
+			opLogs.snapshots()
 		));
 	}
 
@@ -142,15 +142,5 @@ public class Save {
 	private String deleteSql() {
 		return "DELETE FROM saves WHERE id = ?"
 			+ (userId == null ? "" : " AND user_id = ?");
-	}
-
-	private int[][] copy(Tilemap tilemap) {
-		int[][] result = new int[tilemap.getHeight()][tilemap.getWidth()];
-		for (int row = 0; row < tilemap.getHeight(); row++) {
-			for (int col = 0; col < tilemap.getWidth(); col++) {
-				result[row][col] = tilemap.getTile(row, col);
-			}
-		}
-		return result;
 	}
 }

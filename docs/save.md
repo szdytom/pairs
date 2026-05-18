@@ -4,13 +4,14 @@ This document describes the save/load mechanism: what data is persisted, how the
 
 ## What needs to be saved
 
-To restore a game session completely, three things must be captured:
+To restore a game session completely, four things must be captured:
 
 1. **The current board state** — the full 2D tile grid plus the difficulty level.
-2. **The score** — a single integer maintained in `GameStatus`.
-3. **The full undo history** — every `OpElimination` that has been executed, in chronological order. Without this, `undo()` would stop working after a load.
+2. **The map factory state** — the seed, shape, pairing strategy, palette policy, and selected palette used to regenerate the original board for `restart()`.
+3. **The game status** — score, combo, and item counts maintained in `GameStatus`.
+4. **The full undo history** — every `OpElimination` that has been executed, in chronological order. Without this, `undo()` would stop working after a load.
 
-A seed-based replay approach was rejected because it would couple the save format to the map generator and break as soon as `restart()` is called. Snapshotting the actual tile grid is simpler and future-proof.
+The current tile grid and the restart factory are intentionally separate: the tile grid restores progress, while the factory regenerates the original board.
 
 ## Database
 
@@ -62,9 +63,30 @@ The `json_data` column holds a `GameSnapshot` serialized via Gson:
 
 ```json
 {
-  "difficulty": "HARD",
-  "score": 3000,
-  "tilemap": [[1,2,0],[0,3,3],[1,2,0]],
+    "tilemap": {
+        "difficulty": "HARD",
+        "grid": [[1,2,0],[0,3,3],[1,2,0]]
+    },
+    "factory": {
+        "seedS0": 42,
+        "seedS1": 137,
+        "width": 3,
+        "height": 3,
+        "types": 3,
+        "registryPalette": true,
+        "includeSlabs": false,
+        "spread": "FREE",
+        "pairingStrategy": "NON_ADJACENT",
+        "difficulty": "HARD",
+        "initial": null,
+        "subset": [0, 12, 18, 25],
+        "fixedGrid": null
+    },
+    "status": {
+        "score": 3000,
+        "combo": 1,
+        "items": { "AUTO_SOLVER": 0, "TNT": 0 }
+    },
   "operations": [
     { "row1":0,"col1":0,"row2":2,"col2":0,"tileId":1,"time":2000,"deltaScore":1500 },
     { "row1":0,"col1":1,"row2":2,"col2":1,"tileId":2,"time":4000,"deltaScore":1000 }
@@ -72,7 +94,7 @@ The `json_data` column holds a `GameSnapshot` serialized via Gson:
 }
 ```
 
-`tilemap` is the **current** board state (zeros where tiles were eliminated). `operations` is the complete undo history in chronological order. This pattern keeps the SQL schema stable — adding new fields to a save requires no `ALTER TABLE`, only a change to the Java record.
+`tilemap.grid` is the **current** board state (zeros where tiles were eliminated). `factory` is the restart recipe and stores the selected palette so loading a save does not need to rediscover the palette. `operations` is the complete undo history in chronological order. This pattern keeps the SQL schema stable — adding new fields to a save requires no `ALTER TABLE`, only a change to the Java record.
 
 ## Layer boundaries
 
@@ -91,7 +113,7 @@ The solution is `OpElimination.restored(...)`, a package-private factory that:
 2. Sets `executed = true` immediately.
 3. Stores the pre-computed `deltaScore` directly.
 
-`GameState.fromSnapshot()` pushes one restored `OpElimination` per entry in `snapshot.operations()` onto the `OpLogs` stack. Calling `undo()` correctly puts tiles back and deducts the score. `restart()` regenerates the board from the snapshot's tile grid.
+`GameState.fromSnapshot()` restores the tilemap, game status, factory, and one restored `OpElimination` per entry in `snapshot.operations()`. Calling `undo()` correctly puts tiles back and deducts the score. `restart()` regenerates the original board from the saved factory snapshot.
 
 ## Available interfaces
 
@@ -101,7 +123,7 @@ The view layer always operates through a `User` instance. `RealUser` routes
 calls to the database; `NullUser` (guest mode) is a silent no-op.
 
 ```java
-long saveGame(Tilemap tilemap, OpLogs opLogs, GameStatus gameStatus)
+long saveGame(GameState state)
 ```
 Serializes the current game state and inserts a new row owned by this user.
 Returns the auto-generated row `id`, or `-1` for guests.
@@ -148,14 +170,17 @@ static GameState fromSnapshot(GameSnapshot snapshot)
 ```
 Reconstructs a fully playable `GameState` with the same board, score, and undo
 history as when the save was taken. `restart()` regenerates the board from the
-snapshot's tile grid.
+snapshot's factory.
 
 ---
 
 ### Data records (`app.pairs.model`)
 
 ```java
-record GameSnapshot(Difficulty difficulty, int score, int combo, int[][] tilemap, List<OperationSnapshot> operations)
+record GameSnapshot(TilemapSnapshot tilemap, TilemapFactorySnapshot factory, GameStatusSnapshot status, List<OperationSnapshot> operations)
+record TilemapSnapshot(Tilemap.Difficulty difficulty, int[][] grid)
+record TilemapFactorySnapshot(...)
+record GameStatusSnapshot(int score, int combo, Map<String, Integer> items)
 record OperationSnapshot(int row1, int col1, int row2, int col2, int tileId, long time, int deltaScore, List<Integer> path, int comboBefore)
 record SaveEntry(long id, long updatedAt, Tilemap.Difficulty type)
 ```
@@ -166,8 +191,7 @@ record SaveEntry(long id, long updatedAt, Tilemap.Difficulty type)
 User user = /* RealUser or NullUser */;
 
 // Save
-long id = user.saveGame(
-    state.getTilemap(), state.getOpLogsModel(), state.getGameStatus());
+long id = user.saveGame(state);
 
 // List (for UI menu)
 List<SaveEntry> entries = user.listSaves();

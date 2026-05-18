@@ -27,4 +27,19 @@ public class GameStatus {
 	public boolean reduceItem(ItemType type) {
 		return items.reduce(type);
 	}
+
+	public GameStatusSnapshot toSnapshot() {
+		return new GameStatusSnapshot(score, combo, items.toSnapshot());
+	}
+
+	public static GameStatus fromSnapshot(GameStatusSnapshot snapshot) {
+		GameStatus status = new GameStatus();
+		if (snapshot == null) {
+			return status;
+		}
+		status.score = snapshot.score();
+		status.combo = snapshot.combo();
+		status.items.restore(snapshot.items());
+		return status;
+	}
 }
