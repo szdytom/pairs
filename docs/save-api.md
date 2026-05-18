@@ -33,7 +33,7 @@ Each entry exposes:
 | Field | Type | Description |
 |---|---|---|
 | `id()` | `long` | Unique identifier |
-| `type()` | `Tilemap.Difficulty` | Difficulty of the saved game |
+| `type()` | `GameType` | Category of the saved game |
 | `updatedAt()` | `long` | Last save time (Unix ms) |
 
 ## Load
@@ -43,8 +43,8 @@ Optional<GameSnapshot> snapshot = user.loadSave(id);
 snapshot.ifPresent(s -> GameState.fromSnapshot(s));
 ```
 
-Restores a fully playable game — same board, score, undo history, and restart
-factory.
+Restores a fully playable game — same board, score, remaining time, undo
+history, and restart factory.
 Returns `Optional.empty()` for guests. Throws `IllegalStateException` if the
 save does not exist or does not belong to this user (fail-fast; callers should
 only pass IDs obtained from `listSaves()`).

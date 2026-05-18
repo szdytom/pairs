@@ -4,6 +4,7 @@ import static app.pairs.utils.Colors.*;
 
 import app.pairs.map.CustomGameBuilder;
 import app.pairs.map.TileSelectionPolicy;
+import app.pairs.user.UserSession;
 import app.pairs.view.*;
 
 import java.util.function.Consumer;
@@ -188,6 +189,7 @@ public class CustomDifficultyPage implements Page {
 		boolean slabs = slabsSel.getIndex() == 1;
 		TileSelectionPolicy.Spread spread = SPREADS[spreadSel.getIndex()];
 		int strategyIdx = pairingSel.getIndex();
+		UserSession.instance().setActiveSaveId(null);
 		Router.instance().navigateTo(new LevelPage(
 			CustomGameBuilder.build(w, h, types, slabs, spread, strategyIdx),
 			LevelPage.DEFAULT_COUNTDOWN_MS

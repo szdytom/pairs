@@ -5,6 +5,7 @@ public class UserSession {
 	private static final UserSession INSTANCE = new UserSession();
 
 	private User current = new NullUser();
+	private Long activeSaveId = null;
 
 	private UserSession() {}
 
@@ -18,6 +19,14 @@ public class UserSession {
 
 	public void setUser(User user) {
 		this.current = user;
+	}
+
+	public Long getActiveSaveId() {
+		return activeSaveId;
+	}
+
+	public void setActiveSaveId(Long id) {
+		this.activeSaveId = id;
 	}
 
 	public boolean isAuthorized() {
