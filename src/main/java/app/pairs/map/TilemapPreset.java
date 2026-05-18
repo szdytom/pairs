@@ -18,7 +18,7 @@ public record TilemapPreset(
 ) {
 	public TilemapPreset {
 		if (pairingStrategy == null) {
-			pairingStrategy = new BasePairingStrategy();
+			pairingStrategy = PairingStrategy.BASE;
 		}
 	}
 
@@ -28,20 +28,7 @@ public record TilemapPreset(
 	 * base strategy when the field is absent.
 	 */
 	public static PairingStrategy parseStrategy(JsonObject root) {
-		if (!root.has("pairStrategy")) {
-			return new BasePairingStrategy();
-		}
-		String name = root.get("pairStrategy").getAsString();
-		return switch (name) {
-			case "base" -> new BasePairingStrategy();
-			case "nonAdjacent" -> new NonAdjacentPairingStrategy();
-			case "distant" -> new DistantPairingStrategy();
-			default ->
-				throw new IllegalArgumentException(
-					"Unknown pairStrategy: \"" + name
-					+ "\" (expected base|nonAdjacent|distant)"
-				);
-		};
+		return PairingStrategy.parse(root);
 	}
 
 	/** Build a fresh mutable seed grid for the generator. */

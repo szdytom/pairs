@@ -21,11 +21,11 @@ public record DifficultyParams(
 	}
 
 	public String strategyLabel() {
-		if (strategy instanceof DistantPairingStrategy)
-			return "Mean";
-		if (strategy instanceof NonAdjacentPairingStrategy)
-			return "Neutral";
-		return "Kind";
+		return switch (strategy) {
+			case BASE -> "Kind";
+			case NON_ADJACENT -> "Neutral";
+			case DISTANT -> "Mean";
+		};
 	}
 
 	public String tierLabel() {

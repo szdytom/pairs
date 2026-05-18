@@ -11,8 +11,7 @@ class HardTileFactoryPrintTest {
 	@Test
 	void printHardIdArray() {
 		TilemapPreset preset = new TilemapPreset(12, 12, 20, null, null);
-		Tilemap tilemap = CustomizedTilemapFactory
-							  .fromPreset(preset, Seed.deviceRandom())
+		Tilemap tilemap = TilemapFactory.fromPreset(preset, Seed.deviceRandom())
 							  .generate();
 
 		System.out.println("===== HARD ID (tile type) =====");

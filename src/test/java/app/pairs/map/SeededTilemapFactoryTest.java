@@ -12,30 +12,16 @@ class SeededTilemapFactoryTest {
 	@Test
 	void sameSeedProducesSameMap() {
 		Seed seed = Seed.fromString("hello-pairs");
-		Tilemap a = new CustomizedTilemapFactory(seed)
-						.setWidth(8)
-						.setHeight(8)
-						.setTypes(4)
-						.generate();
-		Tilemap b = new CustomizedTilemapFactory(seed)
-						.setWidth(8)
-						.setHeight(8)
-						.setTypes(4)
-						.generate();
+		Tilemap a = TilemapFactory.customized(8, 8, 4, seed).generate();
+		Tilemap b = TilemapFactory.customized(8, 8, 4, seed).generate();
 		assertThat(flatten(a)).containsExactly(flatten(b));
 	}
 
 	@Test
 	void differentSeedsProduceDifferentMaps() {
-		Tilemap a = new CustomizedTilemapFactory(new Seed(1L, 2L))
-						.setWidth(8)
-						.setHeight(8)
-						.setTypes(4)
+		Tilemap a = TilemapFactory.customized(8, 8, 4, new Seed(1L, 2L))
 						.generate();
-		Tilemap b = new CustomizedTilemapFactory(new Seed(3L, 4L))
-						.setWidth(8)
-						.setHeight(8)
-						.setTypes(4)
+		Tilemap b = TilemapFactory.customized(8, 8, 4, new Seed(3L, 4L))
 						.generate();
 		assertThat(flatten(a)).isNotEqualTo(flatten(b));
 	}

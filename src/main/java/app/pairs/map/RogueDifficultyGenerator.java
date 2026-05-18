@@ -1,7 +1,6 @@
 package app.pairs.map;
 
 import app.pairs.logic.GameState;
-import app.pairs.model.Tilemap;
 import app.pairs.utils.Seed;
 import app.pairs.utils.Xoroshiro128PP;
 
@@ -95,9 +94,9 @@ public class RogueDifficultyGenerator {
 			? TileSelectionPolicy.Spread.PREFER_DUPLICATES
 			: level >= 4 ? TileSelectionPolicy.Spread.FREE
 						 : TileSelectionPolicy.Spread.NO_DUPLICATES;
-		PairingStrategy strategy = level >= 10 ? new DistantPairingStrategy()
-			: level >= 6 ? new NonAdjacentPairingStrategy()
-						 : new BasePairingStrategy();
+		PairingStrategy strategy = level >= 10 ? PairingStrategy.DISTANT
+			: level >= 6                       ? PairingStrategy.NON_ADJACENT
+											   : PairingStrategy.BASE;
 		int total = CustomGameBuilder.computePoints(
 			w, h, types, slabs, spread, strategy
 		);
@@ -114,9 +113,9 @@ public class RogueDifficultyGenerator {
 	private static PairingStrategy pickStrategy(Random rng) {
 		int n = rng.nextInt(3);
 		if (n == 0)
-			return new BasePairingStrategy();
+			return PairingStrategy.BASE;
 		if (n == 1)
-			return new NonAdjacentPairingStrategy();
-		return new DistantPairingStrategy();
+			return PairingStrategy.NON_ADJACENT;
+		return PairingStrategy.DISTANT;
 	}
 }

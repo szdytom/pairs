@@ -44,6 +44,16 @@ public class Tilemap {
 		this.difficulty = difficulty;
 	}
 
+	public TilemapSnapshot toSnapshot() {
+		return new TilemapSnapshot(difficulty, copy(id));
+	}
+
+	public static Tilemap fromSnapshot(TilemapSnapshot snapshot) {
+		Tilemap tilemap = new Tilemap(copy(snapshot.grid()));
+		tilemap.setDifficulty(snapshot.difficulty());
+		return tilemap;
+	}
+
 	/** A tile position on the map. */
 	public record TilePos(int row, int col) {}
 
@@ -65,5 +75,13 @@ public class Tilemap {
 		}
 		result.replaceAll((k, v) -> Collections.unmodifiableList(v));
 		return Collections.unmodifiableMap(result);
+	}
+
+	private static int[][] copy(int[][] source) {
+		int[][] result = new int[source.length][];
+		for (int row = 0; row < source.length; row++) {
+			result[row] = source[row].clone();
+		}
+		return result;
 	}
 }

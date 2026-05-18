@@ -2,9 +2,7 @@ package app.pairs.logic;
 
 import app.pairs.asset.AssetManager;
 import app.pairs.asset.TileRegistry;
-import app.pairs.map.CustomizedTilemapFactory;
-import app.pairs.map.SubsetTilemapFactory;
-import app.pairs.map.TileGroupRegistry;
+import app.pairs.map.PairingStrategy;
 import app.pairs.map.TileSelectionPolicy;
 import app.pairs.map.TilemapFactory;
 import app.pairs.model.GameSnapshot;
@@ -15,7 +13,6 @@ import app.pairs.model.Tilemap;
 import app.pairs.solver.Solver;
 import app.pairs.solver.SolverResult;
 import app.pairs.utils.Seed;
-import app.pairs.utils.Xoroshiro128PP;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,7 +35,6 @@ import java.util.List;
  */
 public final class GameState {
 	private static final String TILE_REGISTRY = "tiles/typed";
-	private static final String TILE_GROUPS = "tile-groups/default";
 
 	private final TilemapFactory factory;
 	private Tilemap tilemap;
@@ -49,28 +45,21 @@ public final class GameState {
 	private int undoBarrier;
 	private int remainingTiles;
 	private Boolean stallResult;
-	private final Seed seed;
-	private final String factoryPresetId;
 
 	public enum OpKind { MANUAL, AUTO }
 
 	public GameState(TilemapFactory factory) {
-		this(
-			factory, factory.generate(), new OpLogs(), new GameStatus(), null,
-			null
-		);
+		this(factory, factory.generate(), new OpLogs(), new GameStatus());
 	}
 
 	private GameState(
 		TilemapFactory factory, Tilemap tilemap, OpLogs opLogs,
-		GameStatus gameStatus, Seed seed, String factoryPresetId
+		GameStatus gameStatus
 	) {
 		this.factory = factory;
 		this.tilemap = tilemap;
 		this.opLogs = opLogs;
 		this.gameStatus = gameStatus;
-		this.seed = seed;
-		this.factoryPresetId = factoryPresetId;
 		this.remainingTiles = countTiles();
 		this.stallResult = null;
 	}
@@ -98,10 +87,7 @@ public final class GameState {
 	 */
 	public static GameState fromPreset(String presetId, Seed seed) {
 		TilemapFactory factory = TilemapFactory.fromPreset(presetId, seed);
-		Tilemap tilemap = factory.generate();
-		return new GameState(
-			factory, tilemap, new OpLogs(), new GameStatus(), seed, presetId
-		);
+		return new GameState(factory);
 	}
 
 	/** Custom dimensions and tile-type count, no group constraints. */
@@ -112,13 +98,8 @@ public final class GameState {
 	public static GameState customized(
 		int width, int height, int types, Seed seed
 	) {
-		TilemapFactory factory = new CustomizedTilemapFactory(seed)
-									 .setWidth(width)
-									 .setHeight(height)
-									 .setTypes(types);
 		return new GameState(
-			factory, factory.generate(), new OpLogs(), new GameStatus(), seed,
-			null
+			TilemapFactory.customized(width, height, types, seed)
 		);
 	}
 
@@ -140,87 +121,35 @@ public final class GameState {
 		int width, int height, int types, boolean includeSlabs,
 		TileSelectionPolicy.Spread spread, Seed seed
 	) {
-		TileSelectionPolicy policy = new TileSelectionPolicy(
-			includeSlabs, spread
-		);
-		TileRegistry registry = AssetManager.instance().get(TILE_REGISTRY);
-		TileGroupRegistry groups = AssetManager.instance().get(TILE_GROUPS);
-		int[] subset = policy.selectFor(
-			registry, groups, types, new Xoroshiro128PP(seed)
-		);
-		TilemapFactory inner = new CustomizedTilemapFactory(seed)
-								   .setWidth(width)
-								   .setHeight(height)
-								   .setTypes(types);
-		TilemapFactory factory = new SubsetTilemapFactory(inner, subset);
-		return new GameState(
-			factory, factory.generate(), new OpLogs(), new GameStatus(), seed,
-			null
-		);
+		return new GameState(TilemapFactory.customized(
+			width, height, types, includeSlabs, spread, PairingStrategy.BASE,
+			seed, Tilemap.Difficulty.NORMAL
+		));
 	}
 
 	public static GameState fromSnapshot(GameSnapshot snapshot) {
-		Tilemap tilemap = tilemapFrom(snapshot);
+		Tilemap tilemap = Tilemap.fromSnapshot(snapshot.tilemap());
 		OpLogs opLogs = new OpLogs();
-		GameStatus gameStatus = new GameStatus();
-		gameStatus.score = snapshot.score();
-		gameStatus.combo = snapshot.combo();
+		GameStatus gameStatus = GameStatus.fromSnapshot(snapshot.status());
+		TilemapFactory factory = snapshot.factory() == null
+			? TilemapFactory.fixed(snapshot.tilemap())
+			: TilemapFactory.fromSnapshot(snapshot.factory());
 
-		Seed seed = snapshotSeed(snapshot);
-		String presetId = snapshot.factoryPresetId();
-		TilemapFactory factory;
-		if (seed != null && presetId != null) {
-			factory = TilemapFactory.fromPreset(presetId, seed);
-		} else {
-			factory = () -> tilemapFrom(snapshot);
-		}
-
-		GameState state = new GameState(
-			factory, tilemap, opLogs, gameStatus, seed, presetId
-		);
+		GameState state = new GameState(factory, tilemap, opLogs, gameStatus);
 		for (OperationSnapshot op : snapshot.operations()) {
 			opLogs.push(OpElimination.restored(op));
 		}
 		return state;
 	}
 
-	private static Seed snapshotSeed(GameSnapshot snapshot) {
-		if (snapshot.seedS0() == null || snapshot.seedS1() == null) {
-			return null;
-		}
-		return new Seed(snapshot.seedS0(), snapshot.seedS1());
-	}
-
 	/**
-	 * Snapshot the current game state including seed info for restart support.
+	 * Snapshot the current game state with component-owned state fragments.
 	 */
 	public GameSnapshot toSnapshot() {
-		Long s0 = seed != null ? seed.s0() : null;
-		Long s1 = seed != null ? seed.s1() : null;
-		int[][] grid = new int[tilemap.getHeight()][tilemap.getWidth()];
-		for (int r = 0; r < tilemap.getHeight(); r++) {
-			for (int c = 0; c < tilemap.getWidth(); c++) {
-				grid[r][c] = tilemap.getTile(r, c);
-			}
-		}
 		return new GameSnapshot(
-			tilemap.getDifficulty(), gameStatus.score, gameStatus.combo, grid,
-			opLogs.snapshots(), s0, s1, factoryPresetId
+			tilemap.toSnapshot(), factory.toSnapshot(), gameStatus.toSnapshot(),
+			opLogs.snapshots()
 		);
-	}
-
-	private static Tilemap tilemapFrom(GameSnapshot snapshot) {
-		Tilemap tilemap = new Tilemap(copy(snapshot.tilemap()));
-		tilemap.setDifficulty(snapshot.difficulty());
-		return tilemap;
-	}
-
-	private static int[][] copy(int[][] source) {
-		int[][] result = new int[source.length][];
-		for (int row = 0; row < source.length; row++) {
-			result[row] = source[row].clone();
-		}
-		return result;
 	}
 
 	// ---- read-only map accessors -----------------------------------------
