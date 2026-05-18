@@ -22,6 +22,19 @@ public class LevelPage implements Page {
 		this.root = new LevelComponent(gameState, totalCountdownMs, blackboard);
 	}
 
+	/**
+	 * Load from save: restart always uses totalCountdownMs, but the level
+	 * starts from initialRemainingMs.
+	 */
+	public LevelPage(
+		GameState gameState, long totalCountdownMs, long initialRemainingMs
+	) {
+		this.blackboard = new Blackboard();
+		this.root = new LevelComponent(
+			gameState, totalCountdownMs, initialRemainingMs, blackboard
+		);
+	}
+
 	@Override
 	public void onEnter() {
 		AudioManager.instance().fadeOutMusic(3000f);

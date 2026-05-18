@@ -36,7 +36,7 @@ public class RoguePlayPage implements Page {
 		this.relatedMapId = relatedMapId;
 		this.blackboard = new Blackboard();
 		this.levelComponent = new LevelComponent(
-			gameState, session, blackboard
+			gameState, session, gameState.gameStatus.remainingMs, blackboard
 		);
 	}
 
@@ -49,23 +49,23 @@ public class RoguePlayPage implements Page {
 	@Override
 	public void onExit() {
 		AudioManager.instance().fadeOutMusic(3000f);
-		syncToSession();
 		User user = UserSession.instance().getUser();
 		if (!user.isAuthorized()) {
 			return;
 		}
 		GameState gs = blackboard.get(GameState.class);
 		if (levelComponent.isTimedOut()) {
+			syncToSession();
 			user.saveRogue(session, null, null);
 			softDeleteLinkedMapSave(user);
 			user.deleteRogue();
 		} else if (levelComponent.isCleared()) {
+			syncToSession();
 			softDeleteLinkedMapSave(user);
 			user.saveRogue(session, null, null);
 		} else {
-			// mid-game: subtract the score already added by syncToSession() so
-			// the rogue snapshot stores the pre-level spendable score
-			session.spendableScore -= gs.gameStatus.score;
+			CountdownState cs = blackboard.get(CountdownState.class);
+			gs.gameStatus.remainingMs = cs.remainingMs;
 			softDeleteLinkedMapSave(user);
 			long newId = user.saveRogueLinkedGame(gs);
 			user.saveRogue(session, newId, gs.getGameStatus());

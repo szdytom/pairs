@@ -78,6 +78,13 @@ public class LevelComponent extends Container {
 	public LevelComponent(
 		GameState gameState, long totalCountdownMs, Blackboard blackboard
 	) {
+		this(gameState, totalCountdownMs, totalCountdownMs, blackboard);
+	}
+
+	public LevelComponent(
+		GameState gameState, long totalCountdownMs, long initialRemainingMs,
+		Blackboard blackboard
+	) {
 		this.gameState = gameState;
 		this.gridWidth = gameState.getWidth();
 		this.gridHeight = gameState.getHeight();
@@ -94,7 +101,7 @@ public class LevelComponent extends Container {
 		this.totalPairs = totalPairs;
 		this.totalCountdownMs = totalCountdownMs;
 		this.countdownState = new CountdownState();
-		countdownState.remainingMs = totalCountdownMs;
+		countdownState.remainingMs = initialRemainingMs;
 		this.lastEliminationTimeMs = countdownState.now();
 
 		blackboard.put(GameState.class, gameState);
@@ -209,7 +216,14 @@ public class LevelComponent extends Container {
 	public LevelComponent(
 		GameState gameState, RogueSession session, Blackboard blackboard
 	) {
-		this(gameState, session.remainingMs, blackboard);
+		this(gameState, session, session.remainingMs, blackboard);
+	}
+
+	public LevelComponent(
+		GameState gameState, RogueSession session, long initialRemainingMs,
+		Blackboard blackboard
+	) {
+		this(gameState, session.remainingMs, initialRemainingMs, blackboard);
 		this.rogueSession = session;
 	}
 
@@ -251,6 +265,7 @@ public class LevelComponent extends Container {
 		countdownState.resetPause();
 		lastEliminationTimeMs = countdownState.now();
 		gameState.restart();
+		gameState.getGameStatus().remainingMs = totalCountdownMs;
 		tntSelecting = false;
 		int newW = gameState.getWidth();
 		int newH = gameState.getHeight();

@@ -66,9 +66,9 @@ public class LoadPage implements Page {
 				long remaining = snapshot.status().remainingMs() > 0
 					? snapshot.status().remainingMs()
 					: LevelPage.DEFAULT_COUNTDOWN_MS;
-				Router.instance().navigateTo(
-					new LevelPage(gameState, remaining)
-				);
+				Router.instance().navigateTo(new LevelPage(
+					gameState, LevelPage.DEFAULT_COUNTDOWN_MS, remaining
+				));
 			});
 		}
 	}
