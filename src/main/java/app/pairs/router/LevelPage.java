@@ -2,6 +2,8 @@ package app.pairs.router;
 
 import app.pairs.audio.AudioManager;
 import app.pairs.logic.GameState;
+import app.pairs.user.User;
+import app.pairs.user.UserSession;
 import app.pairs.view.Blackboard;
 import app.pairs.view.Event;
 import app.pairs.view.LevelComponent;
@@ -29,6 +31,33 @@ public class LevelPage implements Page {
 	@Override
 	public void onExit() {
 		AudioManager.instance().fadeOutMusic(3000f);
+		User user = UserSession.instance().getUser();
+		if (!user.isAuthorized()) {
+			return;
+		}
+		GameState gs = blackboard.get(GameState.class);
+		app.pairs.model.CountdownState
+			cs = blackboard.get(app.pairs.model.CountdownState.class);
+		if (cs != null) {
+			gs.getGameStatus().remainingMs = cs.remainingMs;
+		}
+		Long id = UserSession.instance().getActiveSaveId();
+		if (root.isCleared()) {
+			if (id != null) {
+				user.updateSave(id, gs);
+				user.deleteSave(id);
+				UserSession.instance().setActiveSaveId(null);
+			}
+		} else if (!root.isTimedOut()) {
+			// mid-game: overwrite existing save or create a new one
+			if (id != null) {
+				user.updateSave(id, gs);
+			} else {
+				long newId = user.saveGame(gs);
+				UserSession.instance().setActiveSaveId(newId);
+			}
+		}
+		// timed out and not cleared: no save action
 	}
 
 	@Override

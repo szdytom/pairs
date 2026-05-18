@@ -8,7 +8,7 @@ To restore a game session completely, four things must be captured:
 
 1. **The current board state** — the full 2D tile grid plus the difficulty level.
 2. **The map factory state** — the seed, shape, pairing strategy, palette policy, and selected palette used to regenerate the original board for `restart()`.
-3. **The game status** — score, combo, and item counts maintained in `GameStatus`.
+3. **The game status** — score, combo, remaining countdown time, and item counts maintained in `GameStatus`.
 4. **The full undo history** — every `OpElimination` that has been executed, in chronological order. Without this, `undo()` would stop working after a load.
 
 The current tile grid and the restart factory are intentionally separate: the tile grid restores progress, while the factory regenerates the original board.
@@ -31,7 +31,9 @@ CREATE TABLE saves (
     user_id    INTEGER REFERENCES users(id),
     updated_at INTEGER NOT NULL,
     type       TEXT NOT NULL,
-    json_data  TEXT NOT NULL
+    json_data  TEXT NOT NULL,
+    is_deleted INTEGER NOT NULL DEFAULT 0,
+    is_rogue   INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE TABLE scores (
@@ -85,6 +87,7 @@ The `json_data` column holds a `GameSnapshot` serialized via Gson:
     "status": {
         "score": 3000,
         "combo": 1,
+        "remainingMs": 180000,
         "items": { "AUTO_SOLVER": 0, "TNT": 0 }
     },
   "operations": [
@@ -180,9 +183,9 @@ snapshot's factory.
 record GameSnapshot(TilemapSnapshot tilemap, TilemapFactorySnapshot factory, GameStatusSnapshot status, List<OperationSnapshot> operations)
 record TilemapSnapshot(Tilemap.Difficulty difficulty, int[][] grid)
 record TilemapFactorySnapshot(...)
-record GameStatusSnapshot(int score, int combo, Map<String, Integer> items)
+record GameStatusSnapshot(int score, int combo, long remainingMs, Map<String, Integer> items)
 record OperationSnapshot(int row1, int col1, int row2, int col2, int tileId, long time, int deltaScore, List<Integer> path, int comboBefore)
-record SaveEntry(long id, long updatedAt, Tilemap.Difficulty type)
+record SaveEntry(long id, long updatedAt, GameType type)
 ```
 
 ## Typical usage

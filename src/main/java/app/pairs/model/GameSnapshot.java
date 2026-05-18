@@ -11,4 +11,20 @@ public record GameSnapshot(
 	public Tilemap.Difficulty difficulty() {
 		return tilemap.difficulty();
 	}
+
+	public GameType type() {
+		return GameType.from(difficulty());
+	}
+
+	public int score() {
+		return status.score();
+	}
+
+	public int combo() {
+		return status.combo();
+	}
+
+	public long remainingMs() {
+		return status.remainingMs();
+	}
 }

@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import app.pairs.logic.GameState;
 import app.pairs.logic.OpElimination;
 import app.pairs.model.GameSnapshot;
+import app.pairs.model.GameType;
 import app.pairs.model.OperationSnapshot;
 import app.pairs.model.Tilemap;
 import app.pairs.utils.Seed;
@@ -23,6 +24,7 @@ class SaveTest {
 	void savesAndLoadsModelSnapshot() {
 		GameState state = GameState.customized(2, 2, 1);
 		state.eliminate(0, 0, 0, 1, 5_000, GameState.OpKind.MANUAL);
+		state.getGameStatus().remainingMs = 123_000;
 
 		try (Database db = new Database(dbPath())) {
 			Save save = db.saves();
@@ -34,9 +36,13 @@ class SaveTest {
 				.containsExactly(id);
 			assertThat(snapshot.tilemap().difficulty())
 				.isEqualTo(Tilemap.Difficulty.NORMAL);
+			assertThat(save.list())
+				.extracting(SaveEntry::type)
+				.containsExactly(GameType.NORMAL);
 			assertThat(snapshot.status().score())
 				.isEqualTo(OpElimination.SCORE_PER_PAIR);
 			assertThat(snapshot.status().combo()).isEqualTo(1);
+			assertThat(snapshot.status().remainingMs()).isEqualTo(123_000);
 			assertThat(snapshot.tilemap().grid())
 				.isDeepEqualTo(new int[][] {{0, 0}, {1, 1}});
 			assertThat(snapshot.factory()).isNotNull();

@@ -44,6 +44,7 @@ public class OpLogEntry extends FlexLayout {
 		addChild(numWrap);
 
 		TileRegistry reg = AssetManager.instance().get("tiles/typed");
+		reg.createTextures(AssetManager.instance().renderer());
 		SDL_Texture tex = reg.getTexture(tileId);
 		SDL_Rect iconSrc = new SDL_Rect();
 		iconSrc.x = 1;

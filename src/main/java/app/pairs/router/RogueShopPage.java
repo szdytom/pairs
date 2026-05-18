@@ -1,6 +1,8 @@
 package app.pairs.router;
 
 import app.pairs.model.RogueSession;
+import app.pairs.user.User;
+import app.pairs.user.UserSession;
 import app.pairs.view.*;
 
 import io.github.libsdl4j.api.render.*;
@@ -8,14 +10,24 @@ import io.github.libsdl4j.api.render.*;
 public class RogueShopPage implements Page {
 	private final Blackboard blackboard;
 	private final ShopComponent root;
+	private final RogueSession session;
 
 	public RogueShopPage(RogueSession session) {
+		this.session = session;
 		this.blackboard = new Blackboard();
 		this.root = new ShopComponent(session, () -> {
 			session.level++;
 			Router.instance().navigateTo(new RogueStagePage(session));
 		});
 		root.setBlackboard(blackboard);
+	}
+
+	@Override
+	public void onExit() {
+		User user = UserSession.instance().getUser();
+		if (!user.isAuthorized())
+			return;
+		user.saveRogue(session, null, null);
 	}
 
 	@Override

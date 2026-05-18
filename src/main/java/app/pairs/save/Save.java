@@ -1,9 +1,7 @@
 package app.pairs.save;
 
 import app.pairs.model.GameSnapshot;
-import app.pairs.model.GameStatus;
-import app.pairs.model.OpLogs;
-import app.pairs.model.Tilemap;
+import app.pairs.model.GameType;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -30,6 +28,15 @@ public class Save {
 	}
 
 	public long save(GameSnapshot snapshot) {
+		return insert(snapshot, false);
+	}
+
+	/** Saves a rogue-linked map; hidden from the normal save list. */
+	public long saveLinked(GameSnapshot snapshot) {
+		return insert(snapshot, true);
+	}
+
+	private long insert(GameSnapshot snapshot, boolean isLinked) {
 		String json = gson.toJson(snapshot);
 		long now = System.currentTimeMillis();
 		try (
@@ -42,8 +49,9 @@ public class Save {
 				statement.setLong(index++, userId);
 			}
 			statement.setLong(index++, now);
-			statement.setString(index++, snapshot.difficulty().name());
-			statement.setString(index, json);
+			statement.setString(index++, snapshot.type().name());
+			statement.setString(index++, json);
+			statement.setInt(index, isLinked ? 1 : 0);
 			statement.executeUpdate();
 			try (ResultSet keys = statement.getGeneratedKeys()) {
 				if (!keys.next()) {
@@ -58,13 +66,6 @@ public class Save {
 		}
 	}
 
-	public long save(Tilemap tilemap, OpLogs opLogs, GameStatus gameStatus) {
-		return save(new GameSnapshot(
-			tilemap.toSnapshot(), null, gameStatus.toSnapshot(),
-			opLogs.snapshots()
-		));
-	}
-
 	public List<SaveEntry> list() {
 		List<SaveEntry> entries = new ArrayList<>();
 		try (
@@ -77,7 +78,7 @@ public class Save {
 				while (rows.next()) {
 					entries.add(new SaveEntry(
 						rows.getLong(1), rows.getLong(2),
-						Tilemap.Difficulty.valueOf(rows.getString(3))
+						GameType.valueOf(rows.getString(3))
 					));
 				}
 				return entries;
@@ -106,10 +107,10 @@ public class Save {
 		}
 	}
 
-	public void delete(long id) {
+	public void softDelete(long id) {
 		try (
 			PreparedStatement statement = connection.prepareStatement(
-				deleteSql()
+				softDeleteSql()
 			)
 		) {
 			statement.setLong(1, id);
@@ -118,29 +119,57 @@ public class Save {
 			}
 			statement.executeUpdate();
 		} catch (SQLException e) {
-			throw new IllegalStateException("failed to delete save", e);
+			throw new IllegalStateException("failed to soft-delete save", e);
+		}
+	}
+
+	public void update(long id, GameSnapshot snapshot) {
+		String json = gson.toJson(snapshot);
+		long now = System.currentTimeMillis();
+		try (
+			PreparedStatement statement = connection.prepareStatement(
+				updateSql()
+			)
+		) {
+			statement.setString(1, json);
+			statement.setLong(2, now);
+			statement.setLong(3, id);
+			if (userId != null) {
+				statement.setLong(4, userId);
+			}
+			statement.executeUpdate();
+		} catch (SQLException e) {
+			throw new IllegalStateException("failed to update save", e);
 		}
 	}
 
 	private String insertSql() {
-		return "INSERT INTO saves (user_id, updated_at, type, json_data) "
-			+ (userId == null ? "VALUES (NULL, ?, ?, ?)"
-		                      : "VALUES (?, ?, ?, ?)");
+		return "INSERT INTO saves (user_id, updated_at, type, json_data, "
+			+ "is_rogue) "
+			+ (userId == null ? "VALUES (NULL, ?, ?, ?, ?)"
+		                      : "VALUES (?, ?, ?, ?, ?)");
 	}
 
 	private String listSql() {
 		return "SELECT id, updated_at, type FROM saves"
-			+ (userId == null ? "" : " WHERE user_id = ?")
+			+ (userId == null
+		           ? " WHERE is_deleted = 0 AND is_rogue = 0"
+		           : " WHERE user_id = ? AND is_deleted = 0 AND is_rogue = 0")
 			+ " ORDER BY updated_at DESC";
 	}
 
 	private String loadSql() {
-		return "SELECT json_data FROM saves WHERE id = ?"
+		return "SELECT json_data FROM saves WHERE id = ? AND is_deleted = 0"
 			+ (userId == null ? "" : " AND user_id = ?");
 	}
 
-	private String deleteSql() {
-		return "DELETE FROM saves WHERE id = ?"
+	private String softDeleteSql() {
+		return "UPDATE saves SET is_deleted = 1 WHERE id = ?"
+			+ (userId == null ? "" : " AND user_id = ?");
+	}
+
+	private String updateSql() {
+		return "UPDATE saves SET json_data = ?, updated_at = ? WHERE id = ?"
 			+ (userId == null ? "" : " AND user_id = ?");
 	}
 }
