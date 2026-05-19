@@ -49,7 +49,6 @@ public class LevelComponent extends Container {
 	private boolean tntSelecting;
 
 	private long totalCountdownMs;
-	private final CountdownState countdownState;
 	private RogueSession rogueSession;
 	private long lastEliminationTimeMs;
 
@@ -100,12 +99,11 @@ public class LevelComponent extends Container {
 
 		this.totalPairs = totalPairs;
 		this.totalCountdownMs = totalCountdownMs;
-		this.countdownState = new CountdownState();
-		countdownState.remainingMs = initialRemainingMs;
-		this.lastEliminationTimeMs = countdownState.now();
+		gameState.gameStatus.countdown.remainingMs = initialRemainingMs;
+		this.lastEliminationTimeMs = gameState.gameStatus.countdown.now();
 
 		blackboard.put(GameState.class, gameState);
-		blackboard.put(CountdownState.class, countdownState);
+		blackboard.put(CountdownState.class, gameState.gameStatus.countdown);
 		setBlackboard(blackboard);
 
 		this.gridView = new IsometricGridView(gridWidth, gridHeight);
@@ -230,10 +228,10 @@ public class LevelComponent extends Container {
 	@Override
 	public void update(long deltaTimeMs) {
 		if (!cleared && !timedOut && gameStarted) {
-			countdownState.remainingMs = Math.max(
-				0, countdownState.remainingMs - deltaTimeMs
+			gameState.gameStatus.countdown.remainingMs = Math.max(
+				0, gameState.gameStatus.countdown.remainingMs - deltaTimeMs
 			);
-			if (countdownState.remainingMs == 0) {
+			if (gameState.gameStatus.countdown.remainingMs == 0) {
 				timedOut = true;
 				autoPairingState.clear();
 				gridView.setVisible(false);
@@ -241,14 +239,16 @@ public class LevelComponent extends Container {
 		}
 		boolean hintReady = !cleared && !timedOut
 			&& !autoPairingState.isActive()
-			&& countdownState.now() - lastEliminationTimeMs >= HINT_COOLDOWN_MS;
+			&& gameState.gameStatus.countdown.now() - lastEliminationTimeMs
+				>= HINT_COOLDOWN_MS;
 		hintBtn.setVisible(hintReady);
 		undoBtn.setVisible(!cleared && !timedOut && gameState.canUndo());
 		if (!cleared && !timedOut && gameState.isStall()) {
 			pairCounter.showStall();
 		} else if (
 			!cleared && !timedOut
-			&& countdownState.now() - lastEliminationTimeMs < 1_000
+			&& gameState.gameStatus.countdown.now() - lastEliminationTimeMs
+				< 1_000
 			&& gameState.gameStatus.combo >= 2
 		) {
 			pairCounter.showCombo(gameState.gameStatus.combo);
@@ -261,11 +261,10 @@ public class LevelComponent extends Container {
 
 	/** Reset the level with the map generated. */
 	public void restart() {
-		countdownState.remainingMs = totalCountdownMs;
-		countdownState.resetPause();
-		lastEliminationTimeMs = countdownState.now();
+		gameState.gameStatus.countdown.remainingMs = totalCountdownMs;
+		gameState.gameStatus.countdown.resetPause();
 		gameState.restart();
-		gameState.getGameStatus().remainingMs = totalCountdownMs;
+		lastEliminationTimeMs = gameState.gameStatus.countdown.now();
 		tntSelecting = false;
 		int newW = gameState.getWidth();
 		int newH = gameState.getHeight();
@@ -297,7 +296,7 @@ public class LevelComponent extends Container {
 
 	private void startEntryAnimation() {
 		gameStarted = false;
-		countdownState.pause();
+		gameState.gameStatus.countdown.pause();
 		gridView.setEntryPlaying(true);
 		int[][] order = gridView.getDepthOrder();
 		for (int[] cell : order) {
@@ -316,7 +315,7 @@ public class LevelComponent extends Container {
 		autoPairingState.push(dt -> gridView.isEntryComplete());
 		autoPairingState.push(new ActionStep(() -> {
 			gridView.setEntryPlaying(false);
-			countdownState.resume();
+			gameState.gameStatus.countdown.resume();
 			gameStarted = true;
 		}));
 	}
@@ -487,7 +486,7 @@ public class LevelComponent extends Container {
 	private void eliminatePair(int r1, int c1, int r2, int c2) {
 		if (timedOut || cleared)
 			return;
-		long now = countdownState.now();
+		long now = gameState.gameStatus.countdown.now();
 		int elapsed = (int)(now - lastEliminationTimeMs);
 		AudioManager.instance().play(
 			"eliminate", gameState.getTileString(r1, c1)
@@ -506,7 +505,7 @@ public class LevelComponent extends Container {
 	private void performAutoElimination(int r1, int c1, int r2, int c2) {
 		if (timedOut || cleared)
 			return;
-		long now = countdownState.now();
+		long now = gameState.gameStatus.countdown.now();
 		int elapsed = (int)(now - lastEliminationTimeMs);
 		AudioManager.instance().play(
 			"eliminate", gameState.getTileString(r1, c1)

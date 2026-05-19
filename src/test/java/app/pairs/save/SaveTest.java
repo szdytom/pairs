@@ -24,7 +24,7 @@ class SaveTest {
 	void savesAndLoadsModelSnapshot() {
 		GameState state = GameState.customized(2, 2, 1);
 		state.eliminate(0, 0, 0, 1, 5_000, GameState.OpKind.MANUAL);
-		state.getGameStatus().remainingMs = 123_000;
+		state.getGameStatus().countdown.remainingMs = 123_000;
 
 		try (Database db = new Database(dbPath())) {
 			Save save = db.saves();
