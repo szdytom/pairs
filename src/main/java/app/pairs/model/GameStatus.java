@@ -3,7 +3,7 @@ package app.pairs.model;
 public class GameStatus {
 	public int score;
 	public int combo;
-	public long remainingMs;
+	public final CountdownState countdown = new CountdownState();
 	public final ItemCountMap items = new ItemCountMap();
 
 	public GameStatus() {
@@ -31,7 +31,7 @@ public class GameStatus {
 
 	public GameStatusSnapshot toSnapshot() {
 		return new GameStatusSnapshot(
-			score, combo, remainingMs, items.toSnapshot()
+			score, combo, countdown.remainingMs, items.toSnapshot()
 		);
 	}
 
@@ -42,7 +42,7 @@ public class GameStatus {
 		}
 		status.score = snapshot.score();
 		status.combo = snapshot.combo();
-		status.remainingMs = snapshot.remainingMs();
+		status.countdown.remainingMs = snapshot.remainingMs();
 		status.items.restore(snapshot.items());
 		return status;
 	}

@@ -49,11 +49,6 @@ public class LevelPage implements Page {
 			return;
 		}
 		GameState gs = blackboard.get(GameState.class);
-		app.pairs.model.CountdownState
-			cs = blackboard.get(app.pairs.model.CountdownState.class);
-		if (cs != null) {
-			gs.getGameStatus().remainingMs = cs.remainingMs;
-		}
 		Long id = UserSession.instance().getActiveSaveId();
 		if (root.isCleared()) {
 			if (id != null) {
