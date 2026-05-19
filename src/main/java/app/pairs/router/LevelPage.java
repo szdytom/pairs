@@ -55,6 +55,8 @@ public class LevelPage implements Page {
 				user.updateSave(id, gs);
 				user.deleteSave(id);
 				UserSession.instance().setActiveSaveId(null);
+			} else {
+				user.save(gs);
 			}
 		} else if (!root.isTimedOut()) {
 			// mid-game: overwrite existing save or create a new one
