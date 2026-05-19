@@ -36,7 +36,8 @@ public class RoguePlayPage implements Page {
 		this.relatedMapId = relatedMapId;
 		this.blackboard = new Blackboard();
 		this.levelComponent = new LevelComponent(
-			gameState, session, gameState.gameStatus.remainingMs, blackboard
+			gameState, session, gameState.gameStatus.countdown.remainingMs,
+			blackboard
 		);
 	}
 
@@ -65,7 +66,7 @@ public class RoguePlayPage implements Page {
 			user.saveRogue(session, null, null);
 		} else {
 			CountdownState cs = blackboard.get(CountdownState.class);
-			gs.gameStatus.remainingMs = cs.remainingMs;
+			gs.gameStatus.countdown.remainingMs = cs.remainingMs;
 			softDeleteLinkedMapSave(user);
 			long newId = user.saveRogueLinkedGame(gs);
 			user.saveRogue(session, newId, gs.getGameStatus());

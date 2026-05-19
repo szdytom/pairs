@@ -57,6 +57,28 @@ public class Database implements AutoCloseable {
 		}
 	}
 
+	public void runInTransaction(Runnable action) {
+		try {
+			connection.setAutoCommit(false);
+			action.run();
+			connection.commit();
+			connection.setAutoCommit(true);
+		} catch (RuntimeException e) {
+			silentRollback();
+			throw e;
+		} catch (SQLException e) {
+			silentRollback();
+			throw new IllegalStateException("transaction failed", e);
+		}
+	}
+
+	private void silentRollback() {
+		try {
+			connection.rollback();
+			connection.setAutoCommit(true);
+		} catch (SQLException ignore) {}
+	}
+
 	private long userId(String username) {
 		try (
 			PreparedStatement statement = connection.prepareStatement(

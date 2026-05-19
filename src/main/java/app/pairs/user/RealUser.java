@@ -66,11 +66,13 @@ public class RealUser implements User {
 
 	@Override
 	public void deleteSave(long id) {
-		GameSnapshot snap = saves().load(id);
-		saves().softDelete(id);
-		Database.instance().users().addScore(
-			username, snap.type(), snap.status().score()
-		);
+		Database.instance().runInTransaction(() -> {
+			GameSnapshot snap = saves().load(id);
+			saves().softDelete(id);
+			Database.instance().users().addScore(
+				username, snap.type(), snap.status().score()
+			);
+		});
 	}
 
 	@Override
@@ -92,15 +94,17 @@ public class RealUser implements User {
 
 	@Override
 	public void deleteRogue() {
-		Optional<RogueSnapshot> snap = rogueSave().load();
-		rogueSave().softDelete();
-		snap.ifPresent(
-			s
-			-> Database.instance().users().addScore(
-				username, GameType.ROGUE,
-				s.spendableScore() + s.cumulativeSpent()
-			)
-		);
+		Database.instance().runInTransaction(() -> {
+			Optional<RogueSnapshot> snap = rogueSave().load();
+			rogueSave().softDelete();
+			snap.ifPresent(
+				s
+				-> Database.instance().users().addScore(
+					username, GameType.ROGUE,
+					s.spendableScore() + s.cumulativeSpent()
+				)
+			);
+		});
 	}
 
 	private Save saves() {
