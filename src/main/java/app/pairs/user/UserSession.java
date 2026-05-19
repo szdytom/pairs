@@ -19,6 +19,7 @@ public class UserSession {
 
 	public void setUser(User user) {
 		this.current = user;
+		this.activeSaveId = null;
 	}
 
 	public Long getActiveSaveId() {
