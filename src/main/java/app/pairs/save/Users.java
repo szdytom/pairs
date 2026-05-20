@@ -96,31 +96,14 @@ public class Users {
 		}
 	}
 
-	public int getBestScore(String username) {
-		try (
-			PreparedStatement ps = connection.prepareStatement(
-				"SELECT MAX(score) FROM scores"
-				+ " WHERE user_id = (SELECT id FROM users WHERE name = ?)"
-			)
-		) {
-			ps.setString(1, username);
-			try (ResultSet rs = ps.executeQuery()) {
-				if (rs.next()) {
-					int val = rs.getInt(1);
-					return rs.wasNull() ? 0 : val;
-				}
-				return 0;
-			}
-		} catch (SQLException e) {
-			throw new IllegalStateException("failed to get best score", e);
-		}
-	}
-
 	public void addScore(String username, GameType difficulty, int score) {
 		try (
 			PreparedStatement ps = connection.prepareStatement(
 				"INSERT INTO scores (user_id, difficulty, score, played_at)"
 				+ " VALUES ((SELECT id FROM users WHERE name = ?), ?, ?, ?)"
+				+ " ON CONFLICT(user_id, difficulty) DO UPDATE SET"
+				+ " score = excluded.score, played_at = excluded.played_at"
+				+ " WHERE excluded.score > scores.score"
 			)
 		) {
 			ps.setString(1, username);
