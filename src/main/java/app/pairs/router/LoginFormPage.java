@@ -31,7 +31,9 @@ public class LoginFormPage implements Page {
 	}
 
 	@Override
-	public void onEnter() {}
+	public void onEnter() {
+		Router.instance().setTitle("Pairs - Login");
+	}
 
 	@Override
 	public void onExit() {}

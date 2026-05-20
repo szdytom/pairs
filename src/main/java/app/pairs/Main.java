@@ -94,6 +94,7 @@ public class Main {
 		}
 
 		Router router = Router.instance();
+		router.setWindow(window);
 
 		if (args != null && args.length > 0
 		    && ("-t".equals(args[0]) || "--test".equals(args[0]))) {

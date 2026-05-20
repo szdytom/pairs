@@ -5,6 +5,7 @@ import static app.pairs.utils.Colors.*;
 import static io.github.libsdl4j.api.keycode.SDL_Keycode.*;
 import static io.github.libsdl4j.api.keycode.SDL_Keymod.*;
 import static io.github.libsdl4j.api.render.SdlRender.*;
+import static io.github.libsdl4j.api.video.SdlVideo.*;
 
 import app.pairs.view.Blackboard;
 import app.pairs.view.Event;
@@ -13,11 +14,13 @@ import app.pairs.view.MouseEvent;
 import app.pairs.view.Widget;
 
 import io.github.libsdl4j.api.render.*;
+import io.github.libsdl4j.api.video.*;
 
 public class Router {
 	private static final Router INSTANCE = new Router();
 
 	private final ScaleManager scaleManager = new ScaleManager();
+	private SDL_Window window;
 	private Page currentPage;
 	private Page pendingPage;
 	private int windowWidth = 1_024;
@@ -31,6 +34,16 @@ public class Router {
 
 	public static Router instance() {
 		return INSTANCE;
+	}
+
+	public void setWindow(SDL_Window window) {
+		this.window = window;
+	}
+
+	public void setTitle(String title) {
+		if (window != null) {
+			SDL_SetWindowTitle(window, title);
+		}
 	}
 
 	public void navigateTo(Page page) {

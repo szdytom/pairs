@@ -11,6 +11,7 @@ public class MainMenuPage implements Page {
 
 	@Override
 	public void onEnter() {
+		Router.instance().setTitle("Pairs - Main Menu");
 		AudioManager.instance().shufflePlayWithFadeIn("MainMusic", 3000f);
 	}
 

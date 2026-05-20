@@ -37,7 +37,9 @@ public class RegisterFormPage implements Page {
 	}
 
 	@Override
-	public void onEnter() {}
+	public void onEnter() {
+		Router.instance().setTitle("Pairs - Register");
+	}
 
 	@Override
 	public void onExit() {}
