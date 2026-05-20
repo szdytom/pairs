@@ -65,6 +65,28 @@ public class Save {
 			throw new IllegalStateException("failed to write save", e);
 		}
 	}
+	public List<LeaderBoardEntry> listLeaderBoard() {
+		List<LeaderBoardEntry> entries = new ArrayList<>();
+		try (
+			PreparedStatement ps = connection.prepareStatement(
+				"SELECT u.name, s.difficulty, s.score, s.played_at"
+				+ " FROM scores s JOIN users u ON s.user_id = u.id"
+				+ " ORDER BY s.score DESC, s.played_at ASC"
+			)
+		) {
+			try (ResultSet rs = ps.executeQuery()) {
+				while (rs.next()) {
+					entries.add(new LeaderBoardEntry(
+						rs.getString(1), GameType.valueOf(rs.getString(2)),
+						rs.getLong(3), rs.getLong(4)
+					));
+				}
+			}
+			return entries;
+		} catch (SQLException e) {
+			throw new IllegalStateException("failed to list leaderboard", e);
+		}
+	}
 
 	public List<SaveEntry> list() {
 		List<SaveEntry> entries = new ArrayList<>();

@@ -124,6 +124,10 @@ public class Database implements AutoCloseable {
 				+ "played_at  INTEGER NOT NULL)"
 			);
 			st.executeUpdate(
+				"CREATE UNIQUE INDEX IF NOT EXISTS idx_scores_user_difficulty "
+				+ "ON scores(user_id, difficulty)"
+			);
+			st.executeUpdate(
 				"CREATE INDEX IF NOT EXISTS idx_scores_rank "
 				+ "ON scores(difficulty, score DESC, user_id)"
 			);
