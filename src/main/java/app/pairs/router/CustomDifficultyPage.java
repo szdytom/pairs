@@ -214,6 +214,11 @@ public class CustomDifficultyPage implements Page {
 	}
 
 	@Override
+	public void onEnter() {
+		Router.instance().setTitle("Pairs - Custom Difficulty");
+	}
+
+	@Override
 	public void update(long deltaTimeMs) {
 		root.update(deltaTimeMs);
 	}

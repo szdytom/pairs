@@ -27,7 +27,9 @@ public class UserPage implements Page {
 	}
 
 	@Override
-	public void onEnter() {}
+	public void onEnter() {
+		Router.instance().setTitle("Pairs - User");
+	}
 
 	@Override
 	public void onExit() {}

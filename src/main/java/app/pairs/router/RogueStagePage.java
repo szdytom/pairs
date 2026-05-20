@@ -91,6 +91,11 @@ public class RogueStagePage implements Page {
 	}
 
 	@Override
+	public void onEnter() {
+		Router.instance().setTitle("Pairs - Rogue Stage");
+	}
+
+	@Override
 	public void update(long deltaTimeMs) {
 		root.update(deltaTimeMs);
 	}

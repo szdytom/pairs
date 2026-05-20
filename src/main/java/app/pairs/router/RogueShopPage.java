@@ -31,6 +31,11 @@ public class RogueShopPage implements Page {
 	}
 
 	@Override
+	public void onEnter() {
+		Router.instance().setTitle("Pairs - Rogue Shop");
+	}
+
+	@Override
 	public void update(long deltaTimeMs) {
 		root.update(deltaTimeMs);
 	}

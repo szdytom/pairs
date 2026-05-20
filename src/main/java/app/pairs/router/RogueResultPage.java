@@ -76,6 +76,11 @@ public class RogueResultPage implements Page {
 	}
 
 	@Override
+	public void onEnter() {
+		Router.instance().setTitle("Pairs - Rogue Result");
+	}
+
+	@Override
 	public void update(long deltaTimeMs) {
 		root.update(deltaTimeMs);
 	}

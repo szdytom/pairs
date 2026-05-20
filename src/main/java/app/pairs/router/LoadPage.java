@@ -74,6 +74,11 @@ public class LoadPage implements Page {
 	}
 
 	@Override
+	public void onEnter() {
+		Router.instance().setTitle("Pairs - Load Game");
+	}
+
+	@Override
 	public void update(long deltaTimeMs) {
 		root.update(deltaTimeMs);
 	}
