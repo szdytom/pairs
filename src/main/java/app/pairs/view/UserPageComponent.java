@@ -11,7 +11,9 @@ import io.github.libsdl4j.api.render.*;
 public class UserPageComponent extends AlignLayout {
 	private final SDL_Texture avatar;
 
-	public UserPageComponent(Runnable onLogout, Runnable onBack) {
+	public UserPageComponent(
+		Runnable onLogout, Runnable onStatistic, Runnable onBack
+	) {
 		String username = UserSession.instance().getUser().getUsername();
 		avatar = Identicon.create(username);
 
@@ -36,6 +38,7 @@ public class UserPageComponent extends AlignLayout {
 
 		var column = new FlexLayout(FlexLayout.Direction.COLUMN, 8);
 		column.addChild(infoWrapper);
+		column.addChild(makeButton("Statistics", onStatistic));
 		column.addChild(makeButton("Logout", onLogout));
 		column.addChild(makeButton("Back", onBack));
 		column.setProp("h-align", AlignLayout.HAlign.CENTER);

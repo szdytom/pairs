@@ -3,11 +3,13 @@ package app.pairs.user;
 import app.pairs.logic.GameState;
 import app.pairs.model.GameSnapshot;
 import app.pairs.model.GameStatus;
+import app.pairs.model.GameType;
 import app.pairs.model.RogueSession;
 import app.pairs.model.RogueSnapshot;
 import app.pairs.save.SaveEntry;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public interface User {
@@ -32,4 +34,5 @@ public interface User {
 	Optional<RogueSnapshot> loadRogue();
 	/** Soft-delete and record the rogue session score into the rankings. */
 	void deleteRogue();
+	Map<GameType, Long> listBestScores();
 }
