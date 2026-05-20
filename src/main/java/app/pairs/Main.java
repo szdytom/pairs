@@ -16,6 +16,9 @@ import static io.github.libsdl4j.api.video.SdlVideoConst.*;
 import app.pairs.asset.AssetManager;
 import app.pairs.audio.AudioManager;
 import app.pairs.logic.GameState;
+import app.pairs.map.TilemapFactory;
+import app.pairs.model.Tilemap;
+import app.pairs.model.TilemapSnapshot;
 import app.pairs.router.LevelPage;
 import app.pairs.router.LoadPage;
 import app.pairs.router.MainMenuPage;
@@ -100,6 +103,13 @@ public class Main {
 			router.navigateTo(new TestPage());
 		} else if (args == null || args.length == 0) {
 			router.navigateTo(new MainMenuPage());
+		} else if (
+			"stall".equalsIgnoreCase(args[0])
+			|| "--stall".equalsIgnoreCase(args[0])
+		) {
+			router.navigateTo(
+				new LevelPage(stallDemoState(), LevelPage.DEFAULT_COUNTDOWN_MS)
+			);
 		} else if ("load".equals(args[0])) {
 			seedAndNavigateToLoadPage();
 		} else {
@@ -202,6 +212,17 @@ public class Main {
 		}
 
 		Router.instance().navigateTo(new LoadPage());
+	}
+
+	private static GameState stallDemoState() {
+		int[][] grid = {
+			{1, 2, 1},
+			{2, 1, 1},
+		};
+		TilemapSnapshot snapshot = new TilemapSnapshot(
+			Tilemap.Difficulty.NORMAL, grid
+		);
+		return new GameState(TilemapFactory.fixed(snapshot));
 	}
 
 	/**
