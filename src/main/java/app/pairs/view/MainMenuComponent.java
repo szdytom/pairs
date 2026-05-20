@@ -7,7 +7,8 @@ import app.pairs.user.UserSession;
 public class MainMenuComponent extends AlignLayout {
 	public MainMenuComponent(
 		Runnable onStart, Runnable onPractise, Runnable onQuit,
-		Runnable onLogin, Runnable onUser, Runnable onLoad
+		Runnable onLogin, Runnable onUser, Runnable onLoad,
+		Runnable onLeaderboard
 	) {
 		var title = new TextComponent("Pairs", 5, rgb(30, 30, 30));
 		var titleAlign = new AlignLayout();
@@ -19,11 +20,15 @@ public class MainMenuComponent extends AlignLayout {
 		var userBtn = makeButton("User", onUser);
 		userBtn.setVisible(UserSession.instance().isAuthorized());
 
+		var leaderboardIcon = Button.fromIcon("cup", onLeaderboard);
 		var quitIcon = Button.fromIcon("quit", onQuit);
-		quitIcon.setProp("h-align", AlignLayout.HAlign.RIGHT);
-		quitIcon.setProp("v-align", AlignLayout.VAlign.BOTTOM);
-		quitIcon.setProp("h-padding", 4);
-		quitIcon.setProp("v-padding", 4);
+		var cornerColumn = new FlexLayout(FlexLayout.Direction.ROW, 4);
+		cornerColumn.addChild(leaderboardIcon);
+		cornerColumn.addChild(quitIcon);
+		cornerColumn.setProp("h-align", AlignLayout.HAlign.RIGHT);
+		cornerColumn.setProp("v-align", AlignLayout.VAlign.BOTTOM);
+		cornerColumn.setProp("h-padding", 4);
+		cornerColumn.setProp("v-padding", 4);
 
 		var column = new FlexLayout(FlexLayout.Direction.COLUMN, 8);
 		column.addChild(titleAlign);
@@ -35,7 +40,7 @@ public class MainMenuComponent extends AlignLayout {
 		column.setProp("h-align", AlignLayout.HAlign.CENTER);
 		column.setProp("v-align", AlignLayout.VAlign.CENTER);
 		addChild(column);
-		addChild(quitIcon);
+		addChild(cornerColumn);
 	}
 
 	private static Button makeButton(String label, Runnable onClick) {
