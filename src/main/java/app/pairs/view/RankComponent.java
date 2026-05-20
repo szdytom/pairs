@@ -4,7 +4,7 @@ import static app.pairs.utils.Colors.*;
 
 import app.pairs.model.GameType;
 import app.pairs.save.Database;
-import app.pairs.save.LeaderBoardEntry;
+import app.pairs.save.LeaderboardEntry;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -17,7 +17,7 @@ public class RankComponent extends FlexLayout {
 		TIME_FMT = DateTimeFormatter.ofPattern("MM/dd HH:mm");
 
 	private static final GameType[] TABS = {
-		GameType.EASY, GameType.HARD, GameType.EXTREME, GameType.NORMAL,
+		GameType.EASY, GameType.NORMAL, GameType.HARD, GameType.EXTREME,
 		GameType.ROGUE
 	};
 
@@ -26,14 +26,14 @@ public class RankComponent extends FlexLayout {
 	private static final int TAB_HOVER = rgba(160, 160, 160, 255);
 	private static final int TAB_SELECTED_HOVER = rgba(80, 120, 180, 255);
 
-	private final List<LeaderBoardEntry> allEntries;
+	private final List<LeaderboardEntry> allEntries;
 	private final Button[] tabButtons = new Button[TABS.length];
 	private final ScrollListLayout scrollList;
 	private GameType selectedType = TABS[0];
 
 	public RankComponent(Runnable onBack) {
 		super(Direction.COLUMN, 8, 16);
-		allEntries = Database.instance().saves().listLeaderBoard();
+		allEntries = Database.instance().listLeaderboard();
 
 		addChild(buildHeader(onBack));
 		addChild(buildTabs());
@@ -95,7 +95,7 @@ public class RankComponent extends FlexLayout {
 	}
 
 	private void populateList() {
-		List<LeaderBoardEntry>
+		List<LeaderboardEntry>
 			filtered = allEntries.stream()
 						   .filter(e -> e.difficulty() == selectedType)
 						   .toList();
@@ -108,7 +108,7 @@ public class RankComponent extends FlexLayout {
 			align.addChild(empty);
 			scrollList.addChild(align);
 		} else {
-			for (LeaderBoardEntry entry : filtered) {
+			for (LeaderboardEntry entry : filtered) {
 				scrollList.addChild(makeRow(entry));
 			}
 		}
@@ -137,7 +137,7 @@ public class RankComponent extends FlexLayout {
 		return col;
 	}
 
-	private static Widget makeRow(LeaderBoardEntry entry) {
+	private static Widget makeRow(LeaderboardEntry entry) {
 		var nameText = new TextComponent(entry.username(), 1, rgb(30, 30, 30));
 		var scoreText = new TextComponent(
 			String.valueOf(entry.score()), 1, rgb(50, 80, 150)

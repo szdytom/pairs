@@ -96,7 +96,7 @@ public class Users {
 		}
 	}
 
-	public void addScore(String username, GameType difficulty, int score) {
+	public void addScore(String username, GameType difficulty, long score) {
 		try (
 			PreparedStatement ps = connection.prepareStatement(
 				"INSERT INTO scores (user_id, difficulty, score, played_at)"
@@ -108,7 +108,7 @@ public class Users {
 		) {
 			ps.setString(1, username);
 			ps.setString(2, difficulty.name());
-			ps.setInt(3, score);
+			ps.setLong(3, score);
 			ps.setLong(4, System.currentTimeMillis());
 			ps.executeUpdate();
 		} catch (SQLException e) {
