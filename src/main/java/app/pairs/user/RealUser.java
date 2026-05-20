@@ -12,6 +12,7 @@ import app.pairs.save.Save;
 import app.pairs.save.SaveEntry;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public class RealUser implements User {
@@ -109,6 +110,11 @@ public class RealUser implements User {
 
 	private Save saves() {
 		return Database.instance().saves(username);
+	}
+
+	@Override
+	public Map<GameType, Long> listBestScores() {
+		return saves().listBestScores();
 	}
 
 	private RogueSave rogueSave() {

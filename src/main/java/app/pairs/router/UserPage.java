@@ -13,13 +13,19 @@ public class UserPage implements Page {
 
 	public UserPage() {
 		this.blackboard = new Blackboard();
-		this.root = new UserPageComponent(this::logOut, this::goBack);
+		this.root = new UserPageComponent(
+			this::logOut, this::goToStatistic, this::goBack
+		);
 		root.setBlackboard(blackboard);
 	}
 
 	private void logOut() {
 		UserSession.instance().setUser(new NullUser());
 		Router.instance().navigateTo(new MainMenuPage());
+	}
+
+	private void goToStatistic() {
+		Router.instance().navigateTo(new StatisticPage());
 	}
 
 	private void goBack() {

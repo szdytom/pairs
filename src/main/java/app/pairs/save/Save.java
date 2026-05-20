@@ -9,7 +9,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 
 import com.google.gson.Gson;
 
@@ -171,5 +173,29 @@ public class Save {
 	private String updateSql() {
 		return "UPDATE saves SET json_data = ?, updated_at = ? WHERE id = ?"
 			+ (userId == null ? "" : " AND user_id = ?");
+	}
+
+	public Map<GameType, Long> listBestScores() {
+		if (userId == null) {
+			throw new IllegalStateException("listBestScores requires a user");
+		}
+		Map<GameType, Long> result = new EnumMap<>(GameType.class);
+		try (
+			PreparedStatement ps = connection.prepareStatement(
+				"SELECT difficulty, score FROM scores WHERE user_id = ?"
+			)
+		) {
+			ps.setLong(1, userId);
+			try (ResultSet rs = ps.executeQuery()) {
+				while (rs.next()) {
+					result.put(
+						GameType.valueOf(rs.getString(1)), rs.getLong(2)
+					);
+				}
+			}
+			return result;
+		} catch (SQLException e) {
+			throw new IllegalStateException("failed to list best scores", e);
+		}
 	}
 }
