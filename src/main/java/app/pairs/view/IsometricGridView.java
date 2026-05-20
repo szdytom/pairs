@@ -31,7 +31,7 @@ public class IsometricGridView extends Widget {
 	private int gridHeight;
 	private final TileRegistry tileRegistry;
 	private final TileRegistry hlTileRegistry;
-	private boolean[][] highlighted;
+	private float[][] highlighted;
 	private float[][] liftProgress;
 	private int[][] depthOrder;
 	private final int[] measuredSize = new int[2];
@@ -63,7 +63,7 @@ public class IsometricGridView extends Widget {
 		this.gridWidth = width;
 		this.gridHeight = height;
 		this.depthOrder = mapper.getDepthSortedOrder(height, width);
-		this.highlighted = new boolean[height][width];
+		this.highlighted = new float[height][width];
 		reset();
 	}
 
@@ -71,7 +71,7 @@ public class IsometricGridView extends Widget {
 		this.liftProgress = new float[gridHeight][gridWidth];
 	}
 
-	public void setHighlighted(boolean[][] highlighted) {
+	public void setHighlighted(float[][] highlighted) {
 		this.highlighted = highlighted;
 	}
 
@@ -181,14 +181,14 @@ public class IsometricGridView extends Widget {
 		float step = deltaTimeMs / (float)HOVER_LIFT_MS;
 		for (int r = 0; r < liftProgress.length; r++) {
 			for (int c = 0; c < liftProgress[r].length; c++) {
-				boolean target = highlighted != null && highlighted[r][c];
-				if (target) {
+				float target = highlighted != null ? highlighted[r][c] : 0f;
+				if (liftProgress[r][c] < target) {
 					liftProgress[r][c] = Math.min(
-						1f, liftProgress[r][c] + step
+						target, liftProgress[r][c] + step
 					);
-				} else {
+				} else if (liftProgress[r][c] > target) {
 					liftProgress[r][c] = Math.max(
-						0f, liftProgress[r][c] - step
+						target, liftProgress[r][c] - step
 					);
 				}
 			}
@@ -255,7 +255,7 @@ public class IsometricGridView extends Widget {
 				: 0;
 
 			boolean isHighlighted = highlighted != null
-				&& highlighted[row][col];
+				&& highlighted[row][col] > 0f;
 			if (!entryActive || progress >= 0.5f) {
 				int shadowDstW = SHADOW_SIZE * scale;
 				int shadowDstH = SHADOW_SIZE * scale;

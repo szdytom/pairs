@@ -30,7 +30,7 @@ public class LevelComponent extends Container {
 	private final IsometricGridView gridView;
 	private int gridWidth;
 	private int gridHeight;
-	private boolean[][] highlighted;
+	private float[][] highlighted;
 
 	private int mouseX = -1;
 	private int mouseY = -1;
@@ -87,7 +87,7 @@ public class LevelComponent extends Container {
 		this.gameState = gameState;
 		this.gridWidth = gameState.getWidth();
 		this.gridHeight = gameState.getHeight();
-		this.highlighted = new boolean[gridHeight][gridWidth];
+		this.highlighted = new float[gridHeight][gridWidth];
 
 		int tileCount = 0;
 		for (int r = 0; r < gridHeight; r++) {
@@ -271,7 +271,7 @@ public class LevelComponent extends Container {
 		if (newW != gridWidth || newH != gridHeight) {
 			gridWidth = newW;
 			gridHeight = newH;
-			highlighted = new boolean[gridHeight][gridWidth];
+			highlighted = new float[gridHeight][gridWidth];
 			gridView.setGridSize(newW, newH);
 		} else {
 			gridView.reset();
@@ -358,9 +358,22 @@ public class LevelComponent extends Container {
 			if (gameState.canEliminate(
 					selectedRow, selectedCol, hoveredRow, hoveredCol
 				)) {
-				eliminatePair(selectedRow, selectedCol, hoveredRow, hoveredCol);
+				int r1 = selectedRow, c1 = selectedCol;
+				int r2 = hoveredRow, c2 = hoveredCol;
 				selectedRow = -1;
 				selectedCol = -1;
+				autoHLRow1 = r1;
+				autoHLCol1 = c1;
+				autoHLRow2 = r2;
+				autoHLCol2 = c2;
+				autoPairingState.push(
+					dt -> gridView.isAnimationReady(r1, c1)
+						&& gridView.isAnimationReady(r2, c2)
+				);
+				autoPairingState.push(new ActionStep(() -> {
+					eliminatePair(r1, c1, r2, c2);
+					clearAutoHighlights();
+				}));
 			} else {
 				selectedRow = hoveredRow;
 				selectedCol = hoveredCol;
@@ -573,35 +586,35 @@ public class LevelComponent extends Container {
 	private void updateHighlighted() {
 		for (int r = 0; r < gridHeight; r++) {
 			for (int c = 0; c < gridWidth; c++) {
-				highlighted[r][c] = false;
+				highlighted[r][c] = 0f;
 			}
 		}
 
 		if (autoPairingState.isActive()) {
-			highlightIf(autoHLRow1, autoHLCol1);
-			highlightIf(autoHLRow2, autoHLCol2);
+			highlightIf(autoHLRow1, autoHLCol1, 1f);
+			highlightIf(autoHLRow2, autoHLCol2, 1f);
 		} else if (tntSelecting && hoveredRow >= 0 && hoveredCol >= 0) {
 			int tileId = gameState.getTile(hoveredRow, hoveredCol);
 			if (tileId > 0) {
 				for (int r = 0; r < gridHeight; r++) {
 					for (int c = 0; c < gridWidth; c++) {
 						if (gameState.getTile(r, c) == tileId) {
-							highlighted[r][c] = true;
+							highlighted[r][c] = 1f;
 						}
 					}
 				}
 			}
 		} else {
-			highlightIf(selectedRow, selectedCol);
-			highlightIf(hoveredRow, hoveredCol);
+			highlightIf(selectedRow, selectedCol, 1f);
+			highlightIf(hoveredRow, hoveredCol, 0.5f);
 		}
 
 		gridView.setHighlighted(highlighted);
 	}
 
-	private void highlightIf(int row, int col) {
+	private void highlightIf(int row, int col, float value) {
 		if (row >= 0) {
-			highlighted[row][col] = true;
+			highlighted[row][col] = Math.max(highlighted[row][col], value);
 		}
 	}
 }
