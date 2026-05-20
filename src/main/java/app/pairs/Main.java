@@ -16,6 +16,9 @@ import static io.github.libsdl4j.api.video.SdlVideoConst.*;
 import app.pairs.asset.AssetManager;
 import app.pairs.audio.AudioManager;
 import app.pairs.logic.GameState;
+import app.pairs.map.TilemapFactory;
+import app.pairs.model.Tilemap;
+import app.pairs.model.TilemapSnapshot;
 import app.pairs.router.LevelPage;
 import app.pairs.router.LoadPage;
 import app.pairs.router.MainMenuPage;
@@ -214,10 +217,21 @@ public class Main {
 			? args[0].toLowerCase()
 			: "hard";
 		System.out.println("[Main] difficulty=" + mode);
+		if ("stall".equals(mode)) {
+			return createStallDemoState();
+		}
 		String id = "tilemap/" + mode;
 		if (!AssetManager.instance().has(id)) {
 			throw new IllegalArgumentException("unknown difficulty: " + mode);
 		}
 		return GameState.fromPreset(id);
+	}
+
+	private static GameState createStallDemoState() {
+		int[][] grid = {{1, 2, 1}, {2, 1, 1}};
+		TilemapSnapshot snapshot = new TilemapSnapshot(
+			Tilemap.Difficulty.NORMAL, grid
+		);
+		return new GameState(TilemapFactory.fixed(snapshot));
 	}
 }
