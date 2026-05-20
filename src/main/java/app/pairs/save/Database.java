@@ -1,11 +1,15 @@
 package app.pairs.save;
 
+import app.pairs.model.GameType;
+
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Database implements AutoCloseable {
 	private static Database instance;
@@ -46,6 +50,29 @@ public class Database implements AutoCloseable {
 
 	public Users users() {
 		return new Users(connection);
+	}
+
+	public List<LeaderboardEntry> listLeaderboard() {
+		List<LeaderboardEntry> entries = new ArrayList<>();
+		try (
+			PreparedStatement ps = connection.prepareStatement(
+				"SELECT u.name, s.difficulty, s.score, s.played_at"
+				+ " FROM scores s JOIN users u ON s.user_id = u.id"
+				+ " ORDER BY s.score DESC, s.played_at ASC"
+			)
+		) {
+			try (ResultSet rs = ps.executeQuery()) {
+				while (rs.next()) {
+					entries.add(new LeaderboardEntry(
+						rs.getString(1), GameType.valueOf(rs.getString(2)),
+						rs.getLong(3), rs.getLong(4)
+					));
+				}
+			}
+			return entries;
+		} catch (SQLException e) {
+			throw new IllegalStateException("failed to list leaderboard", e);
+		}
 	}
 
 	@Override
