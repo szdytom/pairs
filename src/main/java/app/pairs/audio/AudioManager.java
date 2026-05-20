@@ -29,6 +29,7 @@ public final class AudioManager implements AutoCloseable {
 	private static final int BUFFER_SAMPLES = 2_048;
 	private static final int SFX_PLAYER_COUNT = 7;
 	private static final long TRACK_GAP_MS = 5_000L;
+	private static final float FADE_IN_MS = 2_000f;
 	private static AudioManager INSTANCE;
 
 	private final Map<String, AudioClip> clips = new HashMap<>();
@@ -73,7 +74,11 @@ public final class AudioManager implements AutoCloseable {
 		shufflePlayWithFadeIn(category, 0f);
 	}
 
-	public void shufflePlayWithFadeIn(String category, float fadeInMs) {
+	public void shufflePlayWithFadeIn(String category) {
+		shufflePlayWithFadeIn(category, FADE_IN_MS);
+	}
+
+	private void shufflePlayWithFadeIn(String category, float fadeInMs) {
 		ensureInitialized();
 		List<String> objects = objectsFor(category);
 		String object = randomObject(objects);
@@ -92,10 +97,16 @@ public final class AudioManager implements AutoCloseable {
 	}
 
 	public void stopMusic() {
-		fadeOutMusic(3000f);
+		fadeOutMusic();
 	}
 
-	public void playWithFadeIn(String category, String object, float fadeInMs) {
+	public void playWithFadeIn(String category, String object) {
+		playWithFadeIn(category, object, FADE_IN_MS);
+	}
+
+	private void playWithFadeIn(
+		String category, String object, float fadeInMs
+	) {
 		ensureInitialized();
 		if (object == null) {
 			return;
@@ -132,10 +143,10 @@ public final class AudioManager implements AutoCloseable {
 		}
 	}
 
-	/** Fade out the currently playing music over {@code durationMs} ms. */
-	public void fadeOutMusic(float durationMs) {
+	/** Fade out the currently playing music over 1 second. */
+	public void fadeOutMusic() {
 		if (musicPlayer != null) {
-			musicPlayer.fadeOut(durationMs);
+			musicPlayer.fadeOut();
 		}
 	}
 
