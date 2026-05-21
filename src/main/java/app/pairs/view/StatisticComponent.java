@@ -22,7 +22,6 @@ public class StatisticComponent extends AlignLayout {
 		backBtn.setProp("v-align", AlignLayout.VAlign.TOP);
 		backBtn.setProp("h-padding", 8);
 		backBtn.setProp("v-padding", 8);
-		addChild(backBtn);
 
 		var col = new FlexLayout(FlexLayout.Direction.COLUMN, 8, 16);
 		col.addChild(buildTitle());
@@ -30,6 +29,7 @@ public class StatisticComponent extends AlignLayout {
 		col.setProp("h-align", AlignLayout.HAlign.CENTER);
 		col.setProp("v-align", AlignLayout.VAlign.CENTER);
 		addChild(col);
+		addChild(backBtn);
 	}
 
 	private static Widget buildTitle() {
