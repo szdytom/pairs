@@ -99,17 +99,19 @@ final class MusicPlayer implements AutoCloseable {
 		}
 	}
 
-	/** Begin a fade-out over {@code durationMs} ms. Stops playback at zero. */
-	void fadeOut(float durationMs) {
+	private static final float FADE_OUT_MS = 1000f;
+
+	/** Begin a 1-second fade-out. Stops playback at zero. */
+	void fadeOut() {
 		if (waiting) {
 			stop();
 			return;
 		}
-		if (durationMs <= 0f || curVolume <= 0f) {
+		if (curVolume <= 0f) {
 			stop();
 		} else {
 			fadingOut = true;
-			volumeDelta = -curVolume / durationMs;
+			volumeDelta = -curVolume / FADE_OUT_MS;
 		}
 	}
 

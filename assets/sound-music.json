@@ -20,5 +20,15 @@
     "precipice": {
       "play": "precipice_remix.wav"
     }
+  },
+  "UserMusic": {
+    "minecraft_jazz": {
+      "play": "minecraft_jazz.wav"
+    }
+  },
+  "ShopMusic": {
+    "stal": {
+      "play": "stal.wav"
+    }
   }
 }

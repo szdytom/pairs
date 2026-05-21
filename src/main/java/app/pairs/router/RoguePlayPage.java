@@ -44,13 +44,13 @@ public class RoguePlayPage implements Page {
 	@Override
 	public void onEnter() {
 		Router.instance().setTitle("Pairs - Rogue");
-		AudioManager.instance().fadeOutMusic(3000f);
-		AudioManager.instance().shufflePlayWithFadeIn("LevelMusic", 3000f);
+		AudioManager.instance().fadeOutMusic();
+		AudioManager.instance().shufflePlayWithFadeIn("LevelMusic");
 	}
 
 	@Override
 	public void onExit() {
-		AudioManager.instance().fadeOutMusic(3000f);
+		AudioManager.instance().fadeOutMusic();
 		User user = UserSession.instance().getUser();
 		if (!user.isAuthorized()) {
 			return;

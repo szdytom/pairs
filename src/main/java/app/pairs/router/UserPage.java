@@ -1,5 +1,6 @@
 package app.pairs.router;
 
+import app.pairs.audio.AudioManager;
 import app.pairs.user.NullUser;
 import app.pairs.user.UserSession;
 import app.pairs.view.Blackboard;
@@ -35,6 +36,8 @@ public class UserPage implements Page {
 	@Override
 	public void onEnter() {
 		Router.instance().setTitle("Pairs - User");
+		AudioManager.instance().fadeOutMusic();
+		AudioManager.instance().shufflePlayWithFadeIn("UserMusic");
 	}
 
 	@Override

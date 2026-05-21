@@ -27,6 +27,20 @@
       "event": "play",
       "basePath": "BgMusicSound"
     },
+    "UserMusic": {
+      "type": "music",
+      "file": "sound-music.json",
+      "objectRoot": "UserMusic",
+      "event": "play",
+      "basePath": "BgMusicSound"
+    },
+    "ShopMusic": {
+      "type": "music",
+      "file": "sound-music.json",
+      "objectRoot": "ShopMusic",
+      "event": "play",
+      "basePath": "BgMusicSound"
+    },
     "explode": {
       "file": "sound-other.json",
       "objectRoot": "explode",

@@ -1,5 +1,6 @@
 package app.pairs.router;
 
+import app.pairs.audio.AudioManager;
 import app.pairs.model.RogueSession;
 import app.pairs.user.User;
 import app.pairs.user.UserSession;
@@ -33,6 +34,8 @@ public class RogueShopPage implements Page {
 	@Override
 	public void onEnter() {
 		Router.instance().setTitle("Pairs - Rogue Shop");
+		AudioManager.instance().fadeOutMusic();
+		AudioManager.instance().shufflePlayWithFadeIn("ShopMusic");
 	}
 
 	@Override

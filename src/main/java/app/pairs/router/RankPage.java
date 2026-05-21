@@ -21,13 +21,13 @@ public class RankPage implements Page {
 
 	@Override
 	public void onEnter() {
-		AudioManager.instance().fadeOutMusic(1_000);
-		AudioManager.instance().shufflePlayWithFadeIn("RecordMusic", 3000f);
+		AudioManager.instance().fadeOutMusic();
+		AudioManager.instance().shufflePlayWithFadeIn("RecordMusic");
 	}
 
 	@Override
 	public void onExit() {
-		AudioManager.instance().fadeOutMusic(1_000);
+		AudioManager.instance().fadeOutMusic();
 	}
 
 	@Override
