@@ -46,9 +46,6 @@ public class LevelPage implements Page {
 	public void onExit() {
 		AudioManager.instance().fadeOutMusic();
 		User user = UserSession.instance().getUser();
-		if (!user.isAuthorized()) {
-			return;
-		}
 		GameState gs = blackboard.get(GameState.class);
 		Long id = UserSession.instance().getActiveSaveId();
 		if (root.isCleared()) {

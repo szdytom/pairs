@@ -52,9 +52,7 @@ public class RoguePlayPage implements Page {
 	public void onExit() {
 		AudioManager.instance().fadeOutMusic();
 		User user = UserSession.instance().getUser();
-		if (!user.isAuthorized()) {
-			return;
-		}
+
 		GameState gs = blackboard.get(GameState.class);
 		if (levelComponent.isTimedOut()) {
 			syncToSession();
@@ -64,6 +62,8 @@ public class RoguePlayPage implements Page {
 		} else if (levelComponent.isCleared()) {
 			syncToSession();
 			softDeleteLinkedMapSave(user);
+			session.level += 1;
+			System.out.println("Saving progress for level " + session.level);
 			user.saveRogue(session, null, null);
 		} else {
 			CountdownState cs = blackboard.get(CountdownState.class);
