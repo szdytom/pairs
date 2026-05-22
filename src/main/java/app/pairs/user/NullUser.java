@@ -2,10 +2,9 @@ package app.pairs.user;
 
 import app.pairs.logic.GameState;
 import app.pairs.model.GameSnapshot;
-import app.pairs.model.GameStatus;
 import app.pairs.model.GameType;
 import app.pairs.model.RogueSession;
-import app.pairs.model.RogueSnapshot;
+import app.pairs.save.RogueLoadData;
 import app.pairs.save.SaveEntry;
 
 import java.util.List;
@@ -33,11 +32,6 @@ public class NullUser implements User {
 	}
 
 	@Override
-	public long saveRogueLinkedGame(GameState state) {
-		return -1;
-	}
-
-	@Override
 	public void updateSave(long id, GameState state) {}
 
 	@Override
@@ -54,15 +48,13 @@ public class NullUser implements User {
 	public void deleteSave(long id) {}
 
 	@Override
-	public void discardSave(long id) {}
+	public void saveRogue(RogueSession session) {}
 
 	@Override
-	public void saveRogue(
-		RogueSession session, Long relatedMapId, GameStatus gameStatus
-	) {}
+	public void saveRogue(RogueSession session, GameState gameState) {}
 
 	@Override
-	public Optional<RogueSnapshot> loadRogue() {
+	public Optional<RogueLoadData> loadRogue() {
 		return Optional.empty();
 	}
 

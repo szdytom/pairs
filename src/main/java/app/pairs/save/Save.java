@@ -30,15 +30,6 @@ public class Save {
 	}
 
 	public long save(GameSnapshot snapshot) {
-		return insert(snapshot, false);
-	}
-
-	/** Saves a rogue-linked map; hidden from the normal save list. */
-	public long saveLinked(GameSnapshot snapshot) {
-		return insert(snapshot, true);
-	}
-
-	private long insert(GameSnapshot snapshot, boolean isLinked) {
 		String json = gson.toJson(snapshot);
 		long now = System.currentTimeMillis();
 		try (
@@ -53,7 +44,6 @@ public class Save {
 			statement.setLong(index++, now);
 			statement.setString(index++, snapshot.type().name());
 			statement.setString(index++, json);
-			statement.setInt(index, isLinked ? 1 : 0);
 			statement.executeUpdate();
 			try (ResultSet keys = statement.getGeneratedKeys()) {
 				if (!keys.next()) {
@@ -146,22 +136,22 @@ public class Save {
 	}
 
 	private String insertSql() {
-		return "INSERT INTO saves (user_id, updated_at, type, json_data, "
-			+ "is_rogue) "
-			+ (userId == null ? "VALUES (NULL, ?, ?, ?, ?)"
-		                      : "VALUES (?, ?, ?, ?, ?)");
+		return "INSERT INTO saves (user_id, updated_at, type, map_data) "
+			+ (userId == null ? "VALUES (NULL, ?, ?, ?)"
+		                      : "VALUES (?, ?, ?, ?)");
 	}
 
 	private String listSql() {
 		return "SELECT id, updated_at, type FROM saves"
-			+ (userId == null
-		           ? " WHERE is_deleted = 0 AND is_rogue = 0"
-		           : " WHERE user_id = ? AND is_deleted = 0 AND is_rogue = 0")
+			+ (userId == null ? " WHERE is_deleted = 0"
+		               + " AND (map_data IS NOT NULL OR rogue_data IS NOT NULL)"
+		                      : " WHERE user_id = ? AND is_deleted = 0"
+		               + " AND (map_data IS NOT NULL OR rogue_data IS NOT NULL)")
 			+ " ORDER BY updated_at DESC";
 	}
 
 	private String loadSql() {
-		return "SELECT json_data FROM saves WHERE id = ? AND is_deleted = 0"
+		return "SELECT map_data FROM saves WHERE id = ? AND is_deleted = 0"
 			+ (userId == null ? "" : " AND user_id = ?");
 	}
 
@@ -171,7 +161,7 @@ public class Save {
 	}
 
 	private String updateSql() {
-		return "UPDATE saves SET json_data = ?, updated_at = ? WHERE id = ?"
+		return "UPDATE saves SET map_data = ?, updated_at = ? WHERE id = ?"
 			+ (userId == null ? "" : " AND user_id = ?");
 	}
 

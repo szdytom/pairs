@@ -6,7 +6,8 @@ import java.util.List;
 
 public record GameSnapshot(
 	TilemapSnapshot tilemap, TilemapFactorySnapshot factory,
-	GameStatusSnapshot status, List<OperationSnapshot> operations
+	GameStatusSnapshot status, List<OperationSnapshot> operations,
+	int undoBarrier
 ) {
 	public Tilemap.Difficulty difficulty() {
 		return tilemap.difficulty();
