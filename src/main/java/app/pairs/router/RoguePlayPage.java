@@ -17,23 +17,18 @@ public class RoguePlayPage implements Page {
 	private final RogueSession session;
 	private final Blackboard blackboard;
 	private final LevelComponent levelComponent;
-	private Long relatedMapId;
 	private boolean synced;
 	private boolean transitioning;
 	private long transitionTimer;
 
 	public RoguePlayPage(RogueSession session, DifficultyParams params) {
 		this.session = session;
-		this.relatedMapId = null;
 		this.blackboard = new Blackboard();
 		this.levelComponent = createLevel(params);
 	}
 
-	public RoguePlayPage(
-		RogueSession session, GameState gameState, Long relatedMapId
-	) {
+	public RoguePlayPage(RogueSession session, GameState gameState) {
 		this.session = session;
-		this.relatedMapId = relatedMapId;
 		this.blackboard = new Blackboard();
 		this.levelComponent = new LevelComponent(
 			gameState, session, gameState.gameStatus.countdown.remainingMs,
@@ -56,28 +51,17 @@ public class RoguePlayPage implements Page {
 		GameState gs = blackboard.get(GameState.class);
 		if (levelComponent.isTimedOut()) {
 			syncToSession();
-			user.saveRogue(session, null, null);
-			softDeleteLinkedMapSave(user);
+			user.saveRogue(session);
 			user.deleteRogue();
 		} else if (levelComponent.isCleared()) {
 			syncToSession();
-			softDeleteLinkedMapSave(user);
 			session.level += 1;
 			System.out.println("Saving progress for level " + session.level);
-			user.saveRogue(session, null, null);
+			user.saveRogue(session);
 		} else {
 			CountdownState cs = blackboard.get(CountdownState.class);
 			gs.gameStatus.countdown.remainingMs = cs.remainingMs;
-			softDeleteLinkedMapSave(user);
-			long newId = user.saveRogueLinkedGame(gs);
-			user.saveRogue(session, newId, gs.getGameStatus());
-		}
-	}
-
-	private void softDeleteLinkedMapSave(User user) {
-		if (relatedMapId != null) {
-			user.discardSave(relatedMapId);
-			relatedMapId = null;
+			user.saveRogue(session, gs);
 		}
 	}
 

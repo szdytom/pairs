@@ -3,9 +3,7 @@ package app.pairs.router;
 import app.pairs.logic.GameState;
 import app.pairs.model.GameSnapshot;
 import app.pairs.model.GameType;
-import app.pairs.model.ItemType;
 import app.pairs.model.RogueSession;
-import app.pairs.model.RogueSnapshot;
 import app.pairs.save.SaveEntry;
 import app.pairs.user.User;
 import app.pairs.user.UserSession;
@@ -32,33 +30,24 @@ public class LoadPage implements Page {
 	private void handleSelect(SaveEntry entry) {
 		User user = UserSession.instance().getUser();
 		if (entry.type() == GameType.ROGUE) {
-			Optional<RogueSnapshot> snap = user.loadRogue();
-			if (snap.isPresent() && snap.get().relatedMapId() != null) {
-				RogueSnapshot s = snap.get();
-				RogueSession session = s.toSession();
-				long mapId = s.relatedMapId();
-				Optional<GameSnapshot> mapSnap = user.loadSave(mapId);
-				if (mapSnap.isEmpty()) {
-					// linked save missing; fall back to shop
-					Router.instance().navigateTo(new RogueShopPage(session));
-					return;
-				}
-				GameState gameState = GameState.fromSnapshot(mapSnap.get());
-				for (ItemType type : ItemType.values()) {
-					Integer count = s.gameItems().get(type.name());
-					if (count != null) {
-						gameState.gameStatus.items.set(type, count);
+			user.loadRogue().ifPresentOrElse(
+				data
+				-> {
+					if (data.hasMap()) {
+						Router.instance().navigateTo(
+							new RoguePlayPage(data.session(), data.gameState())
+						);
+					} else {
+						Router.instance().navigateTo(
+							new RogueShopPage(data.session())
+						);
 					}
-				}
-				Router.instance().navigateTo(
-					new RoguePlayPage(session, gameState, mapId)
-				);
-			} else {
-				RogueSession session = snap.isPresent()
-					? snap.get().toSession()
-					: new RogueSession();
-				Router.instance().navigateTo(new RogueShopPage(session));
-			}
+				},
+				()
+					-> Router.instance().navigateTo(
+						new RogueShopPage(new RogueSession())
+					)
+			);
 		} else {
 			user.loadSave(entry.id()).ifPresent(snapshot -> {
 				GameState gameState = GameState.fromSnapshot(snapshot);

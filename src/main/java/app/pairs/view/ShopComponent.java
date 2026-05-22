@@ -25,6 +25,7 @@ public class ShopComponent extends AlignLayout {
 	};
 
 	private final RogueSession session;
+	private final Runnable onSave;
 	private final TextComponent scoreText;
 	private final TextComponent timeText;
 	private final List<ShopRow> rows = new ArrayList<>();
@@ -48,8 +49,11 @@ public class ShopComponent extends AlignLayout {
 		}
 	}
 
-	public ShopComponent(RogueSession session, Runnable onContinue) {
+	public ShopComponent(
+		RogueSession session, Runnable onContinue, Runnable onSave
+	) {
 		this.session = session;
+		this.onSave = onSave;
 
 		var title = new TextComponent("Shop", 2, rgb(30, 30, 30));
 		title.setProp("h-align", AlignLayout.HAlign.CENTER);
@@ -151,9 +155,13 @@ public class ShopComponent extends AlignLayout {
 	private void purchase(ShopItemConfig config) {
 		int cost = currentCost(config);
 		if ("time".equals(config.kind())) {
-			session.buyTime(cost);
+			if (session.buyTime(cost)) {
+				onSave.run();
+			}
 		} else if ("item".equals(config.kind()) && config.itemType() != null) {
-			session.buyItem(ItemType.valueOf(config.itemType()), cost);
+			if (session.buyItem(ItemType.valueOf(config.itemType()), cost)) {
+				onSave.run();
+			}
 		}
 	}
 

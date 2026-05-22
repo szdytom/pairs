@@ -49,17 +49,18 @@ public final class GameState {
 	public enum OpKind { MANUAL, AUTO }
 
 	public GameState(TilemapFactory factory) {
-		this(factory, factory.generate(), new OpLogs(), new GameStatus());
+		this(factory, factory.generate(), new OpLogs(), new GameStatus(), 0);
 	}
 
 	private GameState(
 		TilemapFactory factory, Tilemap tilemap, OpLogs opLogs,
-		GameStatus gameStatus
+		GameStatus gameStatus, int undoBarrier
 	) {
 		this.factory = factory;
 		this.tilemap = tilemap;
 		this.opLogs = opLogs;
 		this.gameStatus = gameStatus;
+		this.undoBarrier = undoBarrier;
 		this.remainingTiles = countTiles();
 		this.stallResult = null;
 	}
@@ -135,7 +136,9 @@ public final class GameState {
 			? TilemapFactory.fixed(snapshot.tilemap())
 			: TilemapFactory.fromSnapshot(snapshot.factory());
 
-		GameState state = new GameState(factory, tilemap, opLogs, gameStatus);
+		GameState state = new GameState(
+			factory, tilemap, opLogs, gameStatus, snapshot.undoBarrier()
+		);
 		for (OperationSnapshot op : snapshot.operations()) {
 			opLogs.push(OpElimination.restored(op));
 		}
@@ -148,7 +151,7 @@ public final class GameState {
 	public GameSnapshot toSnapshot() {
 		return new GameSnapshot(
 			tilemap.toSnapshot(), factory.toSnapshot(), gameStatus.toSnapshot(),
-			opLogs.snapshots()
+			opLogs.snapshots(), undoBarrier
 		);
 	}
 

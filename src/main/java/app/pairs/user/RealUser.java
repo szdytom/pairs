@@ -2,11 +2,10 @@ package app.pairs.user;
 
 import app.pairs.logic.GameState;
 import app.pairs.model.GameSnapshot;
-import app.pairs.model.GameStatus;
 import app.pairs.model.GameType;
 import app.pairs.model.RogueSession;
-import app.pairs.model.RogueSnapshot;
 import app.pairs.save.Database;
+import app.pairs.save.RogueLoadData;
 import app.pairs.save.RogueSave;
 import app.pairs.save.Save;
 import app.pairs.save.SaveEntry;
@@ -46,11 +45,6 @@ public class RealUser implements User {
 	}
 
 	@Override
-	public long saveRogueLinkedGame(GameState state) {
-		return saves().saveLinked(state.toSnapshot());
-	}
-
-	@Override
 	public void updateSave(long id, GameState state) {
 		saves().update(id, state.toSnapshot());
 	}
@@ -77,32 +71,29 @@ public class RealUser implements User {
 	}
 
 	@Override
-	public void discardSave(long id) {
-		saves().softDelete(id);
+	public void saveRogue(RogueSession session) {
+		rogueSave().save(session);
 	}
 
 	@Override
-	public void saveRogue(
-		RogueSession session, Long relatedMapId, GameStatus gameStatus
-	) {
-		rogueSave().save(session, relatedMapId, gameStatus);
+	public void saveRogue(RogueSession session, GameState gameState) {
+		rogueSave().save(session, gameState);
 	}
 
 	@Override
-	public Optional<RogueSnapshot> loadRogue() {
+	public Optional<RogueLoadData> loadRogue() {
 		return rogueSave().load();
 	}
 
 	@Override
 	public void deleteRogue() {
 		Database.instance().runInTransaction(() -> {
-			Optional<RogueSnapshot> snap = rogueSave().load();
+			Optional<RogueLoadData> data = rogueSave().load();
 			rogueSave().softDelete();
-			snap.ifPresent(
-				s
+			data.ifPresent(
+				d
 				-> Database.instance().users().addScore(
-					username, GameType.ROGUE,
-					s.spendableScore() + s.cumulativeSpent()
+					username, GameType.ROGUE, d.session().getTotalEarned()
 				)
 			);
 		});

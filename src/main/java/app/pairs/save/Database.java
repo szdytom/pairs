@@ -140,7 +140,8 @@ public class Database implements AutoCloseable {
 				+ "user_id    INTEGER REFERENCES users(id), "
 				+ "updated_at INTEGER NOT NULL, "
 				+ "type       TEXT NOT NULL, "
-				+ "json_data  TEXT NOT NULL)"
+				+ "map_data   TEXT, "
+				+ "rogue_data TEXT)"
 			);
 			st.executeUpdate(
 				"CREATE TABLE IF NOT EXISTS scores ("
@@ -165,7 +166,7 @@ public class Database implements AutoCloseable {
 			// Enforce one rogue save per user without a separate table.
 			st.executeUpdate(
 				"CREATE UNIQUE INDEX IF NOT EXISTS idx_rogue_save "
-				+ "ON saves(user_id) WHERE type = 'ROGUE'"
+				+ "ON saves(user_id) WHERE rogue_data IS NOT NULL"
 			);
 		}
 		// Idempotent migration: add soft-delete column if not already present.
@@ -177,14 +178,13 @@ public class Database implements AutoCloseable {
 		} catch (SQLException ignored) {
 			// Column already exists — safe to ignore.
 		}
-		// Idempotent migration: add is_rogue column if not already present.
+		// Idempotent migration: add map_data column if not already present.
 		try (Statement ms = connection.createStatement()) {
-			ms.executeUpdate(
-				"ALTER TABLE saves ADD COLUMN is_rogue INTEGER NOT NULL "
-				+ "DEFAULT 0"
-			);
-		} catch (SQLException ignored) {
-			// Column already exists — safe to ignore.
-		}
+			ms.executeUpdate("ALTER TABLE saves ADD COLUMN map_data TEXT");
+		} catch (SQLException ignored) {}
+		// Idempotent migration: add rogue_data column if not already present.
+		try (Statement ms = connection.createStatement()) {
+			ms.executeUpdate("ALTER TABLE saves ADD COLUMN rogue_data TEXT");
+		} catch (SQLException ignored) {}
 	}
 }

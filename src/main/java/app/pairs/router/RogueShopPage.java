@@ -16,16 +16,17 @@ public class RogueShopPage implements Page {
 	public RogueShopPage(RogueSession session) {
 		this.session = session;
 		this.blackboard = new Blackboard();
+		User user = UserSession.instance().getUser();
 		this.root = new ShopComponent(session, () -> {
 			Router.instance().navigateTo(new RogueStagePage(session));
-		});
+		}, () -> user.saveRogue(session));
 		root.setBlackboard(blackboard);
 	}
 
 	@Override
 	public void onExit() {
 		User user = UserSession.instance().getUser();
-		user.saveRogue(session, null, null);
+		user.saveRogue(session);
 	}
 
 	@Override
