@@ -2,6 +2,10 @@ package app.pairs.save;
 
 import app.pairs.model.GameType;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -13,6 +17,7 @@ import java.util.List;
 
 public class Database implements AutoCloseable {
 	private static Database instance;
+	private static boolean wasCorrupted = false;
 
 	public static Database instance() {
 		if (instance == null) {
@@ -21,18 +26,47 @@ public class Database implements AutoCloseable {
 		return instance;
 	}
 
+	public static boolean wasCorrupted() {
+		return wasCorrupted;
+	}
+
 	private final Connection connection;
 
 	private Database() {
-		this(SavePath.get());
+		this(SavePath.get(), true);
 	}
 
 	Database(String dbPath) {
+		this(dbPath, false);
+	}
+
+	private Database(String dbPath, boolean recoverCorrupted) {
+		Connection conn;
 		try {
-			connection = DriverManager.getConnection("jdbc:sqlite:" + dbPath);
-			init();
+			conn = DriverManager.getConnection("jdbc:sqlite:" + dbPath);
+			init(conn);
 		} catch (SQLException e) {
-			throw new IllegalStateException("failed to open database", e);
+			if (!recoverCorrupted) {
+				throw new IllegalStateException("failed to open database", e);
+			}
+			renameCorrupted(dbPath);
+			wasCorrupted = true;
+			conn = openRecovered(dbPath);
+		}
+		connection = conn;
+	}
+
+	private static Connection openRecovered(String dbPath) {
+		try {
+			Connection conn = DriverManager.getConnection(
+				"jdbc:sqlite:" + dbPath
+			);
+			init(conn);
+			return conn;
+		} catch (SQLException e) {
+			throw new IllegalStateException(
+				"failed to open database after recovery", e
+			);
 		}
 	}
 
@@ -126,7 +160,29 @@ public class Database implements AutoCloseable {
 		}
 	}
 
-	private void init() throws SQLException {
+	private static void renameCorrupted(String dbPath) {
+		Path src = Paths.get(dbPath);
+		if (!Files.exists(src)) {
+			return;
+		}
+		Path dir = src.getParent();
+		for (int i = 0;; i++) {
+			Path dst = dir.resolve("BrokenDb_" + i);
+			if (!Files.exists(dst)) {
+				try {
+					Files.move(src, dst);
+				} catch (IOException ex) {
+					// Rename failed — delete to allow creating a fresh DB.
+					try {
+						Files.delete(src);
+					} catch (IOException ignored) {}
+				}
+				return;
+			}
+		}
+	}
+
+	private static void init(Connection connection) throws SQLException {
 		try (Statement st = connection.createStatement()) {
 			st.executeUpdate(
 				"CREATE TABLE IF NOT EXISTS users ("
@@ -186,5 +242,27 @@ public class Database implements AutoCloseable {
 		try (Statement ms = connection.createStatement()) {
 			ms.executeUpdate("ALTER TABLE saves ADD COLUMN rogue_data TEXT");
 		} catch (SQLException ignored) {}
+		validateSavesSchema(connection);
+	}
+
+	private static void validateSavesSchema(Connection connection)
+		throws SQLException {
+		boolean hasMapData = false;
+		boolean hasRogueData = false;
+		boolean hasJsonData = false;
+		boolean hasIsDeleted = false;
+		try (Statement st = connection.createStatement();
+		     ResultSet rs = st.executeQuery("PRAGMA table_info(saves)")) {
+			while (rs.next()) {
+				String name = rs.getString("name");
+				hasMapData |= "map_data".equals(name);
+				hasRogueData |= "rogue_data".equals(name);
+				hasJsonData |= "json_data".equals(name);
+				hasIsDeleted |= "is_deleted".equals(name);
+			}
+		}
+		if (hasJsonData || !hasMapData || !hasRogueData || !hasIsDeleted) {
+			throw new SQLException("incompatible saves table schema");
+		}
 	}
 }

@@ -1,10 +1,12 @@
 package app.pairs.save;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import app.pairs.model.GameType;
 
 import java.nio.file.Path;
+import java.sql.DriverManager;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -18,6 +20,33 @@ class DatabaseTest {
 		try (Database db = new Database(dbPath())) {
 			assertThat(db.saves().list()).isEmpty();
 		}
+	}
+
+	@Test
+	void incompatibleSaveTableIsRejected() throws Exception {
+		String dbPath = dbPath();
+		try (var conn = DriverManager.getConnection("jdbc:sqlite:" + dbPath)) {
+			try (var st = conn.createStatement()) {
+				st.executeUpdate(
+					"CREATE TABLE users ("
+					+ "id INTEGER PRIMARY KEY AUTOINCREMENT, "
+					+ "name TEXT NOT NULL UNIQUE, "
+					+ "password_hash TEXT NOT NULL)"
+				);
+				st.executeUpdate(
+					"CREATE TABLE saves ("
+					+ "id INTEGER PRIMARY KEY AUTOINCREMENT, "
+					+ "user_id INTEGER REFERENCES users(id), "
+					+ "updated_at INTEGER NOT NULL, "
+					+ "type TEXT NOT NULL, "
+					+ "json_data TEXT NOT NULL)"
+				);
+			}
+		}
+
+		assertThatThrownBy(() -> new Database(dbPath))
+			.isInstanceOf(IllegalStateException.class)
+			.hasMessageContaining("failed to open database");
 	}
 
 	@Test

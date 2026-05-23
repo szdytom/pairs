@@ -19,6 +19,7 @@ import app.pairs.logic.GameState;
 import app.pairs.map.TilemapFactory;
 import app.pairs.model.Tilemap;
 import app.pairs.model.TilemapSnapshot;
+import app.pairs.router.BrokenPage;
 import app.pairs.router.LevelPage;
 import app.pairs.router.LoadPage;
 import app.pairs.router.MainMenuPage;
@@ -83,24 +84,17 @@ public class Main {
 			System.exit(1);
 		}
 
-		try {
-			Database.instance();
-		} catch (Exception e) {
-			System.err.println(
-				"Failed to initialize database: " + e.getMessage()
-			);
-			e.printStackTrace();
-			SDL_DestroyRenderer(renderer);
-			SDL_DestroyWindow(window);
-			SDL_Quit();
-			System.exit(1);
-		}
+		Database.instance();
 
 		Router router = Router.instance();
 		router.setWindow(window);
 
-		if (args != null && args.length > 0
-		    && ("-t".equals(args[0]) || "--test".equals(args[0]))) {
+		if (Database.wasCorrupted()) {
+			router.navigateTo(new BrokenPage());
+		} else if (
+			args != null && args.length > 0
+			&& ("-t".equals(args[0]) || "--test".equals(args[0]))
+		) {
 			router.navigateTo(new TestPage());
 		} else if (args == null || args.length == 0) {
 			router.navigateTo(new MainMenuPage());
