@@ -31,8 +31,8 @@ jobs:
       - name: Upload fat JAR
         uses: actions/upload-artifact@v4
         with:
-          name: paris-fat-jar
-          path: build/libs/paris-*-all.jar
+          name: pairs-fat-jar
+          path: build/libs/pairs-*-all.jar
 
       - name: Upload test report
         if: failure()
